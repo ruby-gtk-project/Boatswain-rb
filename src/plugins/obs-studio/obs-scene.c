@@ -27,6 +27,7 @@ struct _ObsScene
   GObject parent_instance;
 
   char *name;
+  char *uuid;
 };
 
 G_DEFINE_FINAL_TYPE (ObsScene, obs_scene, G_TYPE_OBJECT)
@@ -35,6 +36,7 @@ enum
 {
   PROP_0,
   PROP_NAME,
+  PROP_UUID,
   N_PROPS
 };
 
@@ -51,6 +53,7 @@ obs_scene_finalize (GObject *object)
   ObsScene *self = (ObsScene *)object;
 
   g_clear_pointer (&self->name, g_free);
+  g_clear_pointer (&self->uuid, g_free);
 
   G_OBJECT_CLASS (obs_scene_parent_class)->finalize (object);
 }
@@ -67,6 +70,10 @@ obs_scene_get_property (GObject    *object,
     {
     case PROP_NAME:
       g_value_set_string (value, self->name);
+      break;
+
+    case PROP_UUID:
+      g_value_set_string (value, self->uuid);
       break;
 
     default:
@@ -88,6 +95,10 @@ obs_scene_set_property (GObject      *object,
       obs_scene_set_name (self, g_value_get_string (value));
       break;
 
+    case PROP_UUID:
+      self->uuid = g_value_dup_string (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -106,6 +117,10 @@ obs_scene_class_init (ObsSceneClass *klass)
                                                NULL,
                                                G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
 
+  properties[PROP_UUID] = g_param_spec_string ("uuid", NULL, NULL,
+                                               NULL,
+                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
@@ -121,10 +136,19 @@ obs_scene_new_from_json (ObsConnection *connection,
   g_autoptr (ObsScene) scene = NULL;
 
   scene = g_object_new (OBS_TYPE_SCENE,
-                        "name", json_object_get_string_member (scene_object, "name"),
+                        "name", json_object_get_string_member (scene_object, "sceneName"),
+                        "uuid", json_object_get_string_member (scene_object, "sceneUuid"),
                         NULL);
 
   return g_steal_pointer (&scene);
+}
+
+const char *
+obs_scene_get_uuid (ObsScene *self)
+{
+  g_return_val_if_fail (OBS_IS_SCENE (self), NULL);
+
+  return self->uuid;
 }
 
 const char *

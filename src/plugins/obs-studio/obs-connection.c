@@ -20,7 +20,10 @@
 
 #define G_LOG_DOMAIN "OBS Studio"
 
+#define TRACE_WEBSOCKET_MESSAGES 0
+
 #include "obs-connection.h"
+#include "obs-enum-types.h"
 #include "obs-scene.h"
 #include "obs-source.h"
 #include "obs-utils.h"
@@ -31,6 +34,7 @@
 #include <json-glib/json-glib.h>
 #include <libsoup/soup.h>
 #include <stdint.h>
+#include <libdex.h>
 
 typedef struct
 {
@@ -42,41 +46,38 @@ struct _ObsConnection
 {
   GObject parent_instance;
 
+  DexChannel *channel;
+
   char *host;
   unsigned int port;
   ObsConnectionState state;
 
   GListStore *scenes;
-
-  GHashTable *source_types;
   GListStore *sources;
+  char *current_scene_uuid;
 
-  struct {
-    char *challenge;
-    char *salt;
-  } authentication;
-  guint reconnect_timeout_id;
-
-  GHashTable *uuid_to_task;
-  GCancellable *cancellable;
+  GHashTable *source_to_scene_items; /* char* (uuid) → GtkBitset */
 
   gboolean streaming;
   gboolean virtualcam_enabled;
   ObsRecordingState recording_state;
-
-  SoupSession *session;
-	SoupWebsocketConnection *websocket_client;
 };
 
-static void on_websocket_get_source_types_list_cb (GObject      *source_object,
-                                                   GAsyncResult *result,
-                                                   gpointer      user_data);
-
-static void websocket_connected_cb (GObject      *source_object,
-                                    GAsyncResult *result,
-                                    gpointer      user_data);
-
 G_DEFINE_FINAL_TYPE (ObsConnection, obs_connection, G_TYPE_OBJECT)
+
+typedef enum
+{
+  OP_HELLO,
+  OP_IDENTIFY,
+  OP_IDENTIFIED,
+  OP_REIDENTIFY,
+  /* OpCode 4 doesn't exist! */
+  OP_EVENT = 5,
+  OP_REQUEST,
+  OP_REQUEST_RESPONSE,
+  OP_REQUEST_BATCH,
+  OP_REQUEST_BATCH_RESPONSE,
+} WebSocketOpCode;
 
 enum
 {
@@ -91,6 +92,7 @@ enum
 
 enum
 {
+  AUTHENTICATION_FAILED,
   STATE_CHANGED,
   N_SIGNALS,
 };
@@ -101,50 +103,6 @@ static GParamSpec *properties[N_PROPS];
 /*
  * Auxiliary methods
  */
-
-static SecretSchema secrets_schema = {
-  "com.feaneron.Boatswain.plugin.obs-studio",
-  SECRET_SCHEMA_NONE,
-  {
-    { "host", SECRET_SCHEMA_ATTRIBUTE_STRING },
-    { "port", SECRET_SCHEMA_ATTRIBUTE_INTEGER },
-    { "NULL", 0 },
-  },
-};
-
-static char *
-lookup_password (ObsConnection *self)
-{
-  g_autoptr (GError) error = NULL;
-  g_autofree char *password = NULL;
-
-  password = secret_password_lookup_sync (&secrets_schema,
-                                          self->cancellable,
-                                          &error,
-                                          "host", self->host,
-                                          "port", self->port,
-                                          NULL);
-
-  if (error)
-    g_warning ("Error fetching password: %s", error->message);
-
-  return g_steal_pointer (&password);
-}
-
-
-static void
-save_password (ObsConnection *self,
-               const char    *password)
-{
-  secret_password_store (&secrets_schema,
-                         SECRET_COLLECTION_SESSION,
-                         "obs-websocket connection password",
-                         password,
-                         NULL, NULL, NULL,
-                         "host", self->host,
-                         "port", self->port,
-                         NULL);
-}
 
 static void
 set_recording_state (ObsConnection     *self,
@@ -220,241 +178,542 @@ generate_auth_string (const char *password,
   return g_steal_pointer (&auth);
 }
 
-static void
-set_connection_state (ObsConnection      *self,
-                      ObsConnectionState  state)
+static ObsWebsocketOutputState
+output_state_from_string (const char *string)
 {
-  ObsConnectionState old_state;
+  struct {
+    const char *id;
+    ObsWebsocketOutputState state;
+  } state_mapping[] = {
+    { "OBS_WEBSOCKET_OUTPUT_UNKNOWN",      OBS_WEBSOCKET_OUTPUT_UNKNOWN },
+    { "OBS_WEBSOCKET_OUTPUT_STARTING",     OBS_WEBSOCKET_OUTPUT_STARTING },
+    { "OBS_WEBSOCKET_OUTPUT_STARTED",      OBS_WEBSOCKET_OUTPUT_STARTED },
+    { "OBS_WEBSOCKET_OUTPUT_STOPPING",     OBS_WEBSOCKET_OUTPUT_STOPPING },
+    { "OBS_WEBSOCKET_OUTPUT_STOPPED",      OBS_WEBSOCKET_OUTPUT_STOPPED },
+    { "OBS_WEBSOCKET_OUTPUT_RECONNECTING", OBS_WEBSOCKET_OUTPUT_RECONNECTING },
+    { "OBS_WEBSOCKET_OUTPUT_RECONNECTED",  OBS_WEBSOCKET_OUTPUT_RECONNECTED },
+    { "OBS_WEBSOCKET_OUTPUT_PAUSED",       OBS_WEBSOCKET_OUTPUT_PAUSED },
+    { "OBS_WEBSOCKET_OUTPUT_RESUMED",      OBS_WEBSOCKET_OUTPUT_RESUMED },
+  };
 
-  if (self->state == state)
-    return;
-
-  old_state = self->state;
-  self->state = state;
-
-  if (state != OBS_CONNECTION_STATE_CONNECTED)
+  for (size_t i = 0; i < G_N_ELEMENTS (state_mapping); i++)
     {
-      g_list_store_remove_all (self->sources);
-      g_list_store_remove_all (self->scenes);
-      set_virtualcam_enabled (self, FALSE);
-      set_recording_state (self, OBS_RECORDING_STATE_STOPPED);
-      set_streaming (self, FALSE);
+      if (g_strcmp0 (string, state_mapping[i].id) == 0)
+        return state_mapping[i].state;
     }
 
-  g_signal_emit (self, signals[STATE_CHANGED], 0, old_state, state);
+  return OBS_WEBSOCKET_OUTPUT_UNKNOWN;
+ }
+
+
+/*
+ * Main Fiber
+ */
+
+typedef struct
+{
+  GWeakRef self_wr;
+
+  char *host;
+  unsigned int port;
+
+  SoupSession *session;
+
+  DexChannel *requests_channel;
+  DexChannel *messages_channel;
+
+  SoupWebsocketConnection *websocket;
+  DexCancellable *websocket_cancellable;
+  DexTaskGroup *group;
+
+  GHashTable *uuid_to_promise;
+
+  DexStateMachine *state_machine;
+  DexFuture *connection_fiber;
+
+  struct {
+    char *challenge;
+    char *salt;
+    gboolean required;
+  } authentication;
+} WorkerFiberState;
+
+static void
+worker_fiber_state_free (gpointer data)
+{
+  WorkerFiberState *state = data;
+
+  if (state->websocket)
+    soup_websocket_connection_close (state->websocket, SOUP_WEBSOCKET_CLOSE_GOING_AWAY, NULL);
+
+  g_weak_ref_clear (&state->self_wr);
+  g_clear_pointer (&state->host, g_free);
+  g_clear_object (&state->session);
+  dex_clear (&state->requests_channel);
+  dex_clear (&state->messages_channel);
+  dex_clear (&state->state_machine);
+  g_clear_object (&state->websocket);
+  g_clear_pointer (&state->authentication.challenge, g_free);
+  g_clear_pointer (&state->authentication.salt, g_free);
+  g_free (state);
+}
+
+
+/*
+ * Secrets
+ */
+
+static SecretSchema secrets_schema = {
+  "com.feaneron.Boatswain.plugin.obs-studio",
+  SECRET_SCHEMA_NONE,
+  {
+    { "host", SECRET_SCHEMA_ATTRIBUTE_STRING },
+    { "port", SECRET_SCHEMA_ATTRIBUTE_INTEGER },
+    { "NULL", 0 },
+  },
+};
+
+static void
+password_lookup_finished_cb (GObject      *source_object,
+                             GAsyncResult *result,
+                             gpointer      user_data)
+{
+  g_autoptr (DexPromise) promise = DEX_PROMISE (user_data);
+  g_autoptr (GError) error = NULL;
+  g_autofree char *password = NULL;
+
+  password = secret_password_lookup_finish (result, &error);
+
+  if (error)
+    g_warning ("Error fetching password: %s", error->message);
+
+  dex_promise_resolve_string (promise, g_steal_pointer (&password));
+}
+
+static DexFuture *
+load_password (WorkerFiberState *state)
+{
+  g_autoptr (DexPromise) promise = NULL;
+  g_autoptr (GError) error = NULL;
+
+  promise = dex_promise_new ();
+
+  secret_password_lookup (&secrets_schema,
+                          NULL,
+                          password_lookup_finished_cb,
+                          dex_ref (promise),
+                          "host", state->host,
+                          "port", state->port,
+                          NULL);
+
+  return DEX_FUTURE (g_steal_pointer (&promise));
 }
 
 static void
-send_message (ObsConnection       *self,
-              JsonBuilder         *builder,
-              GCancellable        *cancellable,
-              GAsyncReadyCallback  callback,
-              gpointer             user_data)
+store_password (WorkerFiberState *state,
+                const char       *password)
+{
+  secret_password_store_sync (&secrets_schema,
+                              SECRET_COLLECTION_SESSION,
+                              "obs-websocket connection password",
+                              password,
+                              NULL, NULL,
+                              "host", state->host,
+                              "port", state->port,
+                              NULL);
+}
+
+
+/*
+ * Requests
+ */
+
+typedef struct
+{
+  enum {
+    WEBSOCKET_REQUEST_AUTHENTICATE,
+    WEBSOCKET_REQUEST_GENERIC,
+  } type;
+
+  union {
+    struct {
+      char *password;
+    } authenticate;
+
+    struct {
+      char *method;
+      JsonNode *data;
+    } generic;
+  } d;
+} WebSocketRequest;
+
+static void
+websocket_request_free (gpointer data)
+{
+  WebSocketRequest *request = data;
+
+  g_assert (request != NULL);
+
+  switch (request->type)
+    {
+    case WEBSOCKET_REQUEST_AUTHENTICATE:
+      g_clear_pointer (&request->d.authenticate.password, g_free);
+      break;
+
+    case WEBSOCKET_REQUEST_GENERIC:
+      g_clear_pointer (&request->d.generic.data, json_node_unref);
+      break;
+    }
+
+  g_free (request);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (WebSocketRequest, websocket_request_free)
+
+static WebSocketRequest *
+websocket_request_new_authenticate (const char *password)
+{
+  g_autoptr (WebSocketRequest) request = NULL;
+
+  request = g_new0 (WebSocketRequest, 1);
+  request->type = WEBSOCKET_REQUEST_AUTHENTICATE;
+  request->d.authenticate.password = g_strdup (password);
+
+  return g_steal_pointer (&request);
+}
+
+static WebSocketRequest *
+websocket_request_new_generic (const char *method,
+                               JsonNode   *data)
+{
+  g_autoptr (WebSocketRequest) request = NULL;
+
+  g_assert (method != NULL);
+
+  request = g_new0 (WebSocketRequest, 1);
+  request->type = WEBSOCKET_REQUEST_GENERIC;
+  request->d.generic.method = g_strdup (method);
+  request->d.generic.data = data ? g_steal_pointer (&data) : NULL;
+
+  return g_steal_pointer (&request);
+}
+
+static DexFuture *
+send_request (WorkerFiberState *state,
+              const char       *request_type,
+              JsonNode         *request_data)
 {
   g_autoptr (JsonGenerator) generator = NULL;
+  g_autoptr (JsonBuilder) builder = NULL;
+  g_autoptr (DexPromise) promise = NULL;
   g_autoptr (GTask) task = NULL;
   g_autofree char *message = NULL;
   g_autofree char *uuid = NULL;
 
   uuid = g_uuid_string_random ();
-  json_builder_set_member_name (builder, "message-id");
-  json_builder_add_string_value (builder, uuid);
+
+  builder = json_builder_new ();
+  json_builder_begin_object (builder);
+    {
+      json_builder_set_member_name (builder, "op");
+      json_builder_add_int_value (builder, OP_REQUEST);
+
+      json_builder_set_member_name (builder, "d");
+      json_builder_begin_object (builder);
+        {
+          json_builder_set_member_name (builder, "requestId");
+          json_builder_add_string_value (builder, uuid);
+
+          json_builder_set_member_name (builder, "requestType");
+          json_builder_add_string_value (builder, request_type);
+
+          if (request_data)
+            {
+              g_assert (JSON_NODE_HOLDS_OBJECT (request_data));
+
+              json_builder_set_member_name (builder, "requestData");
+              json_builder_add_value (builder, request_data);
+            }
+        }
+      json_builder_end_object (builder);
+    }
   json_builder_end_object (builder);
 
-  task = g_task_new (self, cancellable, callback, user_data);
-  g_task_set_task_data (task, g_strdup (uuid), g_free);
-  g_hash_table_insert (self->uuid_to_task, g_steal_pointer (&uuid), g_steal_pointer (&task));
+  promise = dex_promise_new ();
+  g_hash_table_insert (state->uuid_to_promise, g_steal_pointer (&uuid), dex_ref (promise));
 
   generator = json_generator_new ();
   json_generator_set_root (generator, json_builder_get_root (builder));
 
   message = json_generator_to_data (generator, NULL);
-  soup_websocket_connection_send_text (self->websocket_client, message);
-}
+  soup_websocket_connection_send_text (state->websocket, message);
 
-static GBytes *
-send_message_finish (GAsyncResult  *result,
-                     GError       **error)
-{
-  return g_task_propagate_pointer (G_TASK (result), error);
-}
-
-static inline JsonNode *
-parse_message_response (GAsyncResult  *result,
-                        GError       **error)
-{
-  g_autoptr (JsonParser) parser = NULL;
-  g_autoptr (JsonNode) root = NULL;
-  g_autoptr (GBytes) message = NULL;
-  const char *data;
-  size_t length;
-
-  message = send_message_finish (result, error);
-
-  if (!message)
-    return NULL;
-
-  data = g_bytes_get_data (message, &length);
-  parser = json_parser_new ();
-  if (!json_parser_load_from_data (parser, data, length, error))
-    return NULL;
-
-  root = json_parser_steal_root (parser);
-
-  if (!JSON_NODE_HOLDS_OBJECT (root))
+#if TRACE_WEBSOCKET_MESSAGES
     {
-      g_set_error (error, JSON_PARSER_ERROR, JSON_PARSER_ERROR_UNKNOWN, "Invalid response");
-      return NULL;
+      json_generator_set_pretty (generator, TRUE);
+
+      g_autofree char *json_output = json_generator_to_data (generator, NULL);
+      g_debug (">>>>>\n%s", json_output);
     }
+#endif
 
-  return g_steal_pointer (&root);
+  return (DexFuture *) g_steal_pointer (&promise);
 }
 
-static void
-connect_to_obs_websocket (ObsConnection *self)
+static DexFuture *
+process_request (WorkerFiberState *state,
+                 WebSocketRequest *request)
 {
-  g_autoptr (SoupMessage) message = NULL;
-  g_autofree char *address = NULL;
+  /* Authenticate requests must only happen before the dispatcher fiber
+   * can call this function.
+   */
+  g_assert (request->type != WEBSOCKET_REQUEST_AUTHENTICATE);
 
-  g_assert (self->state == OBS_CONNECTION_STATE_DISCONNECTED);
+  dex_future_disown (send_request (state, request->d.generic.method, request->d.generic.data));
 
-  address = g_strdup_printf ("%s:%u", self->host, self->port);
-  message = soup_message_new (SOUP_METHOD_GET, address);
-
-  soup_session_websocket_connect_async (self->session,
-                                        message,
-                                        NULL,
-                                        NULL,
-                                        G_PRIORITY_DEFAULT,
-                                        self->cancellable,
-                                        websocket_connected_cb,
-                                        self);
-
-  set_connection_state (self, OBS_CONNECTION_STATE_CONNECTING);
-}
-
-static void
-fetch_all_scenes (ObsConnection *self)
-{
-  g_autoptr (JsonBuilder) builder = NULL;
-
-  /* Check if the connection needs authentication */
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "GetSourceTypesList");
-
-  send_message (self, builder, self->cancellable, on_websocket_get_source_types_list_cb, self);
-}
-
-static gboolean
-reconnect_after_timeout_cb (gpointer data)
-{
-  ObsConnection *self = OBS_CONNECTION (data);
-
-  connect_to_obs_websocket (self);
-
-  self->reconnect_timeout_id = 0;
-  return G_SOURCE_REMOVE;
-}
-
-static void
-reconnect_after_timeout (ObsConnection *self)
-{
-  if (self->reconnect_timeout_id > 0)
-    return;
-
-  self->reconnect_timeout_id = g_timeout_add_seconds (1, reconnect_after_timeout_cb, self);
-}
-
-static void
-update_source_from_json_object (GHashTable *sources_by_name,
-                                JsonObject *source_object)
-{
-  ObsSource *source;
-
-  source = g_hash_table_lookup (sources_by_name,
-                                json_object_get_string_member (source_object, "name"));
-
-  if (!source)
-    return;
-
-  obs_source_set_muted (source, json_object_get_boolean_member_with_default (source_object, "muted", FALSE));
-  obs_source_set_visible (source, json_object_get_boolean_member_with_default (source_object, "render", TRUE));
-
-  g_debug ("Source '%s' is muted=%d, visible=%d",
-           obs_source_get_name (source),
-           obs_source_get_muted (source),
-           obs_source_get_visible (source));
-
-  if (json_object_has_member (source_object, "groupChildren"))
-    {
-      JsonArray *children = json_object_get_array_member (source_object, "groupChildren");
-
-      for (unsigned int i = 0; i < json_array_get_length (children); i++)
-        update_source_from_json_object (sources_by_name, json_array_get_object_element (children, i));
-    }
-}
-
-static void
-update_sources_states_from_scene (ObsConnection *self,
-                                  JsonObject    *scene_object)
-{
-  g_autoptr (GHashTable) sources_by_name = NULL;
-  JsonArray *sources_array;
-
-  sources_by_name = g_hash_table_new (g_str_hash, g_str_equal);
-  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
-    {
-      g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
-      g_hash_table_insert (sources_by_name, (gpointer) obs_source_get_name (source), source);
-    }
-
-  sources_array = json_object_get_array_member (scene_object, "sources");
-  for (unsigned int i = 0; i < json_array_get_length (sources_array); i++)
-    update_source_from_json_object (sources_by_name, json_array_get_object_element (sources_array, i));
+  return dex_future_new_true ();
 }
 
 
 /*
- * Websocket events
+ * Incoming messages
  */
 
-static void
-recording_paused_cb (ObsConnection *self,
-                     JsonObject    *object)
+static gboolean
+update_scene_list_items (WorkerFiberState  *state,
+                         GError           **error)
 {
-  set_recording_state (self, OBS_RECORDING_STATE_PAUSED);
+  g_autoptr (ObsConnection) self = NULL;
+  g_autoptr (JsonBuilder) builder = NULL;
+  g_autoptr (JsonObject) object = NULL;
+  g_autoptr (GHashTable) sources_by_uuid = NULL;
+  JsonArray *scene_items;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return TRUE;
+
+  g_assert (self->current_scene_uuid != NULL);
+
+  builder = json_builder_new ();
+  json_builder_begin_object (builder);
+  json_builder_set_member_name (builder, "sceneUuid");
+  json_builder_add_string_value (builder, self->current_scene_uuid);
+  json_builder_end_object (builder);
+
+  if (!(object = dex_await_boxed (send_request (state, "GetSceneItemList", json_builder_get_root (builder)), error)))
+    return FALSE;
+
+  sources_by_uuid = g_hash_table_new (g_str_hash, g_str_equal);
+  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
+    {
+      g_autoptr (ObsSource) source = NULL;
+      GtkBitset *bitset = NULL;
+
+      source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
+      bitset = g_hash_table_lookup (self->source_to_scene_items, obs_source_get_uuid (source));
+
+      gtk_bitset_remove_all (bitset);
+
+      g_hash_table_insert (sources_by_uuid, (gpointer) obs_source_get_uuid (source), source);
+    }
+
+  scene_items = json_object_get_array_member (object, "sceneItems");
+  for (unsigned int i = 0; i < json_array_get_length (scene_items); i++)
+    {
+      JsonObject *scene_item;
+      JsonNode *is_group;
+
+      scene_item = json_array_get_object_element (scene_items, i);
+      g_assert (scene_item != NULL);
+
+      is_group = json_object_get_member (scene_item, "isGroup");
+      if (JSON_NODE_HOLDS_NULL (is_group))
+        {
+          GtkBitset *bitset = NULL;
+          ObsSource *source;
+          const char *uuid;
+
+          uuid = json_object_get_string_member (scene_item, "sourceUuid");
+          source = g_hash_table_lookup (sources_by_uuid, uuid);
+          g_assert (OBS_IS_SOURCE (source));
+
+          if (json_object_get_boolean_member (scene_item, "sceneItemEnabled"))
+            obs_source_set_visible (source, TRUE);
+
+          bitset = g_hash_table_lookup (self->source_to_scene_items, uuid);
+          g_assert (bitset != NULL);
+
+          gtk_bitset_add (bitset, json_object_get_int_member (scene_item, "sceneItemId"));
+        }
+      else
+        {
+          // TODO: fetch group children
+        }
+    }
+
+  return TRUE;
 }
 
-static void
-recording_resumed_cb (ObsConnection *self,
-                      JsonObject    *object)
+
+static DexFuture *
+current_program_scene_changed_cb (WorkerFiberState *state,
+                                  JsonObject       *object)
 {
-  set_recording_state (self, OBS_RECORDING_STATE_RECORDING);
+  g_autoptr (ObsConnection) self = NULL;
+  g_autoptr (JsonBuilder) builder = NULL;
+  g_autoptr (JsonObject) scene_items = NULL;
+  g_autoptr (GError) error = NULL;
+  const char *scene_uuid;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
+  scene_uuid = json_object_get_string_member (object, "sceneUuid");
+
+  if (g_set_str (&self->current_scene_uuid, scene_uuid) &&
+      !update_scene_list_items (state, &error))
+    return dex_future_new_for_error (g_steal_pointer (&error));
+
+  return dex_future_new_true ();
 }
 
-static void
-recording_started_cb (ObsConnection *self,
-                      JsonObject    *object)
+static DexFuture *
+input_created_cb (WorkerFiberState *state,
+                  JsonObject       *object)
 {
-  set_recording_state (self, OBS_RECORDING_STATE_RECORDING);
+  g_autoptr (ObsConnection) self = NULL;
+  g_autoptr (ObsSource) source = NULL;
+  ObsOutputFlags flags = OBS_OUTPUT_FLAG_NONE;
+  ObsSourceCaps caps = 0;
+  ObsSourceType type = OBS_SOURCE_TYPE_UNKNOWN;
+  const char *kind;
+  const char *name;
+  const char *uuid;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
+  uuid = json_object_get_string_member (object, "inputUuid");
+  name = json_object_get_string_member (object, "inputName");
+  kind = json_object_get_string_member (object, "unversionedInputKind");
+  flags = json_object_get_int_member (object, "inputKindCaps");
+  if (flags & OBS_OUTPUT_VIDEO)
+    caps |= OBS_SOURCE_CAP_VIDEO;
+  if (flags & OBS_OUTPUT_AUDIO)
+    caps |= OBS_SOURCE_CAP_AUDIO;
+
+  type = obs_parse_source_type (kind, "input", caps);
+  source = obs_source_new (uuid, name, TRUE, TRUE, type, caps);
+  g_list_store_append (self->sources, source);
+
+  return dex_future_new_true ();
 }
 
-static void
-recording_stopped_cb (ObsConnection *self,
-                      JsonObject    *object)
+static DexFuture *
+input_mute_state_changed_cb (WorkerFiberState *state,
+                             JsonObject       *object)
 {
-  set_recording_state (self, OBS_RECORDING_STATE_STOPPED);
+  g_autoptr (ObsConnection) self = NULL;
+  const char *input_name;
+  gboolean muted;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
+  input_name = json_object_get_string_member (object, "inputName");
+  muted = json_object_get_boolean_member (object, "inputMuted");
+
+  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
+    {
+      g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
+
+      if (g_strcmp0 (obs_source_get_name (source), input_name) == 0)
+        {
+          obs_source_set_muted (source, muted);
+          break;
+        }
+    }
+
+  return dex_future_new_true ();
 }
 
-static void
-scene_item_visibility_changed_cb (ObsConnection *self,
-                                  JsonObject    *object)
+static DexFuture *
+input_removed_cb (WorkerFiberState *state,
+                  JsonObject       *object)
 {
+  g_autoptr (ObsConnection) self = NULL;
+  const char *input_name;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
+  input_name = json_object_get_string_member (object, "inputName");
+  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
+    {
+      g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
+
+      if (g_strcmp0 (obs_source_get_name (source), input_name) == 0)
+        {
+          g_hash_table_remove (self->source_to_scene_items, obs_source_get_uuid (source));
+          g_list_store_remove (self->sources, i);
+          break;
+        }
+    }
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+recording_state_changed_cb (WorkerFiberState *state,
+                            JsonObject       *object)
+{
+  g_autoptr (ObsConnection) self = NULL;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
+  switch (output_state_from_string (json_object_get_string_member (object, "outputState")))
+    {
+    case OBS_WEBSOCKET_OUTPUT_STARTED:
+      set_recording_state (self, OBS_RECORDING_STATE_RECORDING);
+      break;
+
+    case OBS_WEBSOCKET_OUTPUT_STOPPED:
+      set_recording_state (self, OBS_RECORDING_STATE_STOPPED);
+      break;
+
+    case OBS_WEBSOCKET_OUTPUT_PAUSED:
+      set_recording_state (self, OBS_RECORDING_STATE_PAUSED);
+      break;
+
+    case OBS_WEBSOCKET_OUTPUT_RESUMED:
+      set_recording_state (self, OBS_RECORDING_STATE_RECORDING);
+      break;
+
+    case OBS_WEBSOCKET_OUTPUT_UNKNOWN:
+    case OBS_WEBSOCKET_OUTPUT_STARTING:
+    case OBS_WEBSOCKET_OUTPUT_STOPPING:
+    case OBS_WEBSOCKET_OUTPUT_RECONNECTING:
+    case OBS_WEBSOCKET_OUTPUT_RECONNECTED:
+      break;
+
+    default:
+      g_assert_not_reached ();
+    }
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+scene_item_visibility_changed_cb (WorkerFiberState *state,
+                                  JsonObject       *object)
+{
+  g_autoptr (ObsConnection) self = NULL;
   const char *source_name;
   gboolean visible;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
 
   source_name = json_object_get_string_member (object, "item-name");
   visible = json_object_get_boolean_member (object, "item-visible");
@@ -469,22 +728,28 @@ scene_item_visibility_changed_cb (ObsConnection *self,
           break;
         }
     }
+
+  return dex_future_new_true ();
 }
 
-static void
-scenes_changed_cb (ObsConnection *self,
-                   JsonObject    *object)
+static DexFuture *
+scene_list_changed_cb (WorkerFiberState *state,
+                       JsonObject       *object)
 {
+  g_autoptr (ObsConnection) self = NULL;
   g_autoptr (GPtrArray) new_scenes = NULL;
   JsonArray *scenes_array;
   JsonNode *scenes_node;
   unsigned int old_size;
   unsigned int i;
 
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
   scenes_node = json_object_get_member (object, "scenes");
 
   if (!JSON_NODE_HOLDS_ARRAY (scenes_node))
-    return;
+    return dex_future_new_true ();
 
   scenes_array = json_node_get_array (scenes_node);
   new_scenes = g_ptr_array_new_full (json_array_get_length (scenes_array), g_object_unref);
@@ -505,233 +770,783 @@ scenes_changed_cb (ObsConnection *self,
                        old_size,
                        new_scenes->pdata,
                        new_scenes->len);
+
+  return dex_future_new_true ();
 }
 
-static void
-source_created_cb (ObsConnection *self,
-                   JsonObject    *object)
+static DexFuture *
+input_name_changed_cb (WorkerFiberState *state,
+                       JsonObject       *object)
 {
-  g_autoptr (ObsSource) source = NULL;
-  SourceInfo *source_info;
-  const char *name;
-
-  name = json_object_get_string_member (object, "sourceName");
-
-  source_info = g_hash_table_lookup (self->source_types,
-                                     json_object_get_string_member (object, "sourceKind"));
-
-  source = obs_source_new (name, TRUE, TRUE, source_info->type, source_info->caps);
-  g_list_store_append (self->sources, source);
-}
-
-static void
-source_destroyed_cb (ObsConnection *self,
-                     JsonObject    *object)
-{
-  const char *source_name;
-
-  source_name = json_object_get_string_member (object, "sourceName");
-  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
-    {
-      g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
-
-      if (g_strcmp0 (obs_source_get_name (source), source_name) == 0)
-        {
-          g_list_store_remove (self->sources, i);
-          break;
-        }
-    }
-}
-
-static void
-source_mute_state_changed_cb (ObsConnection *self,
-                              JsonObject    *object)
-{
-  const char *source_name;
-  gboolean muted;
-
-  source_name = json_object_get_string_member (object, "sourceName");
-  muted = json_object_get_boolean_member (object, "muted");
-
-  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
-    {
-      g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
-
-      if (g_strcmp0 (obs_source_get_name (source), source_name) == 0)
-        {
-          obs_source_set_muted (source, muted);
-          break;
-        }
-    }
-}
-
-static void
-source_renamed_cb (ObsConnection *self,
-                   JsonObject    *object)
-{
-  unsigned int i;
+  g_autoptr (ObsConnection) self = NULL;
   const char *previous_name;
-  const char *source_kind;
 
-  source_kind = json_object_get_string_member_with_default (object, "sourceType", NULL);
-  previous_name = json_object_get_string_member (object, "previousName");
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
 
-  if (g_strcmp0 (source_kind, "scene") == 0)
+  previous_name = json_object_get_string_member (object, "oldInputName");
+
+  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
     {
-      for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->scenes)); i++)
-        {
-          g_autoptr (ObsScene) scene = g_list_model_get_item (G_LIST_MODEL (self->scenes), i);
+      g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
 
-          if (g_strcmp0 (obs_scene_get_name (scene), previous_name) == 0)
-            {
-              obs_scene_set_name (scene, json_object_get_string_member (object, "newName"));
-              break;
-            }
+      if (g_strcmp0 (obs_source_get_name (source), previous_name) == 0)
+        {
+          obs_source_set_name (source, json_object_get_string_member (object, "inputName"));
+          break;
         }
     }
-  else
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+stream_statate_changed_cb (WorkerFiberState *state,
+                           JsonObject       *object)
+{
+  g_autoptr (ObsConnection) self = NULL;
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
+  switch (output_state_from_string (json_object_get_string_member (object, "outputState")))
     {
-      for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
-        {
-          g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
+    case OBS_WEBSOCKET_OUTPUT_STARTED:
+      set_streaming (self, TRUE);
+      break;
 
-          if (g_strcmp0 (obs_source_get_name (source), previous_name) == 0)
-            {
-              obs_source_set_name (source, json_object_get_string_member (object, "newName"));
-              break;
-            }
-        }
+    case OBS_WEBSOCKET_OUTPUT_UNKNOWN:
+    case OBS_WEBSOCKET_OUTPUT_STARTING:
+    case OBS_WEBSOCKET_OUTPUT_PAUSED:
+    case OBS_WEBSOCKET_OUTPUT_RESUMED:
+    case OBS_WEBSOCKET_OUTPUT_STOPPING:
+    case OBS_WEBSOCKET_OUTPUT_STOPPED:
+    case OBS_WEBSOCKET_OUTPUT_RECONNECTING:
+    case OBS_WEBSOCKET_OUTPUT_RECONNECTED:
+      set_streaming (self, FALSE);
+      break;
+
+    default:
+      g_assert_not_reached ();
     }
+
+  return dex_future_new_true ();
 }
 
-static void
-stream_started_cb (ObsConnection *self,
-                   JsonObject    *object)
+static DexFuture *
+virtualcam_state_changed_cb (WorkerFiberState *state,
+                             JsonObject       *object)
 {
-  set_streaming (self, TRUE);
-}
+  g_autoptr (ObsConnection) self = NULL;
 
-static void
-stream_stopped_cb (ObsConnection *self,
-                   JsonObject    *object)
-{
-  set_streaming (self, FALSE);
-}
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
 
-static void
-switch_scenes_cb (ObsConnection *self,
-                  JsonObject    *object)
-{
-  update_sources_states_from_scene (self, object);
-}
+  switch (output_state_from_string (json_object_get_string_member (object, "outputState")))
+    {
+    case OBS_WEBSOCKET_OUTPUT_STARTED:
+      set_virtualcam_enabled (self, TRUE);
+      break;
 
-static void
-virtualcam_started_cb (ObsConnection *self,
-                       JsonObject    *object)
-{
-  set_virtualcam_enabled (self, TRUE);
-}
+    case OBS_WEBSOCKET_OUTPUT_UNKNOWN:
+    case OBS_WEBSOCKET_OUTPUT_STARTING:
+    case OBS_WEBSOCKET_OUTPUT_PAUSED:
+    case OBS_WEBSOCKET_OUTPUT_RESUMED:
+    case OBS_WEBSOCKET_OUTPUT_STOPPING:
+    case OBS_WEBSOCKET_OUTPUT_STOPPED:
+    case OBS_WEBSOCKET_OUTPUT_RECONNECTING:
+    case OBS_WEBSOCKET_OUTPUT_RECONNECTED:
+      set_virtualcam_enabled (self, FALSE);
+      break;
 
-static void
-virtualcam_stopped_cb (ObsConnection *self,
-                       JsonObject    *object)
-{
-  set_virtualcam_enabled (self, FALSE);
+    default:
+      g_assert_not_reached ();
+    }
+
+  return dex_future_new_true ();
 }
 
 struct {
   const char *event_name;
-  void (*trigger) (ObsConnection *self,
-                   JsonObject    *object);
-} events_vtable[] = {
-  { "RecordingPaused", recording_paused_cb },
-  { "RecordingResumed", recording_resumed_cb },
-  { "RecordingStarted", recording_started_cb },
-  { "RecordingStopped", recording_stopped_cb },
+  DexFuture * (*trigger) (WorkerFiberState *state,
+                          JsonObject       *object);
+} events_vtable2[] = {
+  { "CurrentProgramSceneChanged", current_program_scene_changed_cb },
+  { "InputCreated", input_created_cb },
+  { "InputNameChanged", input_name_changed_cb },
+  { "InputMuteStateChanged", input_mute_state_changed_cb },
+  { "InputRemoved", input_removed_cb },
+  { "RecordStateChanged", recording_state_changed_cb },
   { "SceneItemVisibilityChanged", scene_item_visibility_changed_cb },
-  { "ScenesChanged", scenes_changed_cb },
-  { "SourceCreated", source_created_cb },
-  { "SourceDestroyed", source_destroyed_cb },
-  { "SourceMuteStateChanged", source_mute_state_changed_cb },
-  { "SourceRenamed", source_renamed_cb },
-  { "StreamStarted", stream_started_cb },
-  { "StreamStopped", stream_stopped_cb },
-  { "SwitchScenes", switch_scenes_cb },
-  { "VirtualCamStarted", virtualcam_started_cb },
-  { "VirtualCamStopped", virtualcam_stopped_cb },
+  { "SceneListChanged", scene_list_changed_cb },
+  { "StreamStateChanged", stream_statate_changed_cb },
+  { "VirtualCamStateChanged", virtualcam_state_changed_cb },
 };
 
-static void
-parse_event (ObsConnection *self,
-             JsonObject    *object)
+static DexFuture *
+ingest_event_fiber (gpointer user_data)
 {
-  const char *update_type;
+  g_autoptr (JsonObject) object = NULL;
+  WorkerFiberState *state;
+  JsonObject *event_data = NULL;
+  gpointer *pair = user_data;
+  const char *event_type;
   size_t i;
 
-  update_type = json_object_get_string_member_with_default (object, "update-type", NULL);
+  state = pair[0];
+  object = g_steal_pointer (&pair[1]);
 
-  for (i = 0; i < G_N_ELEMENTS (events_vtable); i++)
+  event_type = json_object_get_string_member_with_default (object, "eventType", NULL);
+  if (json_object_has_member (object, "eventData"))
+    event_data = json_object_get_object_member (object, "eventData");
+
+  for (i = 0; i < G_N_ELEMENTS (events_vtable2); i++)
     {
-      if (g_strcmp0 (update_type, events_vtable[i].event_name) == 0)
+      if (g_strcmp0 (event_type, events_vtable2[i].event_name) == 0)
         {
-          events_vtable[i].trigger (self, object);
+          g_autoptr (GError) error = NULL;
+
+          if (!dex_await (events_vtable2[i].trigger (state, event_data), &error))
+            return dex_future_new_for_error (g_steal_pointer (&error));
+
           break;
         }
     }
+
+  return dex_future_new_true ();
+}
+
+
+typedef DexFuture * (WebSockerOpCallback) (WorkerFiberState *state,
+                                           JsonObject       *object);
+
+static DexFuture *
+TODO_stub_cb (WorkerFiberState *state,
+               JsonObject       *object)
+{
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+event_cb (WorkerFiberState *state,
+          JsonObject       *object)
+{
+  gpointer *pair = g_new0 (gpointer, 2);
+
+  pair[0] = state;
+  pair[1] = json_object_ref (object);
+
+  dex_task_group_add (state->group,
+                      dex_scheduler_spawn (NULL, 0, ingest_event_fiber, pair, g_free));
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+request_response_cb (WorkerFiberState *state,
+                     JsonObject       *object)
+{
+  JsonObject *response_data = NULL;
+  JsonObject *request_status;
+  const char *request_id;
+  DexPromise *promise = NULL;
+
+  g_assert (json_object_has_member (object, "requestId"));
+  g_assert (json_object_has_member (object, "requestStatus"));
+
+  request_id = json_object_get_string_member (object, "requestId");
+  request_status = json_object_get_object_member (object, "requestStatus");
+
+  if (json_object_has_member (object, "responseData"))
+    response_data = json_object_get_object_member (object, "responseData");
+
+  promise = g_hash_table_lookup (state->uuid_to_promise, request_id);
+  g_assert (promise != NULL);
+
+  if (json_object_get_boolean_member (request_status, "result"))
+    {
+      dex_promise_resolve_boxed (promise,
+                                 JSON_TYPE_OBJECT,
+                                 response_data ? json_object_ref (response_data) : NULL);
+    }
+  else
+    {
+      /* TODO: parse error */
+      dex_promise_reject (promise, g_error_new (G_IO_ERROR,
+                                                G_IO_ERROR_NOT_SUPPORTED,
+                                                "Request failed with message: %s",
+                                                json_object_get_string_member_with_default (request_status, "comment", "(no message)")));
+    }
+
+  g_hash_table_remove (state->uuid_to_promise, request_id);
+
+  return dex_future_new_true ();
+}
+
+static WebSockerOpCallback *op_callbacks[] = {
+  [OP_HELLO]                  = NULL,
+  [OP_IDENTIFIED]             = NULL,
+  [OP_EVENT]                  = event_cb,
+  [OP_REQUEST]                = NULL,
+  [OP_REQUEST_RESPONSE]       = request_response_cb,
+  [OP_REQUEST_BATCH]          = NULL,
+  [OP_REQUEST_BATCH_RESPONSE] = TODO_stub_cb,
+};
+
+static DexFuture *
+process_message (WorkerFiberState *state,
+                 JsonObject       *message)
+{
+  g_autoptr (JsonNode) node = NULL;
+  WebSocketOpCode op_code;
+
+  op_code = json_object_get_int_member_with_default (message, "op", -1);
+  g_assert (op_code != -1);
+  g_assert (op_callbacks[op_code] != NULL);
+
+  return op_callbacks[op_code] (state, json_object_get_object_member (message, "d"));
+}
+
+static JsonObject *
+receive_one_message (WorkerFiberState  *state,
+                     GError           **error)
+{
+  g_autoptr (JsonObject) object = NULL;
+
+  g_assert (state->messages_channel != NULL);
+
+  if (!(object = dex_await_boxed (dex_future_first (dex_channel_receive (state->messages_channel),
+                                                    dex_ref (state->websocket_cancellable),
+                                                    NULL),
+                                error)))
+    return NULL;
+
+  return g_steal_pointer (&object);
 }
 
 
 /*
- * Callbacks
+ * Dispatcher fiber
+ *
+ * This is the fiber that receives the messages from obs-websockets and
+ * processes these messages; this is also the fiber that receives requests
+ * from Boatswain and sends them to obs-websockets.
+ *
+ */
+
+static DexFuture *
+connection_dispatcher_fiber (gpointer user_data)
+{
+  g_autoptr (DexFuture) next_request = NULL;
+  g_autoptr (DexFuture) next_message = NULL;
+  WorkerFiberState *state = user_data;
+
+  g_assert (dex_state_machine_get_state (state->state_machine) == OBS_CONNECTION_STATE_CONNECTED);
+
+  while (TRUE)
+    {
+      g_autoptr (ObsConnection) self = NULL;
+      g_autoptr (GError) error = NULL;
+
+      if (!state->websocket_cancellable)
+        return dex_future_new_true ();
+
+      if (!next_request)
+        next_request = dex_channel_receive (state->requests_channel);
+
+      if (!next_message)
+        next_message = dex_channel_receive (state->messages_channel);
+
+      if (dex_await (dex_future_first (dex_ref (state->websocket_cancellable),
+                                       dex_ref (next_request),
+                                       dex_ref (next_message),
+                                       NULL),
+                     NULL))
+        {
+          if (dex_future_is_resolved (next_request))
+            {
+              g_autoptr (WebSocketRequest) request = NULL;
+
+              if (!(request = dex_await_pointer (g_steal_pointer (&next_request), &error)))
+                return dex_future_new_for_error (g_steal_pointer (&error));
+
+              if (!dex_await (process_request (state, request), &error))
+                return dex_future_new_for_error (g_steal_pointer (&error));
+            }
+
+          if (dex_future_is_resolved (next_message))
+            {
+              g_autoptr (JsonObject) message = NULL;
+
+              if (!(message = dex_await_boxed (g_steal_pointer (&next_message), &error)))
+                return dex_future_new_for_error (g_steal_pointer (&error));
+
+              if (!dex_await (process_message (state, message), &error))
+                return dex_future_new_for_error (g_steal_pointer (&error));
+            }
+
+          if (!dex_future_is_pending (DEX_FUTURE (state->websocket_cancellable)))
+            return dex_future_new_true ();
+        }
+
+      if (!(self = g_weak_ref_get (&state->self_wr)))
+        break;
+    }
+
+  return dex_future_new_true ();
+}
+
+
+/*
+ * Initial fetch fiber & helpers
+ *
+ * This fiber retrieves the list of sources (aka inputs) and scenes from
+ * obs-websockets, their capabilities (audio, video, etc), and their states
+ * (e.g. muted).
+ */
+
+static DexFuture *
+fetch_inputs_fiber (gpointer user_data)
+{
+  g_autoptr (GHashTable) special_sources_names = NULL;
+  g_autoptr (JsonObject) object = NULL;
+  g_autoptr (GError) error = NULL;
+  WorkerFiberState *state = user_data;
+
+  const struct {
+    const char *name;
+    ObsSourceType source_type;
+  } special_sources[] = {
+    { "desktop1", OBS_SOURCE_TYPE_AUDIO },
+    { "desktop2", OBS_SOURCE_TYPE_AUDIO },
+    { "mic1", OBS_SOURCE_TYPE_MICROPHONE },
+    { "mic2", OBS_SOURCE_TYPE_MICROPHONE },
+    { "mic3", OBS_SOURCE_TYPE_MICROPHONE },
+    { "mic4", OBS_SOURCE_TYPE_MICROPHONE },
+  };
+
+  special_sources_names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  /* Special inputs */
+  if ((object = dex_await_boxed (send_request (state, "GetSpecialInputs", NULL), &error)))
+    {
+      for (unsigned int i = 0; i < G_N_ELEMENTS (special_sources); i++)
+        {
+          const char *name;
+
+          if (json_object_has_member (object, special_sources[i].name) &&
+              (name = json_object_get_string_member (object, special_sources[i].name)))
+            g_hash_table_insert (special_sources_names, g_strdup (name), GUINT_TO_POINTER (i));
+        }
+    }
+  else
+    {
+      return dex_future_new_for_error (g_steal_pointer (&error));
+    }
+
+  g_clear_pointer (&object, json_object_unref);
+
+  /* All inputs */
+  if ((object = dex_await_boxed (send_request (state, "GetInputList", NULL), &error)))
+    {
+      JsonArray *sources = json_object_get_array_member (object, "inputs");
+
+      for (unsigned int i = 0; i < json_array_get_length (sources); i++)
+        {
+          g_autoptr (ObsConnection) self = NULL;
+          g_autoptr (ObsSource) source = NULL;
+          JsonObject *source_object;
+          ObsOutputFlags flags = OBS_OUTPUT_FLAG_NONE;
+          ObsSourceCaps caps = 0;
+          ObsSourceType type = OBS_SOURCE_TYPE_UNKNOWN;
+          unsigned int special_source_index;
+          const char *kind;
+          const char *name;
+          const char *uuid;
+          gboolean muted = FALSE;
+
+          source_object = json_array_get_object_element (sources, i);
+          name = json_object_get_string_member (source_object, "inputName");
+          uuid = json_object_get_string_member (source_object, "inputUuid");
+          kind = json_object_get_string_member (source_object, "unversionedInputKind");
+
+          /* Ignore special sources, they're already added */
+          if (g_hash_table_lookup_extended (special_sources_names,
+                                            name,
+                                            NULL,
+                                            (gpointer *) &special_source_index))
+            {
+              type = special_sources[special_source_index].source_type;
+              caps = OBS_SOURCE_CAP_AUDIO;
+            }
+          else
+            {
+              flags = json_object_get_int_member (source_object, "inputKindCaps");
+              if (flags & OBS_OUTPUT_VIDEO)
+                caps |= OBS_SOURCE_CAP_VIDEO;
+              if (flags & OBS_OUTPUT_AUDIO)
+                caps |= OBS_SOURCE_CAP_AUDIO;
+
+              type = obs_parse_source_type (kind, "input", caps);
+            }
+
+          /* Get mute state */
+          if (caps & OBS_SOURCE_CAP_AUDIO)
+            {
+              g_autoptr (JsonBuilder) builder = NULL;
+              g_autoptr (JsonObject) result = NULL;
+
+              builder = json_builder_new ();
+              json_builder_begin_object (builder);
+              json_builder_set_member_name (builder, "inputName");
+              json_builder_add_string_value (builder, name);
+              json_builder_end_object (builder);
+
+              /* TODO: batch request these */
+              if (!(result = dex_await_boxed (send_request (state, "GetInputMute", json_builder_get_root (builder)), &error)))
+                return dex_future_new_for_error (g_steal_pointer (&error));
+
+              muted = json_object_get_boolean_member (result, "inputMuted");
+            }
+
+          if (!(self = g_weak_ref_get (&state->self_wr)))
+            return dex_future_new_true ();
+
+          source = obs_source_new (uuid, name, muted, FALSE, type, caps);
+          g_list_store_append (self->sources, source);
+
+          g_hash_table_insert (self->source_to_scene_items, g_strdup (uuid), gtk_bitset_new_empty ());
+        }
+    }
+  else
+    {
+      return dex_future_new_for_error (g_steal_pointer (&error));
+    }
+
+  g_clear_pointer (&object, json_object_unref);
+
+  /* Scenes */
+  if ((object = dex_await_boxed (send_request (state, "GetSceneList", NULL), &error)))
+    {
+      g_autoptr (ObsConnection) self = NULL;
+      g_autoptr (GPtrArray) new_scenes = NULL;
+      JsonArray *scenes;
+      const char *current_scene_uuid;
+
+      if (!(self = g_weak_ref_get (&state->self_wr)))
+        return dex_future_new_true ();
+
+      current_scene_uuid = json_object_get_string_member (object, "currentProgramSceneUuid");
+      g_assert (current_scene_uuid != NULL);
+      g_set_str (&self->current_scene_uuid, current_scene_uuid);
+
+      scenes = json_object_get_array_member (object, "scenes");
+
+      new_scenes = g_ptr_array_new_full (json_array_get_length (scenes), g_object_unref);
+      for (unsigned int i = 0; i < json_array_get_length (scenes); i++)
+        {
+          g_autoptr (ObsScene) scene = NULL;
+          JsonObject *scene_object;
+
+          scene_object = json_array_get_object_element (scenes, i);
+          scene = obs_scene_new_from_json (self, scene_object);
+          g_ptr_array_add (new_scenes, g_object_ref (scene));
+        }
+
+      g_list_store_splice (self->scenes,
+                           0,
+                           0,
+                           new_scenes->pdata,
+                           new_scenes->len);
+
+      if (!update_scene_list_items (state, &error))
+        return dex_future_new_for_error (g_steal_pointer (&error));
+    }
+  else
+    {
+      return dex_future_new_for_error (g_steal_pointer (&error));
+    }
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+fetch_inputs (WorkerFiberState *state)
+{
+  return dex_scheduler_spawn (NULL, 0, fetch_inputs_fiber, state, NULL);
+}
+
+static DexFuture *
+fetch_stream_status_fiber (gpointer user_data)
+{
+  g_autoptr (ObsConnection) self = NULL;
+  g_autoptr (JsonObject) object = NULL;
+  g_autoptr (GError) error = NULL;
+  WorkerFiberState *state = user_data;
+
+  if (!(object = dex_await_boxed (send_request (state, "GetStreamStatus", NULL), &error)))
+    return dex_future_new_for_error (g_steal_pointer (&error));
+
+  if ((self = g_weak_ref_get (&state->self_wr)))
+    set_streaming (self, json_object_get_boolean_member_with_default (object, "outputActive", FALSE));
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+fetch_stream_status (WorkerFiberState *state)
+{
+  return dex_scheduler_spawn (NULL, 0, fetch_stream_status_fiber, state, NULL);
+}
+
+static DexFuture *
+fetch_record_status_fiber (gpointer user_data)
+{
+  g_autoptr (ObsConnection) self = NULL;
+  g_autoptr (JsonObject) object = NULL;
+  g_autoptr (GError) error = NULL;
+  WorkerFiberState *state = user_data;
+  gboolean recording_paused;
+  gboolean recording;
+
+  if (!(object = dex_await_boxed (send_request (state, "GetRecordStatus", NULL), &error)))
+    return dex_future_new_for_error (g_steal_pointer (&error));
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return dex_future_new_true ();
+
+  recording = json_object_get_boolean_member_with_default (object, "outputActive", FALSE);
+  recording_paused = json_object_get_boolean_member_with_default (object, "outputPaused", FALSE);
+
+  if (!recording)
+    set_recording_state (self, OBS_RECORDING_STATE_STOPPED);
+  else if (recording_paused)
+    set_recording_state (self, OBS_RECORDING_STATE_PAUSED);
+  else
+    set_recording_state (self, OBS_RECORDING_STATE_RECORDING);
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+fetch_record_status (WorkerFiberState *state)
+{
+  return dex_scheduler_spawn (NULL, 0, fetch_record_status_fiber, state, NULL);
+}
+
+static DexFuture *
+fetch_virtualcam_status_fiber (gpointer user_data)
+{
+  g_autoptr (ObsConnection) self = NULL;
+  g_autoptr (JsonObject) object = NULL;
+  g_autoptr (GError) error = NULL;
+  WorkerFiberState *state = user_data;
+  gboolean virtualcam_enabled = FALSE;
+
+  if (!(object = dex_await_boxed (send_request (state, "GetVirtualCamStatus", NULL), &error)))
+    {
+      /*
+       * VirtualCam requests can fail if the host system doesn't support it. Streaming
+       * and recording don't have this issue.
+       */
+      if (!g_str_has_suffix (error->message, "VirtualCam is not available."))
+        return dex_future_new_for_error (g_steal_pointer (&error));
+    }
+
+  if (object)
+    virtualcam_enabled = json_object_get_boolean_member_with_default (object, "outputActive", FALSE);
+
+  if ((self = g_weak_ref_get (&state->self_wr)))
+    set_virtualcam_enabled (self, virtualcam_enabled);
+
+  return dex_future_new_true ();
+}
+
+static DexFuture *
+fetch_virtualcam_status (WorkerFiberState *state)
+{
+  return dex_scheduler_spawn (NULL, 0, fetch_virtualcam_status_fiber, state, NULL);
+}
+
+static DexFuture *
+fetch_initial_data_fiber (gpointer user_data)
+{
+  g_autoptr (GError) error = NULL;
+  WorkerFiberState *state = user_data;
+
+  if (!dex_await (dex_future_all_race (fetch_inputs (state),
+                                       fetch_stream_status (state),
+                                       fetch_record_status (state),
+                                       fetch_virtualcam_status (state),
+                                       NULL),
+                  &error))
+     return dex_future_new_for_error (g_steal_pointer (&error));
+
+  return dex_future_new_true ();
+}
+
+
+/*
+ * Connection state transitions
  */
 
 static void
-on_connection_authenticated_cb (GObject      *source_object,
-                                GAsyncResult *result,
-                                gpointer      user_data)
+emit_state_changed_for_transition_context (ObsConnection             *self,
+                                           DexStateTransitionContext *context)
 {
-  g_autoptr (GError) error = NULL;
+  self->state = dex_state_transition_context_get_to (context);
 
-  obs_connection_authenticate_finish (OBS_CONNECTION (source_object), result, &error);
+  g_signal_emit (self,
+                 signals[STATE_CHANGED],
+                 0,
+                 dex_state_transition_context_get_from (context),
+                 dex_state_transition_context_get_to (context));
 
-  if (error)
+}
+
+static gboolean
+state_changed_cb (DexStateTransitionContext  *context,
+                  gpointer                    user_data,
+                  GError                    **error)
+{
+  g_autoptr (ObsConnection) self = NULL;
+  WorkerFiberState *state = user_data;
+
+  g_assert (state != NULL);
+
+  if ((self = g_weak_ref_get (&state->self_wr)))
+    emit_state_changed_for_transition_context (self, context);
+
+  return TRUE;
+}
+
+static gboolean
+enter_connected_cb (DexStateTransitionContext  *context,
+                    gpointer                    user_data,
+                    GError                    **error)
+{
+  g_autoptr (ObsConnection) self = NULL;
+  WorkerFiberState *state = user_data;
+
+  g_assert (state != NULL);
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return TRUE;
+
+  g_assert (state->group == NULL);
+
+  state->group = dex_task_group_new (DEX_TASK_GROUP_FLAGS_CANCEL_ON_ERROR);
+
+  emit_state_changed_for_transition_context (self, context);
+  dex_state_transition_context_set_state (context, OBS_CONNECTION_STATE_CONNECTED);
+
+  dex_task_group_add (state->group,
+                      dex_scheduler_spawn (NULL, 0,
+                                           connection_dispatcher_fiber,
+                                           state,
+                                           NULL));
+
+  dex_task_group_add (state->group,
+                      dex_scheduler_spawn (NULL, 0,
+                                           fetch_initial_data_fiber,
+                                           state,
+                                           NULL));
+
+  return TRUE;
+}
+
+static gboolean
+enter_disconnected_cb (DexStateTransitionContext  *context,
+                       gpointer                    user_data,
+                       GError                    **error)
+{
+  g_autoptr (ObsConnection) self = NULL;
+  WorkerFiberState *state = user_data;
+
+  g_assert (state != NULL);
+
+  if (!(self = g_weak_ref_get (&state->self_wr)))
+    return TRUE;
+
+  if (state->group)
+    dex_task_group_cancel (state->group);
+
+  dex_clear (&state->group);
+
+  g_hash_table_remove_all (self->source_to_scene_items);
+  g_list_store_remove_all (self->sources);
+  g_list_store_remove_all (self->scenes);
+  set_virtualcam_enabled (self, FALSE);
+  set_recording_state (self, OBS_RECORDING_STATE_STOPPED);
+  set_streaming (self, FALSE);
+
+  if (state->messages_channel)
     {
-      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_PROXY_AUTH_FAILED))
-        g_warning ("Error authenticating connection: %s", error->message);
+      dex_channel_close_receive (state->messages_channel);
+      dex_channel_close_send (state->messages_channel);
+      dex_clear (&state->messages_channel);
     }
+
+  g_clear_object (&state->websocket);
+  g_clear_pointer (&state->authentication.salt, g_free);
+  g_clear_pointer (&state->authentication.challenge, g_free);
+
+  emit_state_changed_for_transition_context (self, context);
+
+  return TRUE;
 }
 
-static void
-on_websocket_client_closed_cb (SoupWebsocketConnection *websocket_client,
-                               ObsConnection           *self)
+static const DexStateTransition connection_state_transitions[] =
 {
-  set_connection_state (self, OBS_CONNECTION_STATE_DISCONNECTED);
-  reconnect_after_timeout (self);
-}
+  { OBS_CONNECTION_STATE_DISCONNECTED, OBS_CONNECTION_STATE_CONNECTING, state_changed_cb },
+  { OBS_CONNECTION_STATE_CONNECTING, OBS_CONNECTION_STATE_AUTHENTICATING, state_changed_cb },
+  { OBS_CONNECTION_STATE_AUTHENTICATING, OBS_CONNECTION_STATE_WAITING_FOR_CREDENTIALS, state_changed_cb },
+  { OBS_CONNECTION_STATE_WAITING_FOR_CREDENTIALS, OBS_CONNECTION_STATE_CONNECTED, enter_connected_cb },
+
+  /* When a saved password succeeds, or no authentication is required */
+  { OBS_CONNECTION_STATE_AUTHENTICATING, OBS_CONNECTION_STATE_CONNECTED, enter_connected_cb },
+
+  /* OBS can vanish at any point, all states can transition to disconnected */
+  { OBS_CONNECTION_STATE_CONNECTING, OBS_CONNECTION_STATE_DISCONNECTED, enter_disconnected_cb },
+  { OBS_CONNECTION_STATE_AUTHENTICATING, OBS_CONNECTION_STATE_DISCONNECTED, enter_disconnected_cb },
+  { OBS_CONNECTION_STATE_WAITING_FOR_CREDENTIALS, OBS_CONNECTION_STATE_DISCONNECTED, enter_disconnected_cb },
+  { OBS_CONNECTION_STATE_CONNECTED, OBS_CONNECTION_STATE_DISCONNECTED, enter_disconnected_cb },
+};
 
 static void
-on_websocket_client_error_cb (SoupWebsocketConnection *websocket_client,
-                              ObsConnection           *self)
+on_websocket_closed_cb (SoupWebsocketConnection *websocket,
+                        WorkerFiberState        *state)
 {
-  g_message ("Websocket error");
+  g_assert (state->websocket_cancellable != NULL);
+
+  dex_future_disown (dex_state_machine_transition (state->state_machine, OBS_CONNECTION_STATE_DISCONNECTED));
+
+  dex_cancellable_cancel (state->websocket_cancellable);
+  dex_clear (&state->websocket_cancellable);
 }
 
 static void
-on_websocket_client_message_cb (SoupWebsocketConnection *websocket_client,
-                                int                      type,
-                                GBytes                  *message,
-                                ObsConnection           *self)
+on_websocket_error_cb (SoupWebsocketConnection *websocket,
+                       WorkerFiberState        *state)
+{
+  g_warning ("Websocket error");
+}
+
+static void
+on_websocket_message_cb (SoupWebsocketConnection *websocket,
+                         int                      type,
+                         GBytes                  *message,
+                         WorkerFiberState        *state)
 {
   g_autoptr (JsonParser) parser = NULL;
+  g_autoptr (JsonNode) root = NULL;
   g_autoptr (GError) error = NULL;
-  JsonObject *root_object;
   const char *data;
-  const char *uuid;
   size_t length;
 
   data = g_bytes_get_data (message, &length);
 
-  parser = json_parser_new ();
+  parser = json_parser_new_immutable ();
   json_parser_load_from_data (parser, data, length, &error);
 
   if (error)
@@ -740,523 +1555,368 @@ on_websocket_client_message_cb (SoupWebsocketConnection *websocket_client,
       return;
     }
 
-  root_object = json_node_get_object (json_parser_get_root (parser));
-  uuid = json_object_get_string_member_with_default (root_object, "message-id", NULL);
+  root = json_parser_steal_root (parser);
 
-#if 0
-  // Useful for debugging:
-  {
-    g_autoptr (JsonGenerator) generator = json_generator_new ();
-    json_generator_set_root (generator, json_parser_get_root (parser));
-    json_generator_set_pretty (generator, TRUE);
+#if TRACE_WEBSOCKET_MESSAGES
+    {
+      g_autoptr (JsonGenerator) generator = json_generator_new ();
+      json_generator_set_root (generator, root);
+      json_generator_set_pretty (generator, TRUE);
 
-    g_autofree char *json_output = json_generator_to_data (generator, NULL);
-    g_debug ("Message received:\n%s", json_output);
-  }
+      g_autofree char *json_output = json_generator_to_data (generator, NULL);
+      g_debug ("<<<<<\n%s", json_output);
+    }
 #endif
 
-  if (uuid)
-    {
-      GTask *task = g_hash_table_lookup (self->uuid_to_task, uuid);
-      g_task_return_pointer (task, g_bytes_ref (message), NULL);
-    }
-  else
-    {
-      parse_event (self, root_object);
-    }
-}
-
-static void
-on_websocket_authenticated_cb (GObject      *source_object,
-                               GAsyncResult *result,
-                               gpointer      user_data)
-{
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  g_autoptr (GTask) task = NULL;
-  ObsConnection *self;
-  JsonObject *object;
-
-  node = parse_message_response (result, &error);
-  object = json_node_get_object (node);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  task = G_TASK (user_data);
-  self = g_task_get_source_object (task);
-
-  if (g_strcmp0 (json_object_get_string_member_with_default (object, "status", NULL), "ok") == 0)
-    {
-      save_password (self, g_task_get_task_data (task));
-      g_task_return_boolean (task, TRUE);
-      fetch_all_scenes (self);
-    }
-  else
-    {
-      g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_PROXY_AUTH_FAILED, _("Invalid password"));
-      set_connection_state (self, OBS_CONNECTION_STATE_WAITING_FOR_CREDENTIALS);
-    }
-}
-
-static void
-on_websocket_check_authentication_required_cb (GObject      *source_object,
-                                               GAsyncResult *result,
-                                               gpointer      user_data)
-{
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  ObsConnection *self;
-  JsonObject *object;
-
-  node = parse_message_response (result, &error);
-  object = json_node_get_object (node);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  self = OBS_CONNECTION (user_data);
-
-  if (json_object_get_boolean_member_with_default (object, "authRequired", FALSE))
-    {
-      g_autofree char *password = NULL;
-
-      self->authentication.challenge = g_strdup (json_object_get_string_member_with_default (object,
-                                                                                             "challenge",
-                                                                                             NULL));
-      self->authentication.salt = g_strdup (json_object_get_string_member_with_default (object,
-                                                                                        "salt",
-                                                                                        NULL));
-
-      /* If there's a stored password, authenticate immediately */
-      password = lookup_password (self);
-      if (password)
-        {
-          /*
-           * Set the state without emitting 'state-changed' so we can use
-           * obs_connection_authenticate() directly.
-           */
-          self->state = OBS_CONNECTION_STATE_WAITING_FOR_CREDENTIALS;
-
-          obs_connection_authenticate (self,
-                                       password,
-                                       self->cancellable,
-                                       on_connection_authenticated_cb,
-                                       self);
-        }
-      else
-        {
-          set_connection_state (self, OBS_CONNECTION_STATE_WAITING_FOR_CREDENTIALS);
-        }
-    }
-  else
-    {
-      set_connection_state (self, OBS_CONNECTION_STATE_CONNECTED);
-      fetch_all_scenes (self);
-    }
-}
-
-static void
-on_websocket_get_streaming_status_cb (GObject      *source_object,
-                                      GAsyncResult *result,
-                                      gpointer      user_data)
-{
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  ObsConnection *self;
-  JsonObject *object;
-  gboolean virtualcam_enabled;
-  gboolean recording_paused;
-  gboolean recording;
-  gboolean streaming;
-
-  node = parse_message_response (result, &error);
-  object = json_node_get_object (node);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  self = OBS_CONNECTION (user_data);
-
-  recording = json_object_get_boolean_member_with_default (object, "recording", FALSE);
-  recording_paused = json_object_get_boolean_member_with_default (object, "recording-paused", FALSE);
-  streaming = json_object_get_boolean_member_with_default (object, "streaming", FALSE);
-  virtualcam_enabled = json_object_get_boolean_member_with_default (object, "virtualcam", FALSE);
-
-  set_virtualcam_enabled (self, virtualcam_enabled);
-  set_streaming (self, streaming);
-  if (!recording)
-    set_recording_state (self, OBS_RECORDING_STATE_STOPPED);
-  else if (recording_paused)
-    set_recording_state (self, OBS_RECORDING_STATE_PAUSED);
-  else
-    set_recording_state (self, OBS_RECORDING_STATE_RECORDING);
-
-  set_connection_state (self, OBS_CONNECTION_STATE_CONNECTED);
-}
-
-static void
-on_websocket_get_scene_list_cb (GObject      *source_object,
-                                GAsyncResult *result,
-                                gpointer      user_data)
-{
-  g_autoptr (JsonBuilder) builder = NULL;
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  ObsConnection *self;
-  JsonObject *object;
-  JsonNode *scenes_node;
-  const char *current_scene_name;
-
-  node = parse_message_response (result, &error);
-  object = json_node_get_object (node);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  self = OBS_CONNECTION (user_data);
-
-  current_scene_name = json_object_get_string_member (object, "current-scene");
-  scenes_node = json_object_get_member (object, "scenes");
-  if (JSON_NODE_HOLDS_ARRAY (scenes_node))
-    {
-      g_autoptr (GPtrArray) new_scenes = NULL;
-      JsonArray *scenes_array;
-      unsigned int i;
-
-      scenes_array = json_node_get_array (scenes_node);
-      new_scenes = g_ptr_array_new_full (json_array_get_length (scenes_array),
-                                         g_object_unref);
-      for (i = 0; i < json_array_get_length (scenes_array); i++)
-        {
-          g_autoptr (ObsScene) scene = NULL;
-          JsonObject *scene_object;
-
-          scene_object = json_array_get_object_element (scenes_array, i);
-          scene = obs_scene_new_from_json (self, scene_object);
-          g_ptr_array_add (new_scenes, g_object_ref (scene));
-
-          if (g_strcmp0 (obs_scene_get_name (scene), current_scene_name) == 0)
-            update_sources_states_from_scene (self, scene_object);
-        }
-
-        g_list_store_splice (self->scenes,
-                             0,
-                             0,
-                             new_scenes->pdata,
-                             new_scenes->len);
-    }
-
-  /* Fetch streaming state as well */
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "GetStreamingStatus");
-
-  send_message (self, builder, self->cancellable, on_websocket_get_streaming_status_cb, self);
-}
-
-static void
-on_websocket_get_sources_list_cb (GObject      *source_object,
-                                  GAsyncResult *result,
-                                  gpointer      user_data)
-{
-  g_autoptr (JsonBuilder) builder = NULL;
-  g_autoptr (GHashTable) special_sources_names = NULL;
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  ObsConnection *self;
-  JsonObject *object;
-  JsonArray *sources;
-
-  node = parse_message_response (result, &error);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  self = OBS_CONNECTION (user_data);
-  object = json_node_get_object (node);
-
-  special_sources_names = g_hash_table_new (g_str_hash, g_str_equal);
-  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->sources)); i++)
-    {
-      g_autoptr (ObsSource) source = g_list_model_get_item (G_LIST_MODEL (self->sources), i);
-      g_hash_table_add (special_sources_names, (gpointer) obs_source_get_name (source));
-    }
-
-  sources = json_object_get_array_member (object, "sources");
-  for (unsigned int i = 0; i < json_array_get_length (sources); i++)
-    {
-      g_autoptr (ObsSource) source = NULL;
-      JsonObject *source_object;
-      SourceInfo *source_info;
-      const char *name;
-
-      source_object = json_array_get_object_element (sources, i);
-      name = json_object_get_string_member (source_object, "name");
-
-      /* Ignore special sources, they're already added */
-      if (g_hash_table_contains (special_sources_names, name))
-        continue;
-
-      source_info = g_hash_table_lookup (self->source_types,
-                                         json_object_get_string_member (source_object, "typeId"));
-
-      if (!source_info)
-        continue;
-
-      source = obs_source_new (name, FALSE, FALSE,  source_info->type, source_info->caps);
-      g_list_store_append (self->sources, source);
-    }
-
-  /* Fetch special sources */
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "GetSceneList");
-
-  send_message (self, builder, self->cancellable, on_websocket_get_scene_list_cb, self);
-}
-
-static void
-on_websocket_special_source_get_mute_cb (GObject      *source_object,
-                                         GAsyncResult *result,
-                                         gpointer      user_data)
-{
-  g_autoptr (ObsSource) special_source = NULL;
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  JsonObject *object;
-
-  special_source = OBS_SOURCE (user_data);
-
-  node = parse_message_response (result, &error);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  object = json_node_get_object (node);
-
-  obs_source_set_muted (special_source, json_object_get_boolean_member (object, "muted"));
-
-  g_debug ("Special source '%s' is muted: %d",
-           obs_source_get_name (special_source),
-           obs_source_get_muted (special_source));
-}
-
-static void
-on_websocket_get_special_sources_cb (GObject      *source_object,
-                                     GAsyncResult *result,
-                                     gpointer      user_data)
-{
-  g_autoptr (JsonBuilder) builder = NULL;
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  ObsConnection *self;
-  JsonObject *object;
-
-  const struct {
-    const char *name;
-    ObsSourceType source_type;
-  } special_sources[] = {
-    { "desktop-1", OBS_SOURCE_TYPE_AUDIO },
-    { "desktop-2", OBS_SOURCE_TYPE_AUDIO },
-    { "mic-1", OBS_SOURCE_TYPE_MICROPHONE },
-    { "mic-2", OBS_SOURCE_TYPE_MICROPHONE },
-    { "mic-3", OBS_SOURCE_TYPE_MICROPHONE },
-  };
-
-  node = parse_message_response (result, &error);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  self = OBS_CONNECTION (user_data);
-  object = json_node_get_object (node);
-
-  for (unsigned int i = 0; i < G_N_ELEMENTS (special_sources); i++)
-    {
-      g_autoptr (JsonBuilder) builder = NULL;
-      g_autoptr (ObsSource) special_source = NULL;
-      const char *name;
-
-      if (!json_object_has_member (object, special_sources[i].name))
-        continue;
-
-      name = json_object_get_string_member (object, special_sources[i].name);
-      special_source = obs_source_new (name, FALSE, FALSE,
-                                       special_sources[i].source_type,
-                                       OBS_SOURCE_CAP_AUDIO);
-      g_list_store_append (self->sources, special_source);
-
-      /* Get special source mute state */
-      builder = json_builder_new ();
-      json_builder_begin_object (builder);
-      json_builder_set_member_name (builder, "request-type");
-      json_builder_add_string_value (builder, "GetMute");
-      json_builder_set_member_name (builder, "source");
-      json_builder_add_string_value (builder, name);
-      send_message (self, builder,
-                    self->cancellable,
-                    on_websocket_special_source_get_mute_cb,
-                    g_object_ref (special_source));
-    }
-
-  /* Fetch information about source */
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "GetSourcesList");
-
-  send_message (self, builder, self->cancellable, on_websocket_get_sources_list_cb, self);
-}
-
-static void
-on_websocket_get_source_types_list_cb (GObject      *source_object,
-                                       GAsyncResult *result,
-                                       gpointer      user_data)
-{
-  g_autoptr (JsonBuilder) builder = NULL;
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-  ObsConnection *self;
-  JsonObject *object;
-  JsonArray *types;
-  unsigned int i;
-
-  node = parse_message_response (result, &error);
-
-  if (error)
-    {
-      g_warning ("Error parsing message response: %s", error->message);
-      return;
-    }
-
-  self = OBS_CONNECTION (user_data);
-  object = json_node_get_object (node);
-  types = json_object_get_array_member (object, "types");
-
-  for (i = 0; i < json_array_get_length (types); i++)
-    {
-      ObsSourceCaps source_caps;
-      JsonObject *type;
-      JsonObject *caps;
-      SourceInfo *info;
-      const char *type_id;
-
-      type = json_array_get_object_element (types, i);
-      caps = json_object_get_object_member (type, "caps");
-
-      source_caps = OBS_SOURCE_CAP_NONE;
-      if (json_object_get_boolean_member_with_default (caps, "hasAudio", FALSE))
-        source_caps |= OBS_SOURCE_CAP_AUDIO;
-      if (json_object_get_boolean_member_with_default (caps, "hasVideo", FALSE))
-        source_caps |= OBS_SOURCE_CAP_VIDEO;
-
-      type_id = json_object_get_string_member (type, "typeId");
-
-      info = g_new0 (SourceInfo, 1);
-      info->caps = source_caps;
-      info->type = obs_parse_source_type (json_object_get_string_member (type, "type"),
-                                          type_id,
-                                          source_caps);
-
-      g_hash_table_insert (self->source_types, g_strdup (type_id), info);
-
-      g_debug ("Source type '%s' has caps = %d, type = %d", type_id, source_caps, info->type);
-    }
-
-  /* Fetch information about source types */
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "GetSpecialSources");
-
-  send_message (self, builder, self->cancellable, on_websocket_get_special_sources_cb, self);
-}
-
-static void
-on_websocket_generic_response_cb (GObject      *source_object,
-                                  GAsyncResult *result,
-                                  gpointer      user_data)
-{
-  g_autoptr (JsonNode) node = NULL;
-  g_autoptr (GError) error = NULL;
-
-  node = parse_message_response (result, &error);
-
-  if (error)
-    g_warning ("Error parsing message response: %s", error->message);
+  dex_future_disown (dex_channel_send (state->messages_channel,
+                                       dex_future_new_take_boxed (JSON_TYPE_OBJECT,
+                                                                  json_node_dup_object (root))));
 }
 
 static void
 websocket_connected_cb (GObject      *source_object,
-                        GAsyncResult *result,
-                        gpointer      user_data)
+                         GAsyncResult *result,
+                         gpointer      user_data)
 {
-	g_autoptr (SoupWebsocketConnection) websocket_client = NULL;
-  g_autoptr (JsonBuilder) builder = NULL;
+
+  g_autoptr (SoupWebsocketConnection) websocket = NULL;
+  g_autoptr (DexPromise) promise = user_data;
   g_autoptr (GError) error = NULL;
-  ObsConnection *self;
 
-  websocket_client = soup_session_websocket_connect_finish (SOUP_SESSION (source_object),
-                                                            result,
-                                                            &error);
+  if ((websocket = soup_session_websocket_connect_finish (SOUP_SESSION (source_object), result, &error)))
+    dex_promise_resolve_object (promise, g_steal_pointer (&websocket));
+  else
+    dex_promise_reject (promise, g_steal_pointer (&error));
+}
 
-  if (error)
+static DexFuture *
+create_websocket (WorkerFiberState *state)
+{
+  g_autoptr (SoupMessage) message = NULL;
+  g_autoptr (DexPromise) promise = NULL;
+  g_autofree char *address = NULL;
+
+  promise = dex_promise_new ();
+  address = g_strdup_printf ("%s:%u", state->host, state->port);
+  message = soup_message_new (SOUP_METHOD_GET, address);
+
+  soup_session_websocket_connect_async (state->session,
+                                        message,
+                                        NULL,
+                                        NULL,
+                                        G_PRIORITY_DEFAULT,
+                                        NULL,
+                                        websocket_connected_cb,
+                                        dex_ref (promise));
+
+  return DEX_FUTURE (g_steal_pointer (&promise));
+}
+
+static SoupWebsocketConnection *
+connect_to_websocket (WorkerFiberState  *state,
+                      GError           **error)
+{
+  g_autoptr (SoupWebsocketConnection) websocket = NULL;
+
+  do
     {
-      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-        return;
+      if (!dex_await (dex_state_machine_transition (state->state_machine, OBS_CONNECTION_STATE_CONNECTING), error))
+        return NULL;
 
-      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CONNECTION_REFUSED))
-        g_warning ("Error connecting to websocket: %s", error->message);
+      if (!(websocket = dex_await_object (create_websocket (state), error)))
+        {
+          if (!dex_await (dex_state_machine_transition (state->state_machine, OBS_CONNECTION_STATE_DISCONNECTED), error))
+            return NULL;
 
-      self = OBS_CONNECTION (user_data);
-      set_connection_state (self, OBS_CONNECTION_STATE_DISCONNECTED);
-      reconnect_after_timeout (self);
-      return;
+          dex_await (dex_timeout_new_seconds (1), NULL);
+        }
+    }
+  while (websocket == NULL);
+
+  state->messages_channel = dex_channel_new (0);
+  state->websocket_cancellable = dex_cancellable_new ();
+  dex_future_set_static_name (DEX_FUTURE (state->websocket_cancellable), "websocket cancellable");
+
+  return g_steal_pointer (&websocket);
+}
+
+static gboolean
+receive_hello (WorkerFiberState  *state,
+               GError           **error)
+{
+  g_autoptr (JsonObject) message = NULL;
+  JsonObject *d;
+  WebSocketOpCode op_code;
+  const char *version;
+  int rpc_version;
+
+  if (!(message = receive_one_message (state, error)))
+    return FALSE;
+
+  op_code = json_object_get_int_member_with_default (message, "op", -1);
+  g_assert (op_code == OP_HELLO);
+
+  d = json_object_get_object_member (message, "d");
+
+  version = json_object_get_string_member_with_default (d, "obsWebSocketVersion", "unknown");
+  rpc_version = json_object_get_int_member_with_default (d, "rpcVersion", 0);
+
+  g_debug ("obs-websocket version: %s (server RPC: %d)", version, rpc_version);
+
+  state->authentication.required = json_object_has_member (d, "authentication");
+  if (state->authentication.required)
+    {
+      g_autofree char *password = NULL;
+      JsonObject *auth;
+
+      g_debug ("Connection needs authentication");
+
+      auth = json_object_get_object_member (d, "authentication");
+
+      g_assert (auth != NULL);
+      g_assert (json_object_has_member (auth, "challenge"));
+      g_assert (json_object_has_member (auth, "salt"));
+
+      state->authentication.challenge = g_strdup (json_object_get_string_member (auth, "challenge"));
+      state->authentication.salt = g_strdup (json_object_get_string_member (auth, "salt"));
     }
 
-  self = OBS_CONNECTION (user_data);
-  self->websocket_client = g_steal_pointer (&websocket_client);
-  g_signal_connect (self->websocket_client, "closed", G_CALLBACK (on_websocket_client_closed_cb), self);
-  g_signal_connect (self->websocket_client, "error", G_CALLBACK (on_websocket_client_error_cb), self);
-  g_signal_connect (self->websocket_client, "message", G_CALLBACK (on_websocket_client_message_cb), self);
+  return TRUE;
+}
 
-  /* Check if the connection needs authentication */
+static char *
+wait_for_authentication_password (WorkerFiberState  *state,
+                                  GError           **error)
+{
+  g_autoptr (WebSocketRequest) request = NULL;
+  g_autofree char *password = NULL;
+
+  if (!(request = dex_await_pointer (dex_future_first (dex_channel_receive (state->requests_channel),
+                                                       dex_ref (state->websocket_cancellable),
+                                                       NULL),
+                                     error)))
+    return NULL;
+
+  g_assert (request->type == WEBSOCKET_REQUEST_AUTHENTICATE);
+
+  return g_steal_pointer (&request->d.authenticate.password);
+}
+
+static gboolean
+identify (WorkerFiberState  *state,
+          const char        *password,
+          GError           **error)
+{
+  g_autoptr (JsonGenerator) generator = NULL;
+  g_autoptr (JsonBuilder) builder = NULL;
+  g_autoptr (DexPromise) promise = NULL;
+  g_autoptr (JsonObject) message = NULL;
+  g_autoptr (GError) local_error = NULL;
+  g_autofree char *request = NULL;
+  WebSocketOpCode op_code;
+
+  /* The authentication request is completely different from any other
+   * request, so we have to build it manually here.
+   */
   builder = json_builder_new ();
   json_builder_begin_object (builder);
+    {
+      json_builder_set_member_name (builder, "op");
+      json_builder_add_int_value (builder, OP_IDENTIFY);
 
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "GetAuthRequired");
+      json_builder_set_member_name (builder, "d");
+      json_builder_begin_object (builder);
+        {
+          json_builder_set_member_name (builder, "rpcVersion");
+          json_builder_add_int_value (builder, 1);
 
-  send_message (self, builder, self->cancellable, on_websocket_check_authentication_required_cb, self);
-  set_connection_state (self, OBS_CONNECTION_STATE_AUTHENTICATING);
+          if (state->authentication.required)
+            {
+              g_autofree char *auth = NULL;
+
+              g_assert (password != NULL);
+
+              auth = generate_auth_string (password,
+                                           state->authentication.challenge,
+                                           state->authentication.salt);
+
+              json_builder_set_member_name (builder, "authentication");
+              json_builder_add_string_value (builder, auth);
+            }
+          else
+            {
+              g_assert (password == NULL);
+            }
+        }
+      json_builder_end_object (builder);
+    }
+  json_builder_end_object (builder);
+
+  generator = json_generator_new ();
+  json_generator_set_root (generator, json_builder_get_root (builder));
+
+  request = json_generator_to_data (generator, NULL);
+  soup_websocket_connection_send_text (state->websocket, request);
+
+#if TRACE_WEBSOCKET_MESSAGES
+    {
+      json_generator_set_pretty (generator, TRUE);
+
+      g_autofree char *json_output = json_generator_to_data (generator, NULL);
+      g_debug (">>>>>\n%s", json_output);
+    }
+#endif
+
+  if (!(message = receive_one_message (state, &local_error)))
+    {
+      /* We have to watch out for the cancellation here because obs-websocket
+       * kicks us out when authentication fails, and at this point we're not
+       * yet in the main event loop of the main fiber.
+       */
+      if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        g_propagate_error (error, g_steal_pointer (&local_error));
+      return FALSE;
+    }
+
+  op_code = json_object_get_int_member_with_default (message, "op", -1);
+  g_assert (op_code == OP_IDENTIFIED);
+
+  return TRUE;
+}
+
+static gboolean
+initialize_websocket_connection (WorkerFiberState  *state,
+                                 GError           **error)
+{
+  gboolean authenticate_from_secret = TRUE;
+
+  g_assert (error != NULL && *error == NULL);
+
+  if (dex_state_machine_get_state (state->state_machine) == OBS_CONNECTION_STATE_CONNECTED)
+    return TRUE;
+
+retry:
+  /* 1. Create a SoupWebsocketConnection */
+  if (!(state->websocket = connect_to_websocket (state, error)))
+     return FALSE;
+
+  g_assert (SOUP_IS_WEBSOCKET_CONNECTION (state->websocket));
+
+  g_signal_connect (state->websocket, "closed", G_CALLBACK (on_websocket_closed_cb), state);
+  g_signal_connect (state->websocket, "error", G_CALLBACK (on_websocket_error_cb), state);
+  g_signal_connect (state->websocket, "message", G_CALLBACK (on_websocket_message_cb), state);
+
+  g_debug ("Connected to websocket, waiting for HELLO");
+
+  /* 2. OP_HELLO */
+  if (!receive_hello (state, error))
+     return FALSE;
+
+  if (!dex_await (dex_state_machine_transition (state->state_machine, OBS_CONNECTION_STATE_AUTHENTICATING), error))
+     return FALSE;
+
+  /* 3. OP_IDENTIFY */
+  if (state->authentication.required)
+    {
+      g_autofree char *password = NULL;
+
+      /* Attempt 1: authenticate from a stored secret, if any */
+      if (authenticate_from_secret)
+        {
+          if (!(password = dex_await_string (load_password (state), error)) && *error)
+            return FALSE;
+        }
+
+      if (!password)
+        {
+          authenticate_from_secret = FALSE;
+
+          if (!dex_await (dex_state_machine_transition (state->state_machine, OBS_CONNECTION_STATE_WAITING_FOR_CREDENTIALS), error))
+            return FALSE;
+
+          if (!(password = wait_for_authentication_password (state, error)))
+            return FALSE;
+        }
+
+      g_assert (password != NULL);
+
+      /*
+       * When the password is wrong, obs-websocket kicks us out. We have to
+       * recreate the SoupWebsocketConnection and start from scratch.
+       */
+
+      if (!identify (state, password, error))
+        {
+          g_clear_pointer (&password, g_free);
+
+          if (*error)
+            return FALSE;
+
+          /*
+           * Only emit the "authentication-failed" when a user-typed password failed.
+           * Authentication from the stored secret should fail quietly.
+           */
+          if (!authenticate_from_secret)
+            {
+              g_autoptr (ObsConnection) self = NULL;
+
+              if ((self = g_weak_ref_get (&state->self_wr)))
+                g_signal_emit (self, signals[AUTHENTICATION_FAILED], 0);
+            }
+
+          authenticate_from_secret = FALSE;
+          goto retry;
+        }
+
+      if (!authenticate_from_secret)
+        store_password (state, password);
+    }
+  else
+    {
+      if (!identify (state, NULL, error) && *error)
+        return FALSE;
+    }
+
+  /* 4. Transition to OBS_CONNECTION_STATE_CONNECTED triggers the initial fetch */
+  if (!dex_await (dex_state_machine_transition (state->state_machine, OBS_CONNECTION_STATE_CONNECTED), error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static DexFuture *
+main_connection_fiber (gpointer user_data)
+{
+  g_autoptr (DexFuture) next_request = NULL;
+  g_autoptr (DexFuture) next_message = NULL;
+  WorkerFiberState *state = user_data;
+
+  g_assert (state != NULL);
+  g_assert (state->requests_channel != NULL);
+  g_assert (state->websocket == NULL);
+  g_assert (dex_state_machine_get_state (state->state_machine) == OBS_CONNECTION_STATE_DISCONNECTED);
+  g_assert (dex_state_machine_get_requested_state (state->state_machine) == OBS_CONNECTION_STATE_DISCONNECTED);
+
+  while (TRUE)
+    {
+      g_autoptr (ObsConnection) self = NULL;
+      g_autoptr (GError) error = NULL;
+
+      if (!initialize_websocket_connection (state, &error))
+        return dex_future_new_for_error (g_steal_pointer (&error));
+
+      g_assert (state->group != NULL);
+
+      dex_await (dex_ref (state->group), &error);
+
+      self = g_weak_ref_get (&state->self_wr);
+      if (!self)
+        break;
+    }
+
+  dex_channel_close_receive (state->requests_channel);
+
+  return dex_future_new_true ();
 }
 
 
@@ -1269,19 +1929,12 @@ obs_connection_finalize (GObject *object)
 {
   ObsConnection *self = (ObsConnection *)object;
 
-  g_cancellable_cancel (self->cancellable);
+  dex_channel_close_send (self->channel);
 
-  if (self->websocket_client)
-    soup_websocket_connection_close (self->websocket_client, SOUP_WEBSOCKET_CLOSE_GOING_AWAY, NULL);
-
-  g_clear_handle_id (&self->reconnect_timeout_id, g_source_remove);
-  g_clear_pointer (&self->authentication.challenge, g_free);
-  g_clear_pointer (&self->authentication.salt, g_free);
-  g_clear_pointer (&self->source_types, g_hash_table_destroy);
+  dex_clear (&self->channel);
+  g_clear_pointer (&self->source_to_scene_items, g_hash_table_destroy);
+  g_clear_pointer (&self->current_scene_uuid, g_free);
   g_clear_pointer (&self->host, g_free);
-  g_clear_object (&self->websocket_client);
-  g_clear_object (&self->cancellable);
-  g_clear_object (&self->session);
   g_clear_object (&self->sources);
   g_clear_object (&self->scenes);
 
@@ -1292,10 +1945,32 @@ static void
 obs_connection_constructed (GObject *object)
 {
   ObsConnection *self = (ObsConnection *)object;
+  WorkerFiberState *state = NULL;
+  DexFuture *future;
 
   G_OBJECT_CLASS (obs_connection_parent_class)->constructed (object);
 
-  connect_to_obs_websocket (self);
+  state = g_new0 (WorkerFiberState, 1);
+  g_weak_ref_init (&state->self_wr, self);
+  state->host = g_strdup (self->host);
+  state->port = self->port;
+  state->session = soup_session_new ();
+  state->requests_channel = dex_ref (self->channel);
+  state->uuid_to_promise = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, dex_unref);
+  state->state_machine = dex_state_machine_new (OBS_TYPE_CONNECTION_STATE,
+                                                OBS_CONNECTION_STATE_DISCONNECTED,
+                                                connection_state_transitions,
+                                                G_N_ELEMENTS (connection_state_transitions),
+                                                NULL, 0,
+                                                state,
+                                                NULL);
+
+  future = dex_scheduler_spawn (NULL, 0,
+                                main_connection_fiber,
+                                state,
+                                worker_fiber_state_free);
+  dex_future_set_static_name (future, "main_connection_fiber");
+  dex_future_disown (future);
 }
 
 static void
@@ -1397,17 +2072,25 @@ obs_connection_class_init (ObsConnectionClass *klass)
                                          2,
                                          G_TYPE_INT,
                                          G_TYPE_INT);
+
+  signals[AUTHENTICATION_FAILED] = g_signal_new ("authentication-failed",
+                                                 OBS_TYPE_CONNECTION,
+                                                 G_SIGNAL_RUN_LAST,
+                                                 0, NULL, NULL, NULL,
+                                                 G_TYPE_NONE,
+                                                 0);
 }
 
 static void
 obs_connection_init (ObsConnection *self)
 {
-  self->session = soup_session_new ();
-  self->cancellable = g_cancellable_new ();
-  self->source_types = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-  self->uuid_to_task = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
+  self->channel = dex_channel_new (0);
   self->scenes = g_list_store_new (OBS_TYPE_SCENE);
   self->sources = g_list_store_new (OBS_TYPE_SOURCE);
+  self->source_to_scene_items = g_hash_table_new_full (g_str_hash,
+                                                       g_str_equal,
+                                                       g_free,
+                                                       (GDestroyNotify) gtk_bitset_unref);
   self->recording_state = OBS_RECORDING_STATE_STOPPED;
 }
 
@@ -1470,15 +2153,11 @@ obs_connection_get_virtualcam_enabled (ObsConnection *self)
 }
 
 void
-obs_connection_authenticate (ObsConnection       *self,
-                             const char          *password,
-                             GCancellable        *cancellable,
-                             GAsyncReadyCallback  callback,
-                             gpointer             user_data)
+obs_connection_authenticate (ObsConnection *self,
+                             const char    *password)
 {
-  g_autoptr (JsonBuilder) builder = NULL;
-  g_autoptr (GTask) task = NULL;
-  g_autofree char *auth = NULL;
+  WebSocketRequest *request = NULL;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (password != NULL && g_utf8_validate (password, -1, NULL));
@@ -1489,38 +2168,10 @@ obs_connection_authenticate (ObsConnection       *self,
       return;
     }
 
-  task = g_task_new (self, cancellable, callback, user_data);
-  g_task_set_task_data (task, g_strdup (password), g_free);
-  g_task_set_source_tag (task, obs_connection_authenticate);
+  request = websocket_request_new_authenticate (password);
+  future = dex_future_new_for_pointer (request);
 
-  set_connection_state (self, OBS_CONNECTION_STATE_AUTHENTICATING);
-
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "Authenticate");
-
-  auth = generate_auth_string (password,
-                               self->authentication.challenge,
-                               self->authentication.salt);
-  json_builder_set_member_name (builder, "auth");
-  json_builder_add_string_value (builder, auth);
-  send_message (self, builder, cancellable, on_websocket_authenticated_cb, g_steal_pointer (&task));
-}
-
-gboolean
-obs_connection_authenticate_finish (ObsConnection  *self,
-                                    GAsyncResult   *result,
-                                    GError        **error)
-{
-  g_return_val_if_fail (OBS_IS_CONNECTION (self), FALSE);
-  g_return_val_if_fail (G_IS_TASK (result), FALSE);
-  g_return_val_if_fail (g_task_is_valid (G_TASK (result), self), FALSE);
-  g_return_val_if_fail (g_task_get_source_tag (G_TASK (result)) == obs_connection_authenticate, FALSE);
-  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-  return g_task_propagate_boolean (G_TASK (result), error);
+  dex_future_disown (dex_channel_send (self->channel, future));
 }
 
 GListModel *
@@ -1544,6 +2195,8 @@ obs_connection_switch_to_scene (ObsConnection *self,
                                 ObsScene      *scene)
 {
   g_autoptr (JsonBuilder) builder = NULL;
+  WebSocketRequest *request = NULL;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (OBS_IS_SCENE (scene));
@@ -1551,65 +2204,60 @@ obs_connection_switch_to_scene (ObsConnection *self,
 
   builder = json_builder_new ();
   json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "SetCurrentScene");
-
-  json_builder_set_member_name (builder, "scene-name");
+  json_builder_set_member_name (builder, "sceneName");
   json_builder_add_string_value (builder, obs_scene_get_name (scene));
+  json_builder_end_object (builder);
 
-  send_message (self, builder, self->cancellable, on_websocket_generic_response_cb, self);
+  request = websocket_request_new_generic ("SetCurrentProgramScene",
+                                           json_builder_get_root (builder));
+  future = dex_future_new_for_pointer (request);
+
+  dex_future_disown (dex_channel_send (self->channel, future));
 }
 
 void
 obs_connection_toggle_recording (ObsConnection *self)
 {
-  g_autoptr (JsonBuilder) builder = NULL;
+  WebSocketRequest *request = NULL;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (self->state == OBS_CONNECTION_STATE_CONNECTED);
 
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
+  request = websocket_request_new_generic ("ToggleRecord", NULL);
+  future = dex_future_new_for_pointer (request);
 
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "StartStopRecording");
-
-  send_message (self, builder, self->cancellable, on_websocket_generic_response_cb, self);
+  dex_future_disown (dex_channel_send (self->channel, future));
 }
 
 void
 obs_connection_toggle_streaming (ObsConnection *self)
 {
-  g_autoptr (JsonBuilder) builder = NULL;
+  WebSocketRequest *request = NULL;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (self->state == OBS_CONNECTION_STATE_CONNECTED);
 
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
+  request = websocket_request_new_generic ("ToggleStream", NULL);
+  future = dex_future_new_for_pointer (request);
 
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "StartStopStreaming");
-
-  send_message (self, builder, self->cancellable, on_websocket_generic_response_cb, self);
+  dex_future_disown (dex_channel_send (self->channel, future));
 }
 
 void
 obs_connection_toggle_virtualcam (ObsConnection *self)
 {
-  g_autoptr (JsonBuilder) builder = NULL;
+  WebSocketRequest *request = NULL;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (self->state == OBS_CONNECTION_STATE_CONNECTED);
 
-  builder = json_builder_new ();
-  json_builder_begin_object (builder);
+  request = websocket_request_new_generic ("ToggleVirtualCam", NULL);
+  future = dex_future_new_for_pointer (request);
 
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "StartStopVirtualCam");
-
-  send_message (self, builder, self->cancellable, on_websocket_generic_response_cb, self);
+  dex_future_disown (dex_channel_send (self->channel, future));
 }
 
 void
@@ -1617,6 +2265,8 @@ obs_connection_toggle_source_mute (ObsConnection *self,
                                    ObsSource     *source)
 {
   g_autoptr (JsonBuilder) builder = NULL;
+  WebSocketRequest *request = NULL;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (OBS_IS_SOURCE (source));
@@ -1625,14 +2275,15 @@ obs_connection_toggle_source_mute (ObsConnection *self,
 
   builder = json_builder_new ();
   json_builder_begin_object (builder);
-
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "ToggleMute");
-
-  json_builder_set_member_name (builder, "source");
+  json_builder_set_member_name (builder, "inputName");
   json_builder_add_string_value (builder, obs_source_get_name (source));
+  json_builder_end_object (builder);
 
-  send_message (self, builder, self->cancellable, on_websocket_generic_response_cb, self);
+  request = websocket_request_new_generic ("ToggleInputMute",
+                                           json_builder_get_root (builder));
+  future = dex_future_new_for_pointer (request);
+
+  dex_future_disown (dex_channel_send (self->channel, future));
 }
 
 void
@@ -1641,6 +2292,8 @@ obs_connection_set_source_mute (ObsConnection *self,
                                 gboolean       mute)
 {
   g_autoptr (JsonBuilder) builder = NULL;
+  WebSocketRequest *request = NULL;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (OBS_IS_SOURCE (source));
@@ -1649,17 +2302,20 @@ obs_connection_set_source_mute (ObsConnection *self,
 
   builder = json_builder_new ();
   json_builder_begin_object (builder);
+    {
+      json_builder_set_member_name (builder, "inputName");
+      json_builder_add_string_value (builder, obs_source_get_name (source));
 
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "SetMute");
+      json_builder_set_member_name (builder, "inputMuted");
+      json_builder_add_boolean_value (builder, mute);
+    }
+  json_builder_end_object (builder);
 
-  json_builder_set_member_name (builder, "source");
-  json_builder_add_string_value (builder, obs_source_get_name (source));
+  request = websocket_request_new_generic ("SetInputMute",
+                                           json_builder_get_root (builder));
+  future = dex_future_new_for_pointer (request);
 
-  json_builder_set_member_name (builder, "mute");
-  json_builder_add_boolean_value (builder, mute);
-
-  send_message (self, builder, self->cancellable, on_websocket_generic_response_cb, self);
+  dex_future_disown (dex_channel_send (self->channel, future));
 }
 
 void
@@ -1680,24 +2336,46 @@ obs_connection_set_source_visible (ObsConnection *self,
                                    gboolean       visible)
 {
   g_autoptr (JsonBuilder) builder = NULL;
+  WebSocketRequest *request = NULL;
+  GtkBitset *bitset;
+  DexFuture *future = NULL;
 
   g_return_if_fail (OBS_IS_CONNECTION (self));
   g_return_if_fail (OBS_IS_SOURCE (source));
   g_return_if_fail (self->state == OBS_CONNECTION_STATE_CONNECTED);
   g_return_if_fail (obs_source_get_caps (source) & OBS_SOURCE_CAP_VIDEO);
 
+  bitset = g_hash_table_lookup (self->source_to_scene_items, obs_source_get_uuid (source));
+  g_assert (bitset != NULL);
+
+  if (visible == obs_source_get_visible (source))
+    return;
+
+  if (gtk_bitset_is_empty (bitset))
+    return;
+
+  /* TODO: batch send all scene items */
+
   builder = json_builder_new ();
   json_builder_begin_object (builder);
+    {
+      json_builder_set_member_name (builder, "sceneUuid");
+      json_builder_add_string_value (builder, self->current_scene_uuid);
 
-  json_builder_set_member_name (builder, "request-type");
-  json_builder_add_string_value (builder, "SetSceneItemRender");
+      json_builder_set_member_name (builder, "sceneItemId");
+      json_builder_add_int_value (builder, gtk_bitset_get_minimum (bitset));
 
-  json_builder_set_member_name (builder, "source");
-  json_builder_add_string_value (builder, obs_source_get_name (source));
+      json_builder_set_member_name (builder, "sceneItemEnabled");
+      json_builder_add_boolean_value (builder, visible);
 
-  json_builder_set_member_name (builder, "render");
-  json_builder_add_boolean_value (builder, visible);
+    }
+  json_builder_end_object (builder);
 
-  send_message (self, builder, self->cancellable, on_websocket_generic_response_cb, self);
+  request = websocket_request_new_generic ("SetSceneItemEnabled",
+                                           json_builder_get_root (builder));
+  future = dex_future_new_for_pointer (request);
+
+  dex_future_disown (dex_channel_send (self->channel, future));
+
+  obs_source_set_visible (source, visible);
 }
-

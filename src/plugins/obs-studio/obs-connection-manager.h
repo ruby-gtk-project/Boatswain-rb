@@ -27,7 +27,7 @@
 G_BEGIN_DECLS
 
 #define OBS_DEFAULT_URL "ws://localhost"
-#define OBS_DEFAULT_PORT 4444
+#define OBS_DEFAULT_PORT 4455
 
 #define OBS_TYPE_CONNECTION_MANAGER (obs_connection_manager_get_type())
 G_DECLARE_FINAL_TYPE (ObsConnectionManager, obs_connection_manager, OBS, CONNECTION_MANAGER, GObject)

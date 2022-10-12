@@ -32,17 +32,8 @@ struct _ObsConnectionSettings
 
   ObsConnectionManager *connection_manager;
   ObsConnection *connection;
-  gulong state_changed_id;
+  GSignalGroup *signal_group;
 };
-
-static void on_connection_authenticated_cb (GObject      *source_object,
-                                            GAsyncResult *result,
-                                            gpointer      user_data);
-
-static void on_connection_state_changed_cb (ObsConnection         *connection,
-                                            ObsConnectionState     old_state,
-                                            ObsConnectionState     new_state,
-                                            ObsConnectionSettings *self);
 
 G_DEFINE_FINAL_TYPE (ObsConnectionSettings, obs_connection_settings, ADW_TYPE_PREFERENCES_GROUP)
 
@@ -62,23 +53,16 @@ static GParamSpec *properties [N_PROPS];
  */
 
 static void
-authenticate_connection (ObsConnectionSettings *self)
-{
-  obs_connection_authenticate (self->connection,
-                               gtk_editable_get_text (self->password_row),
-                               NULL,
-                               on_connection_authenticated_cb,
-                               self);
-}
-
-static void
 update_password_row (ObsConnectionSettings *self)
 {
   switch (obs_connection_get_state (self->connection))
     {
+    case OBS_CONNECTION_STATE_CONNECTED:
+      gtk_widget_remove_css_class (GTK_WIDGET (self->password_row), "error");
+      G_GNUC_FALLTHROUGH;
+
     case OBS_CONNECTION_STATE_DISCONNECTED:
     case OBS_CONNECTION_STATE_CONNECTING:
-    case OBS_CONNECTION_STATE_CONNECTED:
       gtk_widget_set_visible (GTK_WIDGET (self->password_row), FALSE);
       break;
 
@@ -98,14 +82,9 @@ set_connection (ObsConnectionSettings *self,
   if (self->connection == connection)
     return;
 
-  g_clear_signal_handler (&self->state_changed_id, self->connection);
-
   g_set_object (&self->connection, connection);
+  g_signal_group_set_target (self->signal_group, connection);
 
-  self->state_changed_id = g_signal_connect (connection,
-                                             "state-changed",
-                                             G_CALLBACK (on_connection_state_changed_cb),
-                                             self);
   update_password_row (self);
 }
 
@@ -136,21 +115,10 @@ update_connection (ObsConnectionSettings *self)
  */
 
 static void
-on_connection_authenticated_cb (GObject      *source_object,
-                                GAsyncResult *result,
-                                gpointer      user_data)
+on_connection_authentication_failed_cb (ObsConnection         *connection,
+                                        ObsConnectionSettings *self)
 {
-  ObsConnectionSettings *self = OBS_CONNECTION_SETTINGS (user_data);
-  g_autoptr (GError) error = NULL;
-
-  obs_connection_authenticate_finish (OBS_CONNECTION (source_object), result, &error);
-
-  if (error)
-    {
-      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_PROXY_AUTH_FAILED))
-        g_warning ("Error authenticating connection: %s", error->message);
-      gtk_widget_add_css_class (GTK_WIDGET (self->password_row), "error");
-    }
+  gtk_widget_add_css_class (GTK_WIDGET (self->password_row), "error");
 }
 
 static gboolean
@@ -185,7 +153,8 @@ static void
 on_password_row_applied_cb (GtkEditable           *row,
                             ObsConnectionSettings *self)
 {
-  authenticate_connection (self);
+  obs_connection_authenticate (self->connection,
+                               gtk_editable_get_text (self->password_row));
 }
 
 static void
@@ -212,10 +181,10 @@ obs_connection_settings_finalize (GObject *object)
   if (self->update_connection_timeout_id > 0)
     update_connection (self);
 
-  g_clear_signal_handler (&self->state_changed_id, self->connection);
   g_clear_handle_id (&self->update_connection_timeout_id, g_source_remove);
   g_clear_object (&self->connection_manager);
   g_clear_object (&self->connection);
+  g_clear_object (&self->signal_group);
 
   G_OBJECT_CLASS (obs_connection_settings_parent_class)->finalize (object);
 }
@@ -317,6 +286,10 @@ static void
 obs_connection_settings_init (ObsConnectionSettings *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  self->signal_group = g_signal_group_new (OBS_TYPE_CONNECTION);
+  g_signal_group_connect (self->signal_group, "state-changed", G_CALLBACK (on_connection_state_changed_cb), self);
+  g_signal_group_connect (self->signal_group, "authentication-failed", G_CALLBACK (on_connection_authentication_failed_cb), self);
 }
 
 GtkWidget *

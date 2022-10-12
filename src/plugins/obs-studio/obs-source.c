@@ -18,14 +18,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "obs-scene.h"
 #include "obs-source.h"
 
 struct _ObsSource
 {
   GObject parent_instance;
 
-  ObsScene *scene;
+  char *uuid;
   char *name;
   gboolean muted;
   gboolean visible;
@@ -42,6 +41,7 @@ enum
   PROP_NAME,
   PROP_SOURCE_CAPS,
   PROP_SOURCE_TYPE,
+  PROP_UUID,
   PROP_VISIBLE,
   N_PROPS
 };
@@ -53,6 +53,7 @@ obs_source_finalize (GObject *object)
 {
   ObsSource *self = (ObsSource *)object;
 
+  g_clear_pointer (&self->uuid, g_free);
   g_clear_pointer (&self->name, g_free);
 
   G_OBJECT_CLASS (obs_source_parent_class)->finalize (object);
@@ -82,6 +83,10 @@ obs_source_get_property (GObject    *object,
 
     case PROP_SOURCE_TYPE:
       g_value_set_int (value, self->source_type);
+      break;
+
+    case PROP_UUID:
+      g_value_set_string (value, self->uuid);
       break;
 
     case PROP_VISIBLE:
@@ -118,6 +123,11 @@ obs_source_set_property (GObject      *object,
 
     case PROP_SOURCE_TYPE:
       self->source_type = g_value_get_int (value);
+      break;
+
+    case PROP_UUID:
+      g_assert (self->uuid == NULL);
+      self->uuid = g_value_dup_string (value);
       break;
 
     case PROP_VISIBLE:
@@ -158,6 +168,10 @@ obs_source_class_init (ObsSourceClass *klass)
                                                    OBS_SOURCE_TYPE_UNKNOWN, G_MAXINT, OBS_SOURCE_TYPE_UNKNOWN,
                                                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
+  properties[PROP_UUID] = g_param_spec_string ("uuid", NULL, NULL,
+                                               NULL,
+                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
@@ -171,7 +185,8 @@ obs_source_init (ObsSource *self)
 
 
 ObsSource *
-obs_source_new (const char    *name,
+obs_source_new (const char    *uuid,
+                const char    *name,
                 gboolean       muted,
                 gboolean       visible,
                 ObsSourceType  source_type,
@@ -180,6 +195,7 @@ obs_source_new (const char    *name,
   g_autoptr (ObsSource) source = NULL;
 
   source = g_object_new (OBS_TYPE_SOURCE,
+                         "uuid", uuid,
                          "name", name,
                          "muted", muted,
                          "visible", visible,
@@ -188,6 +204,14 @@ obs_source_new (const char    *name,
                          NULL);
 
   return g_steal_pointer (&source);
+}
+
+const char *
+obs_source_get_uuid (ObsSource *self)
+{
+  g_return_val_if_fail (OBS_IS_SOURCE (self), NULL);
+
+  return self->uuid;
 }
 
 const char *
@@ -267,7 +291,7 @@ obs_source_get_caps (ObsSource *self)
 ObsSourceType
 obs_source_get_source_type (ObsSource *self)
 {
-  g_return_val_if_fail (OBS_IS_SOURCE (self), OBS_SOURCE_CAP_INVALID);
+  g_return_val_if_fail (OBS_IS_SOURCE (self), OBS_SOURCE_TYPE_UNKNOWN);
 
   return self->source_type;
 }

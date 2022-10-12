@@ -24,6 +24,12 @@ plugins_sources += files(
   'obs-virtualcam-action.c',
 )
 
+plugins_sources += gnome.mkenums_simple('obs-enum-types', sources: ['obs-types.h'])
+
+plugins_incs += [
+  include_directories('.'),
+]
+
 plugins_deps += [
   dependency('libsecret-1'),
   dependency('libsoup-3.0'),

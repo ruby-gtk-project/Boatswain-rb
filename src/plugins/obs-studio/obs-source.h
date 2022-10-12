@@ -27,11 +27,14 @@ G_BEGIN_DECLS
 #define OBS_TYPE_SOURCE (obs_source_get_type())
 G_DECLARE_FINAL_TYPE (ObsSource, obs_source, OBS, SOURCE, GObject)
 
-ObsSource * obs_source_new (const char    *name,
+ObsSource * obs_source_new (const char    *uuid,
+                            const char    *name,
                             gboolean       muted,
                             gboolean       visible,
                             ObsSourceType  source_type,
                             ObsSourceCaps  source_caps);
+
+const char * obs_source_get_uuid (ObsSource *self);
 
 const char * obs_source_get_name (ObsSource *self);
 void obs_source_set_name (ObsSource  *self,

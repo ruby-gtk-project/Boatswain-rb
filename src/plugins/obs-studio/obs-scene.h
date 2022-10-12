@@ -30,6 +30,7 @@ G_DECLARE_FINAL_TYPE (ObsScene, obs_scene, OBS, SCENE, GObject)
 ObsScene * obs_scene_new_from_json (ObsConnection *connection,
                                     JsonObject    *scene_object);
 
+const char * obs_scene_get_uuid (ObsScene *self);
 const char * obs_scene_get_name (ObsScene *self);
 void obs_scene_set_name (ObsScene   *self,
                          const char *name);

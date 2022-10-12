@@ -42,15 +42,8 @@ ObsRecordingState obs_connection_get_recording_state (ObsConnection *self);
 gboolean obs_connection_get_streaming (ObsConnection *self);
 gboolean obs_connection_get_virtualcam_enabled (ObsConnection *self);
 
-void obs_connection_authenticate (ObsConnection       *self,
-                                  const char          *password,
-                                  GCancellable        *cancellable,
-                                  GAsyncReadyCallback  callback,
-                                  gpointer             user_data);
-
-gboolean obs_connection_authenticate_finish (ObsConnection  *self,
-                                             GAsyncResult   *result,
-                                             GError        **error);
+void obs_connection_authenticate (ObsConnection *self,
+                                  const char    *password);
 
 GListModel * obs_connection_get_scenes (ObsConnection *self);
 GListModel * obs_connection_get_sources (ObsConnection *self);
