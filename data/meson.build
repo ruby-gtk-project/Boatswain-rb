@@ -45,6 +45,12 @@ install_data('com.feaneron.Boatswain.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0/schemas',
 )
 
+install_data(
+  'devices.json',
+  rename: '@0@.json'.format(application_id),
+  install_dir: get_option('datadir') / 'xdg-desktop-portal' / 'devices',
+)
+
 compile_schemas = find_program('glib-compile-schemas', required: false)
 if compile_schemas.found()
   test('Validate schema file', compile_schemas,

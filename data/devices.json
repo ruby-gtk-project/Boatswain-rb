@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "device-filters": {
+    "usb": [
+      {
+        "vendor-id": "0x0fd9",
+        "product-id": [
+            "0x0060", "0x0063", "0x006c", "0x006d",
+            "0x0080", "0x0086", "0x008f",
+            "0x0090"
+        ]
+      }
+    ]
+  }
+}
