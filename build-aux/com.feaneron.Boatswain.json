@@ -11,7 +11,15 @@
         "--share=ipc",
         "--socket=fallback-x11",
         "--socket=wayland",
-        "--talk-name=org.mpris.MediaPlayer2.*"
+        "--talk-name=org.mpris.MediaPlayer2.*",
+        "--usb=vnd:0fd9+dev:0060",
+        "--usb=vnd:0fd9+dev:0063",
+        "--usb=vnd:0fd9+dev:006c",
+        "--usb=vnd:0fd9+dev:006d",
+        "--usb=vnd:0fd9+dev:0080",
+        "--usb=vnd:0fd9+dev:0086",
+        "--usb=vnd:0fd9+dev:008f",
+        "--usb=vnd:0fd9+dev:0090"
     ],
     "cleanup" : [
         "/include",
