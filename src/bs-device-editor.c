@@ -80,6 +80,8 @@ static inline void
 set_selected_item (BsDeviceEditor *self,
                    gpointer        selected_item)
 {
+  adw_bin_set_child (self->editor_bin, NULL);
+
   if (BS_IS_BUTTON (selected_item))
     {
       GtkWidget *button_editor = bs_button_editor_new (selected_item);
