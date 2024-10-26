@@ -93,7 +93,7 @@ typedef struct
                                        BsTouchscreen  *touchscreen,
                                        GdkTexture     *texture,
                                        GError        **error);
-  gboolean (*read_button_states) (BsStreamDeck *self);
+  gboolean (*read_state) (BsStreamDeck *self);
 } StreamDeckModelInfo;
 
 typedef struct
@@ -469,7 +469,7 @@ set_button_texture_mini (BsStreamDeck  *self,
 }
 
 static gboolean
-read_button_states_mini (BsStreamDeck *self)
+read_state_mini (BsStreamDeck *self)
 {
   const BsButtonLayout *layout;
   uint8_t *states;
@@ -651,7 +651,7 @@ set_button_texture_original (BsStreamDeck  *self,
 }
 
 static gboolean
-read_button_states_original (BsStreamDeck *self)
+read_state_original (BsStreamDeck *self)
 {
   const BsButtonLayout *layout;
   uint8_t *states;
@@ -818,7 +818,7 @@ set_button_texture_gen2 (BsStreamDeck  *self,
 }
 
 static gboolean
-read_button_states_gen2 (BsStreamDeck *self)
+read_state_gen2 (BsStreamDeck *self)
 {
   const BsButtonLayout *layout;
   uint8_t *states;
@@ -884,7 +884,7 @@ convert_dial_value (uint8_t value)
 }
 
 static gboolean
-read_button_states_plus (BsStreamDeck *self)
+read_state_plus (BsStreamDeck *self)
 {
   const BsButtonLayout *layout;
   const size_t states_length = 14;
@@ -1088,7 +1088,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_mini_original,
     .set_brightness = set_brightness_mini_original,
     .set_button_texture = set_button_texture_mini,
-    .read_button_states = read_button_states_mini,
+    .read_state = read_state_mini,
   },
   {
     .product_id = STREAMDECK_MINI_V2_PRODUCT_ID,
@@ -1113,7 +1113,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_mini_original,
     .set_brightness = set_brightness_mini_original,
     .set_button_texture = set_button_texture_mini,
-    .read_button_states = read_button_states_mini,
+    .read_state = read_state_mini,
   },
   {
     .product_id = STREAMDECK_ORIGINAL_PRODUCT_ID,
@@ -1138,7 +1138,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_mini_original,
     .set_brightness = set_brightness_mini_original,
     .set_button_texture = set_button_texture_original,
-    .read_button_states = read_button_states_original,
+    .read_state = read_state_original,
   },
   {
     .product_id = STREAMDECK_ORIGINAL_V2_PRODUCT_ID,
@@ -1163,7 +1163,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_gen2,
     .set_brightness = set_brightness_gen2,
     .set_button_texture = set_button_texture_gen2,
-    .read_button_states = read_button_states_gen2,
+    .read_state = read_state_gen2,
   },
   {
     .product_id = STREAMDECK_XL_PRODUCT_ID,
@@ -1188,7 +1188,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_gen2,
     .set_brightness = set_brightness_gen2,
     .set_button_texture = set_button_texture_gen2,
-    .read_button_states = read_button_states_gen2,
+    .read_state = read_state_gen2,
   },
   {
     .product_id = STREAMDECK_XL_V2_PRODUCT_ID,
@@ -1213,7 +1213,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_gen2,
     .set_brightness = set_brightness_gen2,
     .set_button_texture = set_button_texture_gen2,
-    .read_button_states = read_button_states_gen2,
+    .read_state = read_state_gen2,
   },
   {
     .product_id = STREAMDECK_MK2_PRODUCT_ID,
@@ -1238,7 +1238,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_gen2,
     .set_brightness = set_brightness_gen2,
     .set_button_texture = set_button_texture_gen2,
-    .read_button_states = read_button_states_gen2,
+    .read_state = read_state_gen2,
   },
   {
     .product_id = STREAMDECK_PEDAL_PRODUCT_ID,
@@ -1263,7 +1263,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_gen2,
     .set_brightness = set_brightness_pedal,
     .set_button_texture = set_button_texture_pedal,
-    .read_button_states = read_button_states_gen2,
+    .read_state = read_state_gen2,
   },
   {
     .product_id = STREAMDECK_PLUS_PRODUCT_ID,
@@ -1304,7 +1304,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .set_brightness = set_brightness_gen2,
     .set_button_texture = set_button_texture_gen2,
     .set_touchscreen_texture = set_touchscreen_texture_plus,
-    .read_button_states = read_button_states_plus,
+    .read_state = read_state_plus,
   },
   {
     .product_id = STREAMDECK_NEO_PRODUCT_ID,
@@ -1329,7 +1329,7 @@ static const StreamDeckModelInfo models_vtable[] = {
     .get_firmware_version = get_firmware_version_gen2,
     .set_brightness = set_brightness_gen2,
     .set_button_texture = set_button_texture_gen2,
-    .read_button_states = read_button_states_gen2,
+    .read_state = read_state_gen2,
   },
 };
 
@@ -1372,7 +1372,7 @@ set_button_texture_fake (BsStreamDeck  *self,
 }
 
 static gboolean
-read_button_states_fake (BsStreamDeck *self)
+read_state_fake (BsStreamDeck *self)
 {
   return TRUE;
 }
@@ -1398,7 +1398,7 @@ static const StreamDeckModelInfo fake_models_vtable[] = {
     .get_firmware_version = get_firmware_version_fake,
     .set_brightness = set_brightness_fake,
     .set_button_texture = set_button_texture_fake,
-    .read_button_states = read_button_states_fake,
+    .read_state = read_state_fake,
   },
   {
     .product_id = 0x0001,
@@ -1420,7 +1420,7 @@ static const StreamDeckModelInfo fake_models_vtable[] = {
     .get_firmware_version = get_firmware_version_fake,
     .set_brightness = set_brightness_fake,
     .set_button_texture = set_button_texture_fake,
-    .read_button_states = read_button_states_fake,
+    .read_state = read_state_fake,
   },
 };
 
@@ -1438,7 +1438,7 @@ stream_deck_source_dispatch (GSource     *source,
   gint64 current_time;
   gint64 expiration;
 
-  self->model_info->read_button_states (self);
+  self->model_info->read_state (self);
 
   current_time = g_source_get_time (source);
   expiration = current_time + (guint64) POLL_RATE_MS * 1000;
