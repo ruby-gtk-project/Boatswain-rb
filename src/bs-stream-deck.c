@@ -925,6 +925,11 @@ read_state_plus (BsStreamDeck *self)
           SWIPE = 3,
         } touch_event_type = states[4];
         graphene_point_t position;
+        BsDeviceRegion *region;
+        BsTouchscreen *touchscreen;
+
+        region = bs_stream_deck_get_region (self, "touchscreen");
+        touchscreen = bs_touchscreen_region_get_touchscreen (BS_TOUCHSCREEN_REGION (region));
 
         graphene_point_init (&position,
                              (states[7] << 8) + states[6],
@@ -935,20 +940,22 @@ read_state_plus (BsStreamDeck *self)
         switch (touch_event_type)
           {
           case SHORT_PRESS:
-            g_debug ("  Short press");
+            bs_touchscreen_handle_short_press (touchscreen, &position);
             break;
 
           case LONG_PRESS:
-            g_debug ("  Long press");
+            bs_touchscreen_handle_long_press (touchscreen, &position);
             break;
 
           case SWIPE:
             {
               graphene_point_t release_position;
+
               graphene_point_init (&release_position,
                                    (states[11] << 8) + states[10],
                                    (states[13] << 8) + states[12]);
-              g_debug ("  Swipe (released position: %.0fx%.0f)", release_position.x, release_position.y);
+
+              bs_touchscreen_handle_swipe (touchscreen, &position, &release_position);
             }
             break;
           }

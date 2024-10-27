@@ -19,6 +19,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#define G_LOG_DOMAIN "Touchscreen"
+
 #include "bs-device-region.h"
 #include "bs-stream-deck-private.h"
 #include "bs-touchscreen.h"
@@ -220,4 +222,36 @@ bs_touchscreen_get_slots (BsTouchscreen *self)
   g_assert (BS_IS_TOUCHSCREEN (self));
 
   return G_LIST_MODEL (self->slots);
+}
+
+void
+bs_touchscreen_handle_short_press (BsTouchscreen          *self,
+                                   const graphene_point_t *point)
+{
+  g_assert (BS_IS_TOUCHSCREEN (self));
+  g_assert (point != NULL);
+
+  g_debug ("  Short press");
+}
+
+void
+bs_touchscreen_handle_long_press (BsTouchscreen          *self,
+                                  const graphene_point_t *point)
+{
+  g_assert (BS_IS_TOUCHSCREEN (self));
+  g_assert (point != NULL);
+
+  g_debug ("  Long press");
+}
+
+void
+bs_touchscreen_handle_swipe (BsTouchscreen          *self,
+                             const graphene_point_t *touch_position,
+                             const graphene_point_t *release_position)
+{
+  g_assert (BS_IS_TOUCHSCREEN (self));
+  g_assert (touch_position != NULL);
+  g_assert (release_position != NULL);
+
+  g_debug ("  Swipe (released position: %.0fx%.0f)", release_position->x, release_position->y);
 }

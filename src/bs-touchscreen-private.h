@@ -24,6 +24,7 @@
 #include "bs-touchscreen.h"
 
 #include <gio/gio.h>
+#include <graphene-1.0/graphene.h>
 
 G_BEGIN_DECLS
 
@@ -40,5 +41,15 @@ uint32_t bs_touchscreen_get_height (BsTouchscreen *self);
 BsTouchscreenContent * bs_touchscreen_get_content (BsTouchscreen *self);
 
 GListModel * bs_touchscreen_get_slots (BsTouchscreen *self);
+
+void bs_touchscreen_handle_short_press (BsTouchscreen          *self,
+                                        const graphene_point_t *point);
+
+void bs_touchscreen_handle_long_press (BsTouchscreen          *self,
+                                       const graphene_point_t *point);
+
+void bs_touchscreen_handle_swipe (BsTouchscreen          *self,
+                                  const graphene_point_t *touch_position,
+                                  const graphene_point_t *release_position);
 
 G_END_DECLS
