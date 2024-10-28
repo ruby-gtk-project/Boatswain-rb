@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-04-30 19:27+0000\n"
-"PO-Revision-Date: 2024-05-01 02:35+0200\n"
+"POT-Creation-Date: 2024-10-26 14:21+0000\n"
+"PO-Revision-Date: 2024-10-28 05:07+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <ka@li.org>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: data/com.feaneron.Boatswain.desktop.in.in:3
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
@@ -27,6 +27,11 @@ msgstr "Boatswain"
 #: data/com.feaneron.Boatswain.desktop.in.in:11
 msgid "stream deck;streaming;deck;elgato;"
 msgstr "stream deck;streaming;deck;elgato;"
+
+#: data/com.feaneron.Boatswain.gschema.xml:7
+#: data/com.feaneron.Boatswain.gschema.xml:8
+msgid "Restore token for the desktop controller"
+msgstr "კოდის აღდგენა სამუშაო მაგიდის კონტროლერისთვის"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:12
 msgid "Control your Elgato Stream Decks"
@@ -76,11 +81,6 @@ msgstr "იცოდეთ თქვენი ქულები"
 msgid "Open files and launch applications"
 msgstr "ფაილების გახსნა და აპლიკაციების გაშვება"
 
-#: data/com.feaneron.Boatswain.gschema.xml:7
-#: data/com.feaneron.Boatswain.gschema.xml:8
-msgid "Restore token for the desktop controller"
-msgstr "კოდის აღდგენა სამუშაო მაგიდის კონტროლერისთვის"
-
 #: src/bs-application.c:54
 msgid "Enable debug messages"
 msgstr "გამართვის შეტყობინებების ჩართვა"
@@ -113,30 +113,34 @@ msgstr "არჩიეთ ხატულა"
 msgid "Open"
 msgstr "გახსნა"
 
-#: src/bs-button-editor.ui:14
+#: src/bs-button-editor.ui:13
 msgid "Button Properties"
 msgstr "ღილაკის თვისებები"
 
-#: src/bs-button-editor.ui:190
+#: src/bs-button-editor.ui:189
 msgid "Name"
 msgstr "სახელი"
 
-#: src/bs-button-editor.ui:197
+#: src/bs-button-editor.ui:196
 msgid "Background Color"
 msgstr "ფონის ფერი"
 
-#: src/bs-button-editor.ui:233
+#: src/bs-button-editor.ui:232
 msgid "Select Action"
 msgstr "აირჩიეთ ქმედება"
 
-#: src/bs-button-editor.ui:250
+#: src/bs-button-editor.ui:249
 msgid "Remove Action"
 msgstr "ქმედების წაშლა"
 
-#: src/bs-button-editor.ui:272
+#: src/bs-button-editor.ui:271
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "ქმედებები"
+
+#: src/bs-device-editor.ui:63
+msgid "Select a button"
+msgstr "აირჩიეთ ღილაკი"
 
 #: src/bs-profile.c:184
 msgid "Unnamed profile"
@@ -158,21 +162,21 @@ msgstr "ქვემოთ ჩამოწევა"
 msgid "Delete"
 msgstr "წაშლა"
 
-#: src/bs-stream-deck.c:326
+#: src/bs-stream-deck.c:320
 msgid "Default"
 msgstr "ნაგულისხმები"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:996 src/bs-stream-deck.c:1021
+#: src/bs-stream-deck.c:1073 src/bs-stream-deck.c:1098
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1046 src/bs-stream-deck.c:1071
+#: src/bs-stream-deck.c:1123 src/bs-stream-deck.c:1148
 #: src/plugins/default/default-switch-profile-action.c:283
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -181,42 +185,46 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1096 src/bs-stream-deck.c:1121
+#: src/bs-stream-deck.c:1173 src/bs-stream-deck.c:1198
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1146
+#: src/bs-stream-deck.c:1223
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1171
+#: src/bs-stream-deck.c:1248
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1196
+#: src/bs-stream-deck.c:1273
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
-#: src/bs-stream-deck.c:1275
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:1314
+#| msgid "Stream Deck +"
+msgid "Stream Deck Neo"
+msgstr "Stream Deck Neo"
+
+#: src/bs-stream-deck.c:1383
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1297
+#: src/bs-stream-deck.c:1405
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
-
-#: src/bs-stream-deck-editor.ui:61
-msgid "Select a button"
-msgstr "აირჩიეთ ღილაკი"
 
 #: src/bs-window.ui:113
 msgid "New profile…"
@@ -249,10 +257,6 @@ msgstr "Boatswain-ის _შესახებ"
 #: src/bs-window.ui:264
 msgid "_Quit"
 msgstr "დატოვება"
-
-#: src/bs-window.c:272
-msgid "Repository"
-msgstr "საცავი"
 
 #: src/gtk/help-overlay.ui:11
 msgctxt "shortcut window"
@@ -637,6 +641,9 @@ msgstr "ხმის სიმაღლე"
 #: src/plugins/soundboard/soundboard.plugin.desktop.in:3
 msgid "Soundboard"
 msgstr "Soundboard"
+
+#~ msgid "Repository"
+#~ msgstr "საცავი"
 
 #~ msgid "_Open"
 #~ msgstr "_გახსნა"
