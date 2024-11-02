@@ -23,6 +23,7 @@
 
 #include "bs-button-grid-widget.h"
 
+#include "bs-actionable.h"
 #include "bs-action-private.h"
 #include "bs-button-private.h"
 #include "bs-button-grid-region.h"
@@ -86,7 +87,7 @@ on_flowbox_child_activated_cb (GtkFlowBox         *flowbox,
   BsAction *action;
 
   button = bs_button_widget_get_button (BS_BUTTON_WIDGET (child));
-  action = bs_button_get_action (button);
+  action = bs_actionable_get_action (BS_ACTIONABLE (button));
 
   if (action && is_switch_page_action (action))
     bs_action_activate (action);

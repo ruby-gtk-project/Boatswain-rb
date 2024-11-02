@@ -18,10 +18,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-page.h"
+
+#include "bs-actionable.h"
 #include "bs-action-private.h"
 #include "bs-empty-action.h"
 #include "bs-icon.h"
-#include "bs-page.h"
 #include "bs-page-item.h"
 #include "bs-profile.h"
 #include "bs-button.h"
@@ -317,7 +319,7 @@ bs_page_update_item_from_button (BsPage             *self,
       g_ptr_array_insert (self->items, position, item);
     }
 
-  action = bs_button_get_action (button);
+  action = bs_actionable_get_action (BS_ACTIONABLE (button));
   action_type = G_OBJECT_TYPE (action);
 
   custom_icon = bs_button_get_custom_icon (button);

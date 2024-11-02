@@ -41,8 +41,4 @@ BsIcon * bs_button_get_custom_icon (BsButton *self);
 void bs_button_set_custom_icon (BsButton *self,
                                 BsIcon   *icon);
 
-BsAction * bs_button_get_action (BsButton *self);
-void bs_button_set_action (BsButton *self,
-                           BsAction *action);
-
 G_END_DECLS

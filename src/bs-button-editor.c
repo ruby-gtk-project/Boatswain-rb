@@ -18,6 +18,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-button-editor.h"
+
+#include "bs-actionable-private.h"
 #include "bs-action.h"
 #include "bs-action-factory.h"
 #include "bs-action-info.h"
@@ -29,7 +32,6 @@
 #include "bs-page-item.h"
 #include "bs-stream-deck.h"
 #include "bs-button.h"
-#include "bs-button-editor.h"
 
 #include <glib/gi18n.h>
 #include <libpeas.h>
@@ -171,7 +173,7 @@ update_action_preferences_group (BsButtonEditor *self)
   GtkWidget *action_preferences;
   BsAction *action;
 
-  action = self->button ? bs_button_get_action (self->button) : NULL;
+  action = self->button ? bs_actionable_get_action (BS_ACTIONABLE (self->button)) : NULL;
   action_preferences = action ? bs_action_get_preferences (action) : NULL;
 
   gtk_widget_set_visible (self->remove_group,
@@ -261,7 +263,7 @@ on_action_row_activated_cb (GtkListBoxRow  *row,
   if (error)
     g_warning ("Error realizing action: %s", error->message);
 
-  bs_button_set_action (self->button, new_action);
+  bs_actionable_set_action (BS_ACTIONABLE (self->button), new_action);
   bs_button_set_custom_icon (self->button, new_custom_icon);
   update_action_preferences_group (self);
 
@@ -467,7 +469,7 @@ on_remove_row_activated_cb (GtkButton      *button,
   g_autoptr (BsAction) empty_action = NULL;
 
   empty_action = bs_empty_action_new (self->button);
-  bs_button_set_action (self->button, empty_action);
+  bs_actionable_set_action (BS_ACTIONABLE (self->button), empty_action);
 }
 
 static void

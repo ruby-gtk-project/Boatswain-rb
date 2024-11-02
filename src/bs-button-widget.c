@@ -23,6 +23,7 @@
 
 #include "bs-button-widget.h"
 
+#include "bs-actionable-private.h"
 #include "bs-action-private.h"
 #include "bs-debug.h"
 #include "bs-empty-action.h"
@@ -69,7 +70,7 @@ is_move_page_up_action (BsButtonWidget *self)
   BsAction *action;
   BsPage *active_page;
 
-  action = bs_button_get_action (self->button);
+  action = bs_actionable_get_action (BS_ACTIONABLE (self->button));
   if (!action || BS_IS_EMPTY_ACTION (action))
     return FALSE;
 
@@ -155,8 +156,8 @@ on_drop_target_drop_cb (GtkDropTarget            *drop_target,
     BS_RETURN (FALSE);
 
   /* Swap actions */
-  dragged_button_action = bs_button_get_action (dragged_button);
-  dropped_button_action = bs_button_get_action (dropped_button);
+  dragged_button_action = bs_actionable_get_action (BS_ACTIONABLE (dragged_button));
+  dropped_button_action = bs_actionable_get_action (BS_ACTIONABLE (dropped_button));
   dragged_button_icon = bs_button_get_custom_icon (dragged_button);
   dropped_button_icon = bs_button_get_custom_icon (dropped_button);
 
@@ -169,8 +170,8 @@ on_drop_target_drop_cb (GtkDropTarget            *drop_target,
   if (dropped_button_icon)
     g_object_ref (dropped_button_icon);
 
-  bs_button_set_action (dragged_button, dropped_button_action);
-  bs_button_set_action (dropped_button, dragged_button_action);
+  bs_actionable_set_action (BS_ACTIONABLE (dragged_button), dropped_button_action);
+  bs_actionable_set_action (BS_ACTIONABLE (dropped_button), dragged_button_action);
 
   bs_button_set_custom_icon (dragged_button, dropped_button_icon);
   bs_button_set_custom_icon (dropped_button, dragged_button_icon);

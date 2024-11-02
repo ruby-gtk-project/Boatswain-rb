@@ -20,6 +20,9 @@
 
 #define G_LOG_DOMAIN "Stream Deck"
 
+#include "bs-stream-deck-private.h"
+
+#include "bs-actionable-private.h"
 #include "bs-action.h"
 #include "bs-button-grid-region.h"
 #include "bs-button-private.h"
@@ -32,7 +35,6 @@
 #include "bs-page.h"
 #include "bs-profile.h"
 #include "bs-renderer.h"
-#include "bs-stream-deck-private.h"
 #include "bs-touchscreen-private.h"
 #include "bs-touchscreen-region.h"
 
@@ -354,7 +356,7 @@ load_active_page (BsStreamDeck *self)
 
       bs_button_inhibit_page_updates (button);
 
-      bs_button_set_action (button, action);
+      bs_actionable_set_action (BS_ACTIONABLE (button), action);
       bs_button_set_custom_icon (button, custom_icon);
 
       bs_button_uninhibit_page_updates (button);

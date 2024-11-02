@@ -467,61 +467,6 @@ bs_button_set_custom_icon (BsButton *self,
   g_signal_emit (self, signals[ICON_CHANGED], 0, icon);
 }
 
-
-BsAction *
-bs_button_get_action (BsButton *self)
-{
-  g_return_val_if_fail (BS_IS_BUTTON (self), NULL);
-
-  return self->action;
-}
-
-void
-bs_button_set_action (BsButton *self,
-                      BsAction *action)
-{
-  BsIcon *action_icon;
-
-  g_return_if_fail (BS_IS_BUTTON (self));
-
-  if (self->action == action)
-    return;
-
-  if (action)
-    remove_custom_icon (self);
-
-  if (self->action)
-    {
-      g_clear_signal_handler (&self->action_contents_changed_id, bs_action_get_icon (self->action));
-      g_clear_signal_handler (&self->action_size_changed_id, bs_action_get_icon (self->action));
-      g_clear_signal_handler (&self->action_icon_changed_id, bs_action_get_icon (self->action));
-      g_clear_signal_handler (&self->action_changed_id, self->action);
-    }
-
-  g_set_object (&self->action, action);
-
-  self->action_changed_id =
-    g_signal_connect (action, "changed", G_CALLBACK (on_action_changed_cb), self);
-
-  action_icon = bs_action_get_icon (action);
-  self->action_contents_changed_id =
-    g_signal_connect (action_icon, "invalidate-contents", G_CALLBACK (on_icon_changed_cb), self);
-  self->action_size_changed_id =
-    g_signal_connect (action_icon, "invalidate-size", G_CALLBACK (on_icon_changed_cb), self);
-  self->action_icon_changed_id =
-    g_signal_connect (action_icon, "notify", G_CALLBACK (on_icon_properties_changed_cb), self);
-
-  update_relative_icon (self);
-  update_page (self);
-  upload_icon (self);
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ACTION]);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICON]);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CUSTOM_ICON]);
-
-  g_signal_emit (self, signals[ICON_CHANGED], 0, bs_button_get_icon (self));
-}
-
 void
 bs_button_inhibit_page_updates (BsButton *self)
 {
