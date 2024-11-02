@@ -33,8 +33,8 @@ struct _BsTouchscreenSlot
 
   graphene_size_t size;
 
-  BsAction *action;
-  BsTouchscreen *touchscreen;
+  BsAction *action; /* (transfer full)(nullable) */
+  BsTouchscreen *touchscreen; /* (transfer none) */
 };
 
 static void bs_actionable_interface_init (BsActionableInterface *iface);
