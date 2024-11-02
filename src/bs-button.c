@@ -18,11 +18,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-button-private.h"
+
+#include "bs-actionable-private.h"
 #include "bs-action.h"
 #include "bs-icon.h"
 #include "bs-page.h"
 #include "bs-stream-deck-private.h"
-#include "bs-button-private.h"
 
 struct _BsButton
 {
@@ -46,18 +48,23 @@ struct _BsButton
   gboolean pressed;
 };
 
-G_DEFINE_FINAL_TYPE (BsButton, bs_button, G_TYPE_OBJECT)
+static void bs_actionable_interface_init (BsActionableInterface *iface);
+
+G_DEFINE_FINAL_TYPE_WITH_CODE (BsButton, bs_button, G_TYPE_OBJECT,
+                               G_IMPLEMENT_INTERFACE (BS_TYPE_ACTIONABLE, bs_actionable_interface_init))
 
 enum
 {
   PROP_0,
-  PROP_ACTION,
   PROP_ICON,
   PROP_ICON_HEIGHT,
   PROP_ICON_WIDTH,
   PROP_CUSTOM_ICON,
   PROP_PRESSED,
   N_PROPS,
+
+  /* Interface properties */
+  PROP_ACTION,
 };
 
 enum
@@ -154,6 +161,76 @@ on_icon_properties_changed_cb (BsIcon     *icon,
 
 
 /*
+ * BsActionable interface
+ */
+
+static BsAction *
+bs_button_actionable_get_action (BsActionable *actionable)
+{
+  BsButton *self = (BsButton *) actionable;
+
+  g_assert (BS_IS_BUTTON (actionable));
+
+  return self->action;
+}
+
+static void
+bs_button_actionable_set_action (BsActionable *actionable,
+                                 BsAction     *action)
+{
+  BsButton *self = (BsButton *) actionable;
+  BsIcon *action_icon;
+
+  g_assert (BS_IS_BUTTON (actionable));
+
+  if (self->action == action)
+    return;
+
+  if (action)
+    remove_custom_icon (self);
+
+  if (self->action)
+    {
+      g_clear_signal_handler (&self->action_contents_changed_id, bs_action_get_icon (self->action));
+      g_clear_signal_handler (&self->action_size_changed_id, bs_action_get_icon (self->action));
+      g_clear_signal_handler (&self->action_icon_changed_id, bs_action_get_icon (self->action));
+      g_clear_signal_handler (&self->action_changed_id, self->action);
+    }
+
+  g_set_object (&self->action, action);
+
+  self->action_changed_id =
+    g_signal_connect (action, "changed", G_CALLBACK (on_action_changed_cb), self);
+
+  action_icon = bs_action_get_icon (action);
+  self->action_contents_changed_id =
+    g_signal_connect (action_icon, "invalidate-contents", G_CALLBACK (on_icon_changed_cb), self);
+  self->action_size_changed_id =
+    g_signal_connect (action_icon, "invalidate-size", G_CALLBACK (on_icon_changed_cb), self);
+  self->action_icon_changed_id =
+    g_signal_connect (action_icon, "notify", G_CALLBACK (on_icon_properties_changed_cb), self);
+
+  update_relative_icon (self);
+  update_page (self);
+  upload_icon (self);
+
+  g_object_notify (G_OBJECT (self), "action");
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICON]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CUSTOM_ICON]);
+
+
+  g_signal_emit (self, signals[ICON_CHANGED], 0, bs_button_get_icon (self));
+}
+
+static void
+bs_actionable_interface_init (BsActionableInterface *iface)
+{
+  iface->get_action = bs_button_actionable_get_action;
+  iface->set_action = bs_button_actionable_set_action;
+}
+
+
+/*
  * GObject overrides
  */
 
@@ -217,17 +294,7 @@ bs_button_set_property (GObject      *object,
                         const GValue *value,
                         GParamSpec   *pspec)
 {
-  BsButton *self = BS_BUTTON (object);
-
-  switch (prop_id)
-    {
-    case PROP_ACTION:
-      bs_button_set_action (self, g_value_get_object (value));
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
+  G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 }
 
 static void
@@ -238,10 +305,6 @@ bs_button_class_init (BsButtonClass *klass)
   object_class->finalize = bs_button_finalize;
   object_class->get_property = bs_button_get_property;
   object_class->set_property = bs_button_set_property;
-
-  properties[PROP_ACTION] = g_param_spec_object ("action", NULL, NULL,
-                                                 BS_TYPE_ACTION,
-                                                 G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_ICON] = g_param_spec_object ("icon", NULL, NULL,
                                                BS_TYPE_ICON,
@@ -264,6 +327,8 @@ bs_button_class_init (BsButtonClass *klass)
                                                    G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  g_object_class_override_property (object_class, PROP_ACTION, "action");
 
   signals[ICON_CHANGED] = g_signal_new ("icon-changed",
                                         BS_TYPE_BUTTON,
