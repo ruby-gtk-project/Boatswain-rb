@@ -24,7 +24,6 @@
 
 #include "bs-config.h"
 #include "bs-debug.h"
-#include "bs-device-enums.h"
 #include "bs-device-manager.h"
 #include "bs-stream-deck-private.h"
 

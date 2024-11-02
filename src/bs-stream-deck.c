@@ -27,7 +27,6 @@
 #include "bs-button-grid-region.h"
 #include "bs-button-private.h"
 #include "bs-debug.h"
-#include "bs-device-enums.h"
 #include "bs-device-region.h"
 #include "bs-dial-private.h"
 #include "bs-dial-grid-region.h"
@@ -42,6 +41,19 @@
 #include <hidapi.h>
 
 #define POLL_RATE_MS 16
+
+#define ELGATO_SYSTEMS_VENDOR_ID (0x0fd9)
+
+#define STREAMDECK_ORIGINAL_PRODUCT_ID 0x0060
+#define STREAMDECK_ORIGINAL_V2_PRODUCT_ID  0x006d
+#define STREAMDECK_MINI_PRODUCT_ID  0x0063
+#define STREAMDECK_MINI_V2_PRODUCT_ID  0x0090
+#define STREAMDECK_XL_PRODUCT_ID  0x006c
+#define STREAMDECK_XL_V2_PRODUCT_ID  0x008f
+#define STREAMDECK_MK2_PRODUCT_ID  0x0080
+#define STREAMDECK_PEDAL_PRODUCT_ID  0x0086
+#define STREAMDECK_PLUS_PRODUCT_ID  0x0084
+#define STREAMDECK_NEO_PRODUCT_ID  0x009a
 
 G_STATIC_ASSERT (sizeof (unsigned char) == sizeof (uint8_t));
 
