@@ -21,7 +21,8 @@
 
 #include "bs-actionable-private.h"
 
-#include "bs-action.h"
+#include "bs-action-private.h"
+#include "bs-events.h"
 #include "bs-icon.h"
 
 G_DEFINE_INTERFACE (BsActionable, bs_actionable, G_TYPE_OBJECT)
@@ -61,4 +62,18 @@ bs_actionable_set_action (BsActionable *self,
   g_assert (BS_ACTIONABLE_GET_IFACE (self)->set_action != NULL);
 
   BS_ACTIONABLE_GET_IFACE (self)->set_action (self, action);
+}
+
+void
+bs_actionable_handle_event (BsActionable *self,
+                            BsEvent      *event)
+{
+  BsAction *action;
+
+  g_assert (BS_IS_ACTIONABLE (self));
+  g_assert (BS_IS_EVENT (event));
+
+  action = bs_actionable_get_action (self);
+  if (action)
+    bs_action_handle_event (action, event);
 }

@@ -37,4 +37,7 @@ struct _BsActionableInterface
 void bs_actionable_set_action (BsActionable *self,
                                BsAction     *action);
 
+void bs_actionable_handle_event (BsActionable *self,
+                                 BsEvent      *event);
+
 G_END_DECLS
