@@ -1,6 +1,7 @@
 generated_sources = []
 
 boatswain_sources = [
+  'bs-actionable.c',
   'bs-action.c',
   'bs-action-factory.c',
   'bs-action-info.c',
@@ -93,6 +94,7 @@ executable(
 )
 
 gir_headers = [
+  'bs-actionable.h',
   'bs-action.h',
   'bs-action-factory.h',
   'bs-action-info.h',

@@ -27,6 +27,7 @@ G_BEGIN_DECLS
 typedef enum _BsImageFormat BsImageFormat;
 typedef enum _BsRendererFlags BsRendererFlags;
 
+typedef struct _BsActionable BsActionable;
 typedef struct _BsAction BsAction;
 typedef struct _BsActionFactory BsActionFactory;
 typedef struct _BsActionInfo BsActionInfo;
