@@ -21,7 +21,9 @@
 #define G_LOG_DOMAIN "Action"
 
 #include "bs-action-private.h"
+
 #include "bs-debug.h"
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "bs-button.h"
 
@@ -387,4 +389,19 @@ bs_action_changed (BsAction *self)
   g_return_if_fail (BS_IS_ACTION (self));
 
   g_signal_emit (self, signals[CHANGED], 0);
+}
+
+void
+bs_action_handle_event (BsAction *self,
+                        BsEvent  *event)
+{
+  g_return_if_fail (BS_IS_ACTION (self));
+  g_return_if_fail (BS_IS_EVENT (event));
+
+  BS_ENTRY;
+
+  g_debug ("Action %s handling event %s", G_OBJECT_TYPE_NAME (self), G_OBJECT_TYPE_NAME (event));
+
+  if (BS_ACTION_GET_CLASS (self)->handle_event)
+    BS_ACTION_GET_CLASS (self)->handle_event (self, event);
 }

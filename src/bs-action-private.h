@@ -38,4 +38,7 @@ JsonNode * bs_action_serialize_settings (BsAction *self);
 void bs_action_deserialize_settings (BsAction   *self,
                                      JsonObject *settings);
 
+void bs_action_handle_event (BsAction *self,
+                             BsEvent  *event);
+
 G_END_DECLS

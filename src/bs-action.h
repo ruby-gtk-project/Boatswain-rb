@@ -39,6 +39,9 @@ struct _BsActionClass
   void (*activate) (BsAction *self);
   void (*deactivate) (BsAction *self);
 
+  void (*handle_event) (BsAction *self,
+                        BsEvent  *event);
+
   GtkWidget * (*get_preferences) (BsAction *self);
 
   JsonNode * (*serialize_settings) (BsAction *self);
