@@ -21,6 +21,8 @@
 
 #include "bs-touchscreen-slot.h"
 
+#include "bs-actionable-private.h"
+#include "bs-action.h"
 #include "bs-touchscreen.h"
 
 #include <graphene.h>
@@ -31,18 +33,63 @@ struct _BsTouchscreenSlot
 
   graphene_size_t size;
 
+  BsAction *action;
   BsTouchscreen *touchscreen;
 };
 
-G_DEFINE_FINAL_TYPE (BsTouchscreenSlot, bs_touchscreen_slot, G_TYPE_OBJECT)
+static void bs_actionable_interface_init (BsActionableInterface *iface);
+
+G_DEFINE_FINAL_TYPE_WITH_CODE (BsTouchscreenSlot, bs_touchscreen_slot, G_TYPE_OBJECT,
+                               G_IMPLEMENT_INTERFACE (BS_TYPE_ACTIONABLE, bs_actionable_interface_init))
 
 enum {
   PROP_0,
   PROP_TOUCHSCREEN,
   N_PROPS,
+
+  /* Interface properties */
+  PROP_ACTION,
 };
 
 static GParamSpec *properties [N_PROPS];
+
+
+/*
+ * BsActionable interface
+ */
+
+static BsAction *
+bs_touchscreen_slot_actionable_get_action (BsActionable *actionable)
+{
+  BsTouchscreenSlot *self = (BsTouchscreenSlot *) actionable;
+
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (actionable));
+
+  return self->action;
+}
+
+static void
+bs_touchscreen_slot_actionable_set_action (BsActionable *actionable,
+                                           BsAction     *action)
+{
+  BsTouchscreenSlot *self = (BsTouchscreenSlot *) actionable;
+
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (actionable));
+
+  if (self->action == action)
+    return;
+
+  g_set_object (&self->action, action);
+
+  g_object_notify (G_OBJECT (self), "action");
+}
+
+static void
+bs_actionable_interface_init (BsActionableInterface *iface)
+{
+  iface->get_action = bs_touchscreen_slot_actionable_get_action;
+  iface->set_action = bs_touchscreen_slot_actionable_set_action;
+}
 
 
 /*
@@ -52,7 +99,9 @@ static GParamSpec *properties [N_PROPS];
 static void
 bs_touchscreen_slot_finalize (GObject *object)
 {
-  //BsTouchscreenSlot *self = (BsTouchscreenSlot *)object;
+  BsTouchscreenSlot *self = (BsTouchscreenSlot *)object;
+
+  g_clear_object (&self->action);
 
   G_OBJECT_CLASS (bs_touchscreen_slot_parent_class)->finalize (object);
 }
@@ -67,6 +116,10 @@ bs_touchscreen_slot_get_property (GObject    *object,
 
   switch (prop_id)
     {
+    case PROP_ACTION:
+      g_value_set_object (value, self->action);
+      break;
+
     case PROP_TOUCHSCREEN:
       g_value_set_object (value, self->touchscreen);
       break;
@@ -111,6 +164,8 @@ bs_touchscreen_slot_class_init (BsTouchscreenSlotClass *klass)
                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  g_object_class_override_property (object_class, PROP_ACTION, "action");
 }
 
 static void
