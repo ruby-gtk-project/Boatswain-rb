@@ -21,6 +21,7 @@
 #include "bs-config.h"
 #include "bs-desktop-controller-private.h"
 #include "bs-device-manager.h"
+#include "bs-events-private.h"
 #include "bs-log.h"
 #include "bs-window.h"
 
@@ -190,6 +191,8 @@ bs_application_startup (GApplication *application)
   PeasEngine *engine;
 
   self = BS_APPLICATION (application);
+
+  bs_event_init_types_once ();
 
   /* Add legacy gdk-pixbuf loaders to the search path */
   gdk_pixbuf_init_modules ("/app/lib/gdk-pixbuf-2.0/2.10.0", NULL);
