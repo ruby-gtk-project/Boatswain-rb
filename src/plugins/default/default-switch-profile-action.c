@@ -213,17 +213,17 @@ on_combo_row_selected_item_changed_cb (AdwComboRow                *combo_row,
 }
 
 static void
-on_device_manager_stream_deck_added_cb (BsDeviceManager            *device_manager,
-                                        BsStreamDeck               *stream_deck,
-                                        DefaultSwitchProfileAction *self)
+on_device_manager_device_added_cb (BsDeviceManager            *device_manager,
+                                   BsStreamDeck               *stream_deck,
+                                   DefaultSwitchProfileAction *self)
 {
   update_active_profile (self);
 }
 
 static void
-on_device_manager_stream_deck_removed_cb (BsDeviceManager            *device_manager,
-                                          BsStreamDeck               *stream_deck,
-                                          DefaultSwitchProfileAction *self)
+on_device_manager_device_removed_cb (BsDeviceManager            *device_manager,
+                                     BsStreamDeck               *stream_deck,
+                                     DefaultSwitchProfileAction *self)
 {
   update_active_profile (self);
 }
@@ -446,13 +446,13 @@ default_switch_profile_action_init (DefaultSwitchProfileAction *self)
   BsDeviceManager *device_manager = bs_application_get_device_manager (application);
 
   g_signal_connect_object (device_manager,
-                           "stream-deck-added",
-                           G_CALLBACK (on_device_manager_stream_deck_added_cb),
+                           "device-added",
+                           G_CALLBACK (on_device_manager_device_added_cb),
                            self,
                            0);
   g_signal_connect_object (device_manager,
-                           "stream-deck-removed",
-                           G_CALLBACK (on_device_manager_stream_deck_removed_cb),
+                           "device-removed",
+                           G_CALLBACK (on_device_manager_device_removed_cb),
                            self,
                            0);
 }

@@ -209,9 +209,9 @@ create_stream_deck_row_cb (gpointer item,
 }
 
 static void
-on_device_manager_stream_deck_added_cb (BsDeviceManager *device_manager,
-                                        BsStreamDeck    *stream_deck,
-                                        BsWindow        *self)
+on_device_manager_device_added_cb (BsDeviceManager *device_manager,
+                                   BsStreamDeck    *stream_deck,
+                                   BsWindow        *self)
 {
   g_autofree char *page_name = NULL;
   GtkWidget *editor;
@@ -225,9 +225,9 @@ on_device_manager_stream_deck_added_cb (BsDeviceManager *device_manager,
 }
 
 static void
-on_device_manager_stream_deck_removed_cb (BsDeviceManager *device_manager,
-                                          BsStreamDeck    *stream_deck,
-                                          BsWindow        *self)
+on_device_manager_device_removed_cb (BsDeviceManager *device_manager,
+                                     BsStreamDeck    *stream_deck,
+                                     BsWindow        *self)
 {
   g_autofree char *page_name = NULL;
   GtkWidget *child;
@@ -355,14 +355,14 @@ bs_window_constructed (GObject *object)
                            NULL);
 
   g_signal_connect_object (device_manager,
-                           "stream-deck-added",
-                           G_CALLBACK (on_device_manager_stream_deck_added_cb),
+                           "device-added",
+                           G_CALLBACK (on_device_manager_device_added_cb),
                            self,
                            0);
 
   g_signal_connect_object (device_manager,
-                           "stream-deck-removed",
-                           G_CALLBACK (on_device_manager_stream_deck_removed_cb),
+                           "device-removed",
+                           G_CALLBACK (on_device_manager_device_removed_cb),
                            self,
                            0);
 }

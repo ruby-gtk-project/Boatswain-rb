@@ -44,8 +44,8 @@ G_DEFINE_FINAL_TYPE_WITH_CODE (BsDeviceManager, bs_device_manager, G_TYPE_OBJECT
 
 enum
 {
-  STREAM_DECK_ADDED,
-  STREAM_DECK_REMOVED,
+  DEVICE_ADDED,
+  DEVICE_REMOVED,
   N_SIGNALS,
 };
 
@@ -81,7 +81,7 @@ enumerate_fake_stream_decks (BsDeviceManager *self)
       bs_stream_deck_load (stream_deck);
 
       g_list_store_append (self->stream_decks, stream_deck);
-      g_signal_emit (self, signals[STREAM_DECK_ADDED], 0, stream_deck);
+      g_signal_emit (self, signals[DEVICE_ADDED], 0, stream_deck);
     }
 }
 
@@ -119,7 +119,7 @@ enumerate_stream_decks (BsDeviceManager *self)
       bs_stream_deck_load (stream_deck);
 
       g_list_store_append (self->stream_decks, stream_deck);
-      g_signal_emit (self, signals[STREAM_DECK_ADDED], 0, stream_deck);
+      g_signal_emit (self, signals[DEVICE_ADDED], 0, stream_deck);
     }
 }
 
@@ -148,7 +148,7 @@ on_gusb_context_device_added_cb (GUsbContext     *gusb_context,
     }
 
   g_list_store_append (self->stream_decks, g_object_ref (stream_deck));
-  g_signal_emit (self, signals[STREAM_DECK_ADDED], 0, stream_deck);
+  g_signal_emit (self, signals[DEVICE_ADDED], 0, stream_deck);
 
   BS_EXIT;
 }
@@ -173,7 +173,7 @@ on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
       if (d == device)
         {
           g_message ("Removing Stream Deck device %p", stream_deck);
-          g_signal_emit (self, signals[STREAM_DECK_REMOVED], 0, stream_deck);
+          g_signal_emit (self, signals[DEVICE_REMOVED], 0, stream_deck);
           g_list_store_remove (self->stream_decks, i);
           continue;
         }
@@ -255,21 +255,21 @@ bs_device_manager_class_init (BsDeviceManagerClass *klass)
 
   object_class->finalize = bs_device_manager_finalize;
 
-  signals[STREAM_DECK_ADDED] = g_signal_new ("stream-deck-added",
-                                             BS_TYPE_DEVICE_MANAGER,
-                                             G_SIGNAL_RUN_LAST,
-                                             0, NULL, NULL, NULL,
-                                             G_TYPE_NONE,
-                                             1,
-                                             BS_TYPE_STREAM_DECK);
+  signals[DEVICE_ADDED] = g_signal_new ("device-added",
+                                        BS_TYPE_DEVICE_MANAGER,
+                                        G_SIGNAL_RUN_LAST,
+                                        0, NULL, NULL, NULL,
+                                        G_TYPE_NONE,
+                                        1,
+                                        BS_TYPE_STREAM_DECK);
 
-  signals[STREAM_DECK_REMOVED] = g_signal_new ("stream-deck-removed",
-                                               BS_TYPE_DEVICE_MANAGER,
-                                               G_SIGNAL_RUN_LAST,
-                                               0, NULL, NULL, NULL,
-                                               G_TYPE_NONE,
-                                               1,
-                                               BS_TYPE_STREAM_DECK);
+  signals[DEVICE_REMOVED] = g_signal_new ("device-removed",
+                                          BS_TYPE_DEVICE_MANAGER,
+                                          G_SIGNAL_RUN_LAST,
+                                          0, NULL, NULL, NULL,
+                                          G_TYPE_NONE,
+                                          1,
+                                          BS_TYPE_STREAM_DECK);
 }
 
 static void
