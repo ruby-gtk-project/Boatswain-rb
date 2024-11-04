@@ -142,7 +142,7 @@ export const GamingScoreAction = GObject.registerClass({
     }
 }, class GamingScoreAction extends Bs.Action {
     constructor(streamDeckButton) {
-        super({streamDeckButton});
+        super({button: streamDeckButton});
 
         this._paintable = new GamingScorePaintable();
         this.get_icon().paintable = this._paintable;
@@ -215,52 +215,57 @@ export const GamingScoreAction = GObject.registerClass({
             });
     }
 
-    vfunc_activate() {
-        console.assert(this._timeoutId === undefined);
-        console.assert(this._state === TimeoutState.DISABLED);
+    vfunc_handle_event(event) {
+        switch (event.get_event_type()) {
+        case Bs.EventType.PRESS:
+            console.assert(this._timeoutId === undefined);
+            console.assert(this._state === TimeoutState.DISABLED);
 
-        const timeout = Gtk.Settings.get_default().gtk_long_press_time;
+            const timeout = Gtk.Settings.get_default().gtk_long_press_time;
 
-        this._setState(TimeoutState.SHORT);
+            this._setState(TimeoutState.SHORT);
 
-        this._queueStateChange(
-            TimeoutState.LONG,
-            timeout,
-            () => {
+            this._queueStateChange(
+                TimeoutState.LONG,
+                timeout,
+                () => {
 
-                this._applyAction(ScoreAction.DECREMENT);
+                    this._applyAction(ScoreAction.DECREMENT);
 
-                this._queueStateChange(
-                    TimeoutState.VERY_LONG,
-                    timeout * 5,
-                    () => {
-                        this._applyAction(ScoreAction.RESET);
-                        this._setState(TimeoutState.DISABLED);
-                    }
-                );
+                    this._queueStateChange(
+                        TimeoutState.VERY_LONG,
+                        timeout * 5,
+                        () => {
+                            this._applyAction(ScoreAction.RESET);
+                            this._setState(TimeoutState.DISABLED);
+                        }
+                    );
+                }
+            );
+            break;
+
+        case Bs.EventType.RELEASE:
+            switch (this._state) {
+            case TimeoutState.SHORT:
+                this._applyAction(ScoreAction.INCREMENT);
+                break;
+
+            case TimeoutState.LONG:
+            case TimeoutState.VERY_LONG:
+            case TimeoutState.DISABLED:
+            default:
+                break;
             }
-        );
+
+            this._setState(TimeoutState.DISABLED);
+
+            if (this._timeoutId) {
+                GLib.source_remove(this._timeoutId);
+                delete this._timeoutId;
+            }
+        break;
     }
 
-    vfunc_deactivate() {
-        switch (this._state) {
-        case TimeoutState.SHORT:
-            this._applyAction(ScoreAction.INCREMENT);
-            break;
-
-        case TimeoutState.LONG:
-        case TimeoutState.VERY_LONG:
-        case TimeoutState.DISABLED:
-        default:
-            break;
-        }
-
-        this._setState(TimeoutState.DISABLED);
-
-        if (this._timeoutId) {
-            GLib.source_remove(this._timeoutId);
-            delete this._timeoutId;
-        }
     }
 
     vfunc_serialize_settings() {

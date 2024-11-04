@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "launcher-open-url-action.h"
 
@@ -66,12 +67,16 @@ on_url_row_text_changed_cb (GtkEditable           *editable,
  */
 
 static void
-launcher_open_url_action_activate (BsAction *action)
+launcher_open_url_action_handle_event (BsAction *action,
+                                       BsEvent  *event)
 {
   g_autoptr (GtkUriLauncher) uri_launcher = NULL;
   LauncherOpenUrlAction *self;
   GApplication *application;
   GtkWindow *window;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   self = LAUNCHER_OPEN_URL_ACTION (action);
 
@@ -169,7 +174,7 @@ launcher_open_url_action_class_init (LauncherOpenUrlActionClass *klass)
 
   object_class->finalize = launcher_open_url_action_finalize;
 
-  action_class->activate = launcher_open_url_action_activate;
+  action_class->handle_event = launcher_open_url_action_handle_event;
   action_class->get_preferences = launcher_open_url_action_get_preferences;
   action_class->serialize_settings = launcher_open_url_action_serialize_settings;
   action_class->deserialize_settings = launcher_open_url_action_deserialize_settings;

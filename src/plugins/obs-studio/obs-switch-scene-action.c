@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "obs-connection-settings.h"
 #include "obs-scene.h"
@@ -245,10 +246,14 @@ obs_switch_scene_action_update_connection (ObsAction     *obs_action,
  */
 
 static void
-obs_switch_scene_action_activate (BsAction *action)
+obs_switch_scene_action_handle_event (BsAction *action,
+                                      BsEvent  *event)
 {
   ObsSwitchSceneAction *self = OBS_SWITCH_SCENE_ACTION (action);
   ObsConnection *connection;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   if (!self->scene)
     return;
@@ -345,7 +350,7 @@ obs_switch_scene_action_class_init (ObsSwitchSceneActionClass *klass)
 
   object_class->finalize = obs_switch_scene_action_finalize;
 
-  action_class->activate = obs_switch_scene_action_activate;
+  action_class->handle_event = obs_switch_scene_action_handle_event;
   action_class->get_preferences = obs_switch_scene_action_get_preferences;
   action_class->deserialize_settings = obs_switch_scene_action_deserialize_settings;
 

@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "obs-connection-settings.h"
 #include "obs-source.h"
@@ -419,10 +420,14 @@ obs_toggle_source_action_update_connection (ObsAction     *obs_action,
  */
 
 static void
-obs_toggle_source_action_activate (BsAction *action)
+obs_toggle_source_action_handle_event (BsAction *action,
+                                       BsEvent  *event)
 {
   ObsToggleSourceAction *self = OBS_TOGGLE_SOURCE_ACTION (action);
   ObsConnection *connection;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   if (!self->source)
     return;
@@ -612,7 +617,7 @@ obs_toggle_source_action_class_init (ObsToggleSourceActionClass *klass)
   object_class->get_property = obs_toggle_source_action_get_property;
   object_class->set_property = obs_toggle_source_action_set_property;
 
-  action_class->activate = obs_toggle_source_action_activate;
+  action_class->handle_event = obs_toggle_source_action_handle_event;
   action_class->get_preferences = obs_toggle_source_action_get_preferences;
   action_class->deserialize_settings = obs_toggle_source_action_deserialize_settings;
 

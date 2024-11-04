@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "launcher-launch-action.h"
 #include "launcher-launch-preferences.h"
@@ -60,12 +61,16 @@ launcher_launch_action_update_icon (LauncherLaunchAction *self)
 }
 
 static void
-launcher_launch_action_activate (BsAction *action)
+launcher_launch_action_handle_event (BsAction *action,
+                                     BsEvent  *event)
 {
   g_autoptr (GdkAppLaunchContext) context = NULL;
   g_autoptr (GError) error = NULL;
   LauncherLaunchAction *self;
   GdkDisplay *display;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   self = LAUNCHER_LAUNCH_ACTION (action);
   display = gdk_display_get_default ();
@@ -187,7 +192,7 @@ launcher_launch_action_class_init (LauncherLaunchActionClass *klass)
 
   object_class->finalize = launcher_launch_action_finalize;
 
-  action_class->activate = launcher_launch_action_activate;
+  action_class->handle_event = launcher_launch_action_handle_event;
   action_class->get_preferences = launcher_launch_action_get_preferences;
   action_class->serialize_settings = launcher_launch_action_serialize_settings;
   action_class->deserialize_settings = launcher_launch_action_deserialize_settings;

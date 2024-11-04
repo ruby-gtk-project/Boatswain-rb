@@ -20,6 +20,7 @@
 
 #define G_LOG_DOMAIN "HTTP Request"
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "network-http-action.h"
 #include "network-http-action-prefs.h"
@@ -118,7 +119,8 @@ network_connected_cb (GObject      *source,
  */
 
 static void
-network_http_action_activate (BsAction *action)
+network_http_action_handle_event (BsAction *action,
+                                      BsEvent  *event)
 {
   NetworkHttpAction *self = (NetworkHttpAction *) action;
   g_autoptr (SoupMessage) message = NULL;
@@ -126,6 +128,9 @@ network_http_action_activate (BsAction *action)
   char *method;
 
   g_assert (NETWORK_IS_HTTP_ACTION (self));
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   if (!self->uri || self->uri[0] == '\0')
     return;
@@ -345,7 +350,7 @@ network_http_action_class_init (NetworkHttpActionClass *klass)
   object_class->get_property = network_http_action_get_property;
   object_class->set_property = network_http_action_set_property;
 
-  action_class->activate = network_http_action_activate;
+  action_class->handle_event = network_http_action_handle_event;
   action_class->get_preferences = network_http_action_get_preferences;
   action_class->serialize_settings = network_http_action_serialize_settings;
   action_class->deserialize_settings = network_http_action_deserialize_settings;

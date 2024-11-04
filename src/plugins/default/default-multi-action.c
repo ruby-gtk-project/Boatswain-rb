@@ -23,6 +23,7 @@
 #include "bs-action-factory.h"
 #include "bs-action-private.h"
 #include "bs-application-private.h"
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "default-multi-action-editor.h"
 #include "default-multi-action-private.h"
@@ -34,6 +35,7 @@ struct _DefaultMultiAction
   BsAction parent_instance;
 
   GCancellable *cancellable;
+  BsEvent *event;
   guint run_source_id;
   guint current_entry;
 
@@ -128,6 +130,7 @@ cancel_ongoing_run (DefaultMultiAction *self)
   g_cancellable_reset (self->cancellable);
   g_assert (self->run_source_id == 0);
 
+  g_clear_object (&self->event);
   self->current_entry = 0;
 
   if (needs_unref)
@@ -152,6 +155,7 @@ run_actions_in_idle_cb (gpointer data)
 
   if (!entry)
     {
+      g_clear_object (&self->event);
       g_object_unref (self);
       self->run_source_id = 0;
       return G_SOURCE_REMOVE;
@@ -168,7 +172,7 @@ run_actions_in_idle_cb (gpointer data)
 
     case MULTI_ACTION_ENTRY_ACTION:
       g_debug ("Running action '%s'", bs_action_get_id (entry->v.action));
-      bs_action_activate (entry->v.action);
+      bs_action_handle_event (entry->v.action, self->event);
       return G_SOURCE_CONTINUE;
 
     default:
@@ -196,13 +200,21 @@ on_cancellable_cancelled_cb (GCancellable       *cancellable,
  */
 
 static void
-default_multi_action_activate (BsAction *action)
+default_multi_action_handle_event (BsAction *action,
+                                   BsEvent  *event)
 {
   DefaultMultiAction *self = DEFAULT_MULTI_ACTION (action);
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   g_object_ref (self);
 
   cancel_ongoing_run (self);
+
+  g_assert (self->event == NULL);
+  self->event = g_object_ref (event);
+
   self->run_source_id = g_idle_add (run_actions_in_idle_cb, self);
 }
 
@@ -352,7 +364,7 @@ default_multi_action_class_init (DefaultMultiActionClass *klass)
 
   object_class->finalize = default_multi_action_finalize;
 
-  action_class->activate = default_multi_action_activate;
+  action_class->handle_event = default_multi_action_handle_event;
   action_class->serialize_settings = default_multi_action_serialize_settings;
   action_class->deserialize_settings = default_multi_action_deserialize_settings;
   action_class->get_preferences = default_multi_action_get_preferences;

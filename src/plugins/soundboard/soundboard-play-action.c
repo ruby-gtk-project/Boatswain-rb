@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "soundboard-play-action.h"
 #include "soundboard-play-action-prefs.h"
@@ -109,55 +110,9 @@ get_media_stream (SoundboardPlayAction *self)
 }
 
 static void
-maybe_save_action (SoundboardPlayAction *self)
+activate_play_action (SoundboardPlayAction *self)
 {
-  if (!self->deserializing)
-    bs_action_changed (BS_ACTION (self));
-}
-
-
-/*
- * Callbacks
- */
-
-
-static void
-on_media_stream_ended_changed_cb (GtkMediaStream       *media_stream,
-                                  GParamSpec           *pspec,
-                                  SoundboardPlayAction *self)
-{
-  if (!gtk_media_stream_get_ended (media_stream))
-    return;
-
-  update_icon_from_state (self);
-}
-
-static void
-on_overlap_media_stream_ended_changed_cb (GtkMediaStream       *media_stream,
-                                          GParamSpec           *pspec,
-                                          SoundboardPlayAction *self)
-{
-  if (!gtk_media_stream_get_ended (media_stream))
-    return;
-
-  g_queue_remove (self->media_streams_queue, media_stream);
-  g_object_unref (media_stream);
-
-  update_icon_from_state (self);
-}
-
-
-/*
- * BsAction overrides
- */
-
-static void
-soundboard_play_action_activate (BsAction *action)
-{
-  SoundboardPlayAction *self = SOUNDBOARD_PLAY_ACTION (action);
-  GtkMediaStream *media_stream;
-
-  media_stream = get_media_stream (self);
+  GtkMediaStream *media_stream = get_media_stream (self);
 
   switch (self->behavior)
     {
@@ -204,17 +159,12 @@ soundboard_play_action_activate (BsAction *action)
       gtk_media_stream_play (media_stream);
       break;
     }
-
-  update_icon_from_state (self);
 }
 
 static void
-soundboard_play_action_deactivate (BsAction *action)
+deactivate_play_action (SoundboardPlayAction *self)
 {
-  SoundboardPlayAction *self = SOUNDBOARD_PLAY_ACTION (action);
-  GtkMediaStream *media_stream;
-
-  media_stream = get_media_stream (self);
+  GtkMediaStream *media_stream = get_media_stream (self);
 
   switch (self->behavior)
     {
@@ -226,6 +176,68 @@ soundboard_play_action_deactivate (BsAction *action)
 
     case SOUNDBOARD_PLAY_BEHAVIOR_PRESS_HOLD:
       gtk_media_stream_pause (media_stream);
+      break;
+    }
+
+}
+
+static void
+maybe_save_action (SoundboardPlayAction *self)
+{
+  if (!self->deserializing)
+    bs_action_changed (BS_ACTION (self));
+}
+
+
+/*
+ * Callbacks
+ */
+
+
+static void
+on_media_stream_ended_changed_cb (GtkMediaStream       *media_stream,
+                                  GParamSpec           *pspec,
+                                  SoundboardPlayAction *self)
+{
+  if (!gtk_media_stream_get_ended (media_stream))
+    return;
+
+  update_icon_from_state (self);
+}
+
+static void
+on_overlap_media_stream_ended_changed_cb (GtkMediaStream       *media_stream,
+                                          GParamSpec           *pspec,
+                                          SoundboardPlayAction *self)
+{
+  if (!gtk_media_stream_get_ended (media_stream))
+    return;
+
+  g_queue_remove (self->media_streams_queue, media_stream);
+  g_object_unref (media_stream);
+
+  update_icon_from_state (self);
+}
+
+
+/*
+ * BsAction overrides
+ */
+
+static void
+soundboard_play_action_handle_event (BsAction *action,
+                                     BsEvent  *event)
+{
+  SoundboardPlayAction *self = SOUNDBOARD_PLAY_ACTION (action);
+
+  switch (bs_event_get_event_type (event))
+    {
+    case BS_BUTTON_PRESS:
+      activate_play_action (self);
+      break;
+
+    case BS_BUTTON_RELEASE:
+      deactivate_play_action (self);
       break;
     }
 
@@ -312,8 +324,7 @@ soundboard_play_action_class_init (SoundboardPlayActionClass *klass)
 
   object_class->finalize = soundboard_play_action_finalize;
 
-  action_class->activate = soundboard_play_action_activate;
-  action_class->deactivate = soundboard_play_action_deactivate;
+  action_class->handle_event = soundboard_play_action_handle_event;
   action_class->get_preferences = soundboard_play_action_get_preferences;
   action_class->serialize_settings = soundboard_play_action_serialize_settings;
   action_class->deserialize_settings = soundboard_play_action_deserialize_settings;

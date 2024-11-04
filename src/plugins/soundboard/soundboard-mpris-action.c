@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "soundboard-mpris-action.h"
 
@@ -150,9 +151,13 @@ on_combo_row_selected_changed_cb (AdwComboRow           *combo_row,
  */
 
 static void
-soundboard_mpris_action_activate (BsAction *action)
+soundboard_mpris_action_handle_event (BsAction *action,
+                                      BsEvent  *event)
 {
   SoundboardMprisAction *self = SOUNDBOARD_MPRIS_ACTION (action);
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   if (!mpris_controller_get_has_active_player (self->mpris_controller))
     return;
@@ -268,7 +273,7 @@ soundboard_mpris_action_class_init (SoundboardMprisActionClass *klass)
 
   object_class->finalize = soundboard_mpris_action_finalize;
 
-  action_class->activate = soundboard_mpris_action_activate;
+  action_class->handle_event = soundboard_mpris_action_handle_event;
   action_class->get_preferences = soundboard_mpris_action_get_preferences;
   action_class->serialize_settings = soundboard_mpris_action_serialize_settings;
   action_class->deserialize_settings = soundboard_mpris_action_deserialize_settings;

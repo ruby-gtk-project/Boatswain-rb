@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "bs-stream-deck.h"
 #include "bs-button.h"
@@ -92,12 +93,16 @@ set_brightness_mode (DefaultBrightnessAction *self,
  */
 
 static void
-default_brightness_action_activate (BsAction *action)
+default_brightness_action_handle_event (BsAction *action,
+                                        BsEvent  *event)
 {
   DefaultBrightnessAction *self = DEFAULT_BRIGHTNESS_ACTION (action);
   BsButton *button;
   BsStreamDeck *stream_deck;
   double brightness;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   button = bs_action_get_button (action);
   stream_deck = bs_button_get_stream_deck (button);
@@ -271,7 +276,7 @@ default_brightness_action_class_init (DefaultBrightnessActionClass *klass)
   object_class->get_property = default_brightness_action_get_property;
   object_class->set_property = default_brightness_action_set_property;
 
-  action_class->activate = default_brightness_action_activate;
+  action_class->handle_event = default_brightness_action_handle_event;
   action_class->get_preferences = default_brightness_action_get_preferences;
   action_class->serialize_settings = default_brightness_action_serialize_settings;
   action_class->deserialize_settings = default_brightness_action_deserialize_settings;

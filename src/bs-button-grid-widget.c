@@ -83,6 +83,8 @@ on_flowbox_child_activated_cb (GtkFlowBox         *flowbox,
                                GtkFlowBoxChild    *child,
                                BsButtonGridWidget *self)
 {
+  BS_TODO ("Implement page changing");
+#if 0
   BsButton *button;
   BsAction *action;
 
@@ -91,6 +93,7 @@ on_flowbox_child_activated_cb (GtkFlowBox         *flowbox,
 
   if (action && is_switch_page_action (action))
     bs_action_activate (action);
+#endif
 }
 
 static void

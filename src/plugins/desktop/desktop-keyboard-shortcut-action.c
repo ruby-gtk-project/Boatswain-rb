@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "desktop-keyboard-shortcut-action.h"
 #include "desktop-shortcut-dialog.h"
@@ -167,45 +168,39 @@ on_row_activated_cb (AdwActionRow                  *row,
  */
 
 static void
-desktop_keyboard_shortcut_action_activate (BsAction *action)
+desktop_keyboard_shortcut_action_handle_event (BsAction *action,
+                                               BsEvent  *event)
 {
   DesktopKeyboardShortcutAction *self = DESKTOP_KEYBOARD_SHORTCUT_ACTION (action);
 
-  if (self->modifiers & GDK_SUPER_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Super_L);
+  switch (bs_event_get_event_type (event))
+    {
+    case BS_BUTTON_PRESS:
+      if (self->modifiers & GDK_SUPER_MASK)
+        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Super_L);
+      if (self->modifiers & GDK_CONTROL_MASK)
+        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Control_L);
+      if (self->modifiers & GDK_SHIFT_MASK)
+        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Shift_L);
+      if (self->modifiers & GDK_ALT_MASK)
+        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Alt_L);
+      if (self->keysym != 0)
+        bs_desktop_controller_press_key (self->desktop_controller, self->keysym);
+      break;
 
-  if (self->modifiers & GDK_CONTROL_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Control_L);
-
-  if (self->modifiers & GDK_SHIFT_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Shift_L);
-
-  if (self->modifiers & GDK_ALT_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Alt_L);
-
-  if (self->keysym != 0)
-    bs_desktop_controller_press_key (self->desktop_controller, self->keysym);
-}
-
-static void
-desktop_keyboard_shortcut_action_deactivate (BsAction *action)
-{
-  DesktopKeyboardShortcutAction *self = DESKTOP_KEYBOARD_SHORTCUT_ACTION (action);
-
-  if (self->keysym != 0)
-    bs_desktop_controller_release_key (self->desktop_controller, self->keysym);
-
-  if (self->modifiers & GDK_ALT_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Alt_L);
-
-  if (self->modifiers & GDK_SHIFT_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Shift_L);
-
-  if (self->modifiers & GDK_CONTROL_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Control_L);
-
-  if (self->modifiers & GDK_SUPER_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Super_L);
+    case BS_BUTTON_RELEASE:
+      if (self->keysym != 0)
+        bs_desktop_controller_release_key (self->desktop_controller, self->keysym);
+      if (self->modifiers & GDK_ALT_MASK)
+        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Alt_L);
+      if (self->modifiers & GDK_SHIFT_MASK)
+        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Shift_L);
+      if (self->modifiers & GDK_CONTROL_MASK)
+        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Control_L);
+      if (self->modifiers & GDK_SUPER_MASK)
+        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Super_L);
+      break;
+    }
 }
 
 static JsonNode *
@@ -361,8 +356,7 @@ desktop_keyboard_shortcut_action_class_init (DesktopKeyboardShortcutActionClass 
   object_class->get_property = desktop_keyboard_shortcut_action_get_property;
   object_class->set_property = desktop_keyboard_shortcut_action_set_property;
 
-  action_class->activate = desktop_keyboard_shortcut_action_activate;
-  action_class->deactivate = desktop_keyboard_shortcut_action_deactivate;
+  action_class->handle_event = desktop_keyboard_shortcut_action_handle_event;
   action_class->serialize_settings = desktop_keyboard_shortcut_action_serialize_settings;
   action_class->deserialize_settings = desktop_keyboard_shortcut_action_deserialize_settings;
   action_class->get_preferences = desktop_keyboard_shortcut_action_get_preferences;

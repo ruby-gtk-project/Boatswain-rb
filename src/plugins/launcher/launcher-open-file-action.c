@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "launcher-open-file-action.h"
 
@@ -169,12 +170,16 @@ on_file_row_activated_cb (GtkEditable            *editable,
  */
 
 static void
-launcher_open_file_action_activate (BsAction *action)
+launcher_open_file_action_handle_event (BsAction *action,
+                                        BsEvent  *event)
 {
   g_autoptr (GtkFileLauncher) file_launcher = NULL;
   LauncherOpenFileAction *self;
   GApplication *application;
   GtkWindow *window;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   self = LAUNCHER_OPEN_FILE_ACTION (action);
 
@@ -298,7 +303,7 @@ launcher_open_file_action_class_init (LauncherOpenFileActionClass *klass)
 
   object_class->finalize = launcher_open_file_action_finalize;
 
-  action_class->activate = launcher_open_file_action_activate;
+  action_class->handle_event = launcher_open_file_action_handle_event;
   action_class->get_preferences = launcher_open_file_action_get_preferences;
   action_class->serialize_settings = launcher_open_file_action_serialize_settings;
   action_class->deserialize_settings = launcher_open_file_action_deserialize_settings;

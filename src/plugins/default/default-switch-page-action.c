@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "bs-page.h"
 #include "bs-stream-deck.h"
@@ -61,14 +62,16 @@ is_enter_folder_action (DefaultSwitchPageAction *self)
  */
 
 static void
-default_switch_page_action_activate (BsAction *action)
+default_switch_page_action_handle_event (BsAction *action,
+                                         BsEvent  *event)
 {
   DefaultSwitchPageAction *self = DEFAULT_SWITCH_PAGE_ACTION (action);
-  BsButton *button;
   BsStreamDeck *stream_deck;
 
-  button = bs_action_get_button (BS_ACTION (self));
-  stream_deck = bs_button_get_stream_deck (button);
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
+
+  stream_deck = bs_event_get_device (event);
 
   if (is_enter_folder_action (self))
     bs_stream_deck_push_page (stream_deck, self->page);
@@ -167,7 +170,7 @@ default_switch_page_action_class_init (DefaultSwitchPageActionClass *klass)
   object_class->finalize = default_switch_page_action_finalize;
   object_class->constructed = default_switch_page_action_constructed;
 
-  action_class->activate = default_switch_page_action_activate;
+  action_class->handle_event = default_switch_page_action_handle_event;
   action_class->serialize_settings = default_switch_page_action_serialize_settings;
   action_class->deserialize_settings = default_switch_page_action_deserialize_settings;
 }

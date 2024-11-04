@@ -20,6 +20,7 @@
 
 #include "bs-application-private.h"
 #include "bs-device-manager.h"
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "bs-profile.h"
 #include "bs-stream-deck.h"
@@ -244,11 +245,15 @@ on_profiles_items_changed_cb (GListModel                 *list,
  */
 
 static void
-default_switch_profile_action_activate (BsAction *action)
+default_switch_profile_action_handle_event (BsAction *action,
+                                            BsEvent  *event)
 {
   DefaultSwitchProfileAction *self;
   BsStreamDeck *stream_deck;
   BsProfile *profile;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   self = DEFAULT_SWITCH_PROFILE_ACTION (action);
 
@@ -433,7 +438,7 @@ default_switch_profile_action_class_init (DefaultSwitchProfileActionClass *klass
   object_class->finalize = default_switch_profile_action_finalize;
   object_class->constructed = default_switch_profile_action_constructed;
 
-  action_class->activate = default_switch_profile_action_activate;
+  action_class->handle_event = default_switch_profile_action_handle_event;
   action_class->get_preferences = default_switch_profile_action_get_preferences;
   action_class->serialize_settings = default_switch_profile_action_serialize_settings;
   action_class->deserialize_settings = default_switch_profile_action_deserialize_settings;

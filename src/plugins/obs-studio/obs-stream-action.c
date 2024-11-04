@@ -18,7 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "obs-connection-settings.h"
 #include "obs-stream-action.h"
@@ -102,9 +102,13 @@ obs_stream_action_update_connection (ObsAction     *obs_action,
  */
 
 static void
-obs_stream_action_activate (BsAction *action)
+obs_stream_action_handle_event (BsAction *action,
+                                BsEvent  *event)
 {
   ObsConnection *connection;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   connection = obs_action_get_connection (OBS_ACTION (action));
   if (obs_connection_get_state (connection) != OBS_CONNECTION_STATE_CONNECTED)
@@ -148,7 +152,7 @@ obs_stream_action_class_init (ObsStreamActionClass *klass)
   object_class->finalize = obs_stream_action_finalize;
   object_class->constructed = obs_stream_action_constructed;
 
-  action_class->activate = obs_stream_action_activate;
+  action_class->handle_event = obs_stream_action_handle_event;
 
   obs_action_class->update_connection = obs_stream_action_update_connection;
 }

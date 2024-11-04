@@ -19,6 +19,7 @@
  */
 
 
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "obs-connection-settings.h"
 #include "obs-virtualcam-action.h"
@@ -102,9 +103,13 @@ obs_virtualcam_action_update_connection (ObsAction     *obs_action,
  */
 
 static void
-obs_virtualcam_action_activate (BsAction *action)
+obs_virtualcam_action_handle_event (BsAction *action,
+                                    BsEvent  *event)
 {
   ObsConnection *connection;
+
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+    return;
 
   connection = obs_action_get_connection (OBS_ACTION (action));
   if (obs_connection_get_state (connection) != OBS_CONNECTION_STATE_CONNECTED)
@@ -149,7 +154,7 @@ obs_virtualcam_action_class_init (ObsVirtualCamActionClass *klass)
   object_class->finalize = obs_virtualcam_action_finalize;
   object_class->constructed = obs_virtualcam_action_constructed;
 
-  action_class->activate = obs_virtualcam_action_activate;
+  action_class->handle_event = obs_virtualcam_action_handle_event;
 
   obs_action_class->update_connection = obs_virtualcam_action_update_connection;
 }
