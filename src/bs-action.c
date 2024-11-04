@@ -262,36 +262,6 @@ bs_action_get_icon (BsAction *self)
   return BS_ACTION_GET_CLASS (self)->get_icon (self);
 }
 
-void
-bs_action_activate (BsAction *self)
-{
-  g_return_if_fail (BS_IS_ACTION (self));
-
-  BS_ENTRY;
-
-  g_debug ("Activating %s", G_OBJECT_TYPE_NAME (self));
-
-  if (BS_ACTION_GET_CLASS (self)->activate)
-    BS_ACTION_GET_CLASS (self)->activate (self);
-
-  BS_EXIT;
-}
-
-void
-bs_action_deactivate (BsAction *self)
-{
-  g_return_if_fail (BS_IS_ACTION (self));
-
-  BS_ENTRY;
-
-  g_debug ("Dectivating %s", G_OBJECT_TYPE_NAME (self));
-
-  if (BS_ACTION_GET_CLASS (self)->deactivate)
-    BS_ACTION_GET_CLASS (self)->deactivate (self);
-
-  BS_EXIT;
-}
-
 /**
  * bs_action_get_preferences:
  * @self: a #BsAction

@@ -36,9 +36,6 @@ struct _BsActionClass
 
   BsIcon * (*get_icon) (BsAction *self);
 
-  void (*activate) (BsAction *self);
-  void (*deactivate) (BsAction *self);
-
   void (*handle_event) (BsAction *self,
                         BsEvent  *event);
 
@@ -50,8 +47,6 @@ struct _BsActionClass
 };
 
 BsIcon * bs_action_get_icon (BsAction *self);
-void bs_action_activate (BsAction *self);
-void bs_action_deactivate (BsAction *self);
 const char * bs_action_get_id (BsAction *self);
 const char * bs_action_get_name (BsAction *self);
 BsButton * bs_action_get_button (BsAction *self);
