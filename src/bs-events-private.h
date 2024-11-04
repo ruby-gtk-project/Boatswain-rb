@@ -31,7 +31,8 @@ void bs_event_init_types_once (void);
  * BsButtonEvent
  */
 
-BsEvent * bs_button_event_new (BsEventType  event_type,
-                               BsButton    *button);
+BsEvent * bs_button_event_new (BsEventType   event_type,
+                               BsStreamDeck *device,
+                               BsButton     *button);
 
 G_END_DECLS

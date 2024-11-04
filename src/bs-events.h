@@ -29,8 +29,8 @@ G_BEGIN_DECLS
 
 typedef enum
 {
-  BS_BUTTON_PRESS_EVENT,
-  BS_BUTTON_RELEASE_EVENT,
+  BS_BUTTON_PRESS,
+  BS_BUTTON_RELEASE,
 
   // TODO: implement them
   //BS_TOUCHSCREEN_SHORT_PRESS_EVENT,
@@ -57,6 +57,9 @@ typedef struct _BsEvent BsEvent;
 typedef struct _BsEventClass BsEventClass;
 
 GType bs_event_get_type (void) G_GNUC_CONST;
+
+BsEventType bs_event_get_event_type (BsEvent *self);
+BsStreamDeck * bs_event_get_device (BsEvent *self);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsEvent, g_object_unref)
 
