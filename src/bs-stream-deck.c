@@ -30,6 +30,7 @@
 #include "bs-device-region.h"
 #include "bs-dial-private.h"
 #include "bs-dial-grid-region.h"
+#include "bs-events-private.h"
 #include "bs-icon.h"
 #include "bs-page.h"
 #include "bs-profile.h"
@@ -503,8 +504,20 @@ read_state_mini (BsStreamDeck *self)
 
   for (uint8_t i = 0; i < layout->n_buttons; i++)
     {
-      BsButton *button = find_button_at_region (self, "main-button-grid", i);
+      g_autoptr (BsEvent) button_event = NULL;
+      BsEventType event_type;
+      BsButton *button;
+
+      button = find_button_at_region (self, "main-button-grid", i);
+
+      if (states[i + 1] == bs_button_get_pressed (button))
+        continue;
+
       bs_button_set_pressed (button, (gboolean) states[i + 1]);
+
+      event_type = states[i + 1] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
+      button_event = bs_button_event_new (event_type, self, button);
+      bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
     }
 
   return TRUE;
@@ -685,10 +698,22 @@ read_state_original (BsStreamDeck *self)
 
   for (uint8_t i = 0; i < layout->n_buttons; i++)
     {
-      uint8_t position = swap_button_index_original (self, i);
-      BsButton *button = find_button_at_region (self, "main-button-grid", position);
+      g_autoptr (BsEvent) button_event = NULL;
+      BsEventType event_type;
+      BsButton *button;
+      uint8_t position;
+
+      position = swap_button_index_original (self, i);
+      button = find_button_at_region (self, "main-button-grid", position);
+
+      if (states[i + 1] == bs_button_get_pressed (button))
+        continue;
 
       bs_button_set_pressed (button, (gboolean) states[i + 1]);
+
+      event_type = states[i + 1] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
+      button_event = bs_button_event_new (event_type, self, button);
+      bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
     }
 
   return TRUE;
@@ -852,8 +877,20 @@ read_state_gen2 (BsStreamDeck *self)
 
   for (uint8_t i = 0; i < layout->n_buttons; i++)
     {
-      BsButton *button = find_button_at_region (self, "main-button-grid", i);
+      g_autoptr (BsEvent) button_event = NULL;
+      BsEventType event_type;
+      BsButton *button;
+
+      button = find_button_at_region (self, "main-button-grid", i);
+
+      if (states[i + 4] == bs_button_get_pressed (button))
+        continue;
+
       bs_button_set_pressed (button, (gboolean) states[i + 4]);
+
+      event_type = states[i + 4] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
+      button_event = bs_button_event_new (event_type, self, button);
+      bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
     }
 
   return TRUE;
@@ -926,8 +963,20 @@ read_state_plus (BsStreamDeck *self)
     case BUTTON_EVENT:
       for (uint8_t i = 0; i < layout->n_buttons; i++)
         {
-          BsButton *button = find_button_at_region (self, "main-button-grid", i);
+          g_autoptr (BsEvent) button_event = NULL;
+          BsEventType event_type;
+          BsButton *button;
+
+          button = find_button_at_region (self, "main-button-grid", i);
+
+          if (states[i + 4] == bs_button_get_pressed (button))
+            continue;
+
           bs_button_set_pressed (button, (gboolean) states[i + 4]);
+
+          event_type = states[i + 4] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
+          button_event = bs_button_event_new (event_type, self, button);
+          bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
         }
       break;
 
