@@ -403,14 +403,6 @@ bs_button_set_pressed (BsButton *self,
 
   self->pressed = pressed;
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PRESSED]);
-
-  if (self->action)
-    {
-      if (pressed)
-        bs_action_activate (self->action);
-      else
-        bs_action_deactivate (self->action);
-    }
 }
 
 BsIcon *
