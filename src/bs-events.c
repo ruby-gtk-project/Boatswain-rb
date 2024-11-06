@@ -21,6 +21,7 @@
 
 #include "bs-events-private.h"
 
+#include "bs-button.h"
 #include "bs-stream-deck.h"
 
 /* Map BsEventType to the appropriate GType */
@@ -137,6 +138,8 @@ bs_button_event_new (BsEventType   event_type,
 
   g_assert (event_type == BS_BUTTON_PRESS ||
             event_type == BS_BUTTON_RELEASE);
+  g_assert (BS_IS_STREAM_DECK (device));
+  g_assert (BS_IS_BUTTON (button));
 
   button_event = bs_event_alloc (event_type, device);
   g_assert (BS_IS_BUTTON_EVENT (button_event));
