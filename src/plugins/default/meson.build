@@ -13,6 +13,7 @@ plugins_sources += files(
   'default-multi-action.c',
   'default-multi-action-editor.c',
   'default-multi-action-row.c',
+  'default-page-up-action.c',
   'default-plugin.c',
   'default-switch-page-action.c',
   'default-switch-profile-action.c',

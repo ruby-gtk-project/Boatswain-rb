@@ -23,6 +23,7 @@
 #include "default-action-factory.h"
 #include "default-brightness-action.h"
 #include "default-multi-action.h"
+#include "default-page-up-action.h"
 #include "default-switch-page-action.h"
 #include "default-switch-profile-action.h"
 
@@ -60,6 +61,13 @@ static const BsActionEntry entries[] = {
     .name = N_("Multiple Actions"),
     .description = NULL,
   },
+  {
+    .id = "default-page-up-action",
+    .icon_name = "go-up-symbolic",
+    .name = N_("Go Up"),
+    .description = NULL,
+    .hidden = TRUE,
+  },
 };
 
 static BsAction *
@@ -74,6 +82,8 @@ default_action_factory_create_action (BsActionFactory *action_factory,
     return default_switch_page_action_new ();
   else if (g_strcmp0 (bs_action_info_get_id (action_info), "default-multi-action") == 0)
     return default_multi_action_new ();
+  else if (g_strcmp0 (bs_action_info_get_id (action_info), "default-page-up-action") == 0)
+    return default_page_up_action_new ();
 
   return NULL;
 }
