@@ -73,6 +73,11 @@ bs_actionable_handle_event (BsActionable *self,
   g_assert (BS_IS_ACTIONABLE (self));
   g_assert (BS_IS_EVENT (event));
 
+  g_debug ("Actionable %s (%p) handling event %s",
+           G_OBJECT_TYPE_NAME (self),
+           self,
+           G_OBJECT_TYPE_NAME (event));
+
   action = bs_actionable_get_action (self);
   if (action)
     bs_action_handle_event (action, event);
