@@ -35,4 +35,14 @@ BsEvent * bs_button_event_new (BsEventType   event_type,
                                BsStreamDeck *device,
                                BsButton     *button);
 
+/*
+ * BsTouchscreenEvent
+ */
+
+BsEvent * bs_touchscreen_event_new (BsEventType             event_type,
+                                    BsStreamDeck           *device,
+                                    BsTouchscreenSlot      *slot,
+                                    const graphene_point_t *start,
+                                    const graphene_point_t *end);
+
 G_END_DECLS

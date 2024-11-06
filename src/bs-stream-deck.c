@@ -37,6 +37,7 @@
 #include "bs-renderer.h"
 #include "bs-touchscreen-private.h"
 #include "bs-touchscreen-region.h"
+#include "bs-touchscreen-slot.h"
 
 #include <glib/gi18n.h>
 #include <hidapi.h>
@@ -982,6 +983,8 @@ read_state_plus (BsStreamDeck *self)
 
     case TOUCHSCREEN_EVENT:
       {
+        g_autoptr (BsTouchscreenSlot) touchscreen_slot = NULL;
+        g_autoptr (BsEvent) touchscreen_event = NULL;
         enum {
           SHORT_PRESS = 1,
           LONG_PRESS = 2,
@@ -1000,14 +1003,24 @@ read_state_plus (BsStreamDeck *self)
 
         g_debug ("Touchscreen event (%.0fx%.0f)", position.x, position.y);
 
+        touchscreen_slot = bs_touchscreen_pick_slot (touchscreen, &position);
+
         switch (touch_event_type)
           {
           case SHORT_PRESS:
-            bs_touchscreen_handle_short_press (touchscreen, &position);
+            touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_SHORT_PRESS,
+                                                          self,
+                                                          touchscreen_slot,
+                                                          &position,
+                                                          &position);
             break;
 
           case LONG_PRESS:
-            bs_touchscreen_handle_long_press (touchscreen, &position);
+            touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_LONG_PRESS,
+                                                          self,
+                                                          touchscreen_slot,
+                                                          &position,
+                                                          &position);
             break;
 
           case SWIPE:
@@ -1018,10 +1031,16 @@ read_state_plus (BsStreamDeck *self)
                                    (states[11] << 8) + states[10],
                                    (states[13] << 8) + states[12]);
 
-              bs_touchscreen_handle_swipe (touchscreen, &position, &release_position);
+            touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_SWIPE,
+                                                          self,
+                                                          touchscreen_slot,
+                                                          &position,
+                                                          &release_position);
             }
             break;
           }
+
+        bs_actionable_handle_event (BS_ACTIONABLE (touchscreen_slot), touchscreen_event);
       }
       break;
 

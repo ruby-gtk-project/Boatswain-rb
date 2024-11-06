@@ -23,7 +23,7 @@
 
 #include "bs-types.h"
 
-#include <glib-object.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -31,11 +31,11 @@ typedef enum
 {
   BS_BUTTON_PRESS,
   BS_BUTTON_RELEASE,
+  BS_TOUCHSCREEN_SHORT_PRESS,
+  BS_TOUCHSCREEN_LONG_PRESS,
+  BS_TOUCHSCREEN_SWIPE,
 
   // TODO: implement them
-  //BS_TOUCHSCREEN_SHORT_PRESS_EVENT,
-  //BS_TOUCHSCREEN_LONG_PRESS_EVENT,
-  //BS_TOUCHSCREEN_SWIPE_EVENT,
   //BS_DIAL_ROTATION_EVENT,
   //BS_DIAL_PRESS_EVENT,
   //BS_DIAL_RELEASE_EVENT,
@@ -83,5 +83,30 @@ GType bs_button_event_get_type (void) G_GNUC_CONST;
 BsButton * bs_button_event_get_button (BsButtonEvent *self);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsButtonEvent, g_object_unref)
+
+
+/*
+ * BsTouchscreenEvent
+ */
+
+#define BS_TYPE_TOUCHSCREEN_EVENT         (bs_touchscreen_event_get_type())
+#define BS_TOUCHSCREEN_EVENT(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), BS_TYPE_TOUCHSCREEN_EVENT, BsTouchscreenEvent))
+#define BS_TOUCHSCREEN_EVENT_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), BS_TYPE_TOUCHSCREEN_EVENT, BsTouchscreenEventClass))
+#define BS_IS_TOUCHSCREEN_EVENT(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), BS_TYPE_TOUCHSCREEN_EVENT))
+#define BS_IS_TOUCHSCREEN_EVENT_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), BS_TYPE_TOUCHSCREEN_EVENT))
+#define BS_TOUCHSCREEN_EVENT_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), BS_TYPE_TOUCHSCREEN_EVENT, BsTouchscreenEventClass))
+
+typedef struct _BsTouchscreenEvent BsTouchscreenEvent;
+typedef struct _BsTouchscreenEventClass BsTouchscreenEventClass;
+
+GType bs_touchscreen_event_get_type (void) G_GNUC_CONST;
+
+BsTouchscreenSlot * bs_touchscreen_event_get_slot (BsTouchscreenEvent *self);
+
+void bs_touchscreen_event_get_points (BsTouchscreenEvent *self,
+                                      graphene_point_t   *out_start,
+                                      graphene_point_t   *out_end);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsTouchscreenEvent, g_object_unref)
 
 G_END_DECLS

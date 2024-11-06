@@ -89,6 +89,36 @@ update_shortcut_row (DesktopKeyboardShortcutAction *self,
   gtk_label_set_text (GTK_LABEL (shortcut_label), accelerator);
 }
 
+static void
+activate_shortcut (DesktopKeyboardShortcutAction *self)
+{
+  if (self->modifiers & GDK_SUPER_MASK)
+    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Super_L);
+  if (self->modifiers & GDK_CONTROL_MASK)
+    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Control_L);
+  if (self->modifiers & GDK_SHIFT_MASK)
+    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Shift_L);
+  if (self->modifiers & GDK_ALT_MASK)
+    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Alt_L);
+  if (self->keysym != 0)
+    bs_desktop_controller_press_key (self->desktop_controller, self->keysym);
+}
+
+static void
+deactivate_shortcut (DesktopKeyboardShortcutAction *self)
+{
+  if (self->keysym != 0)
+    bs_desktop_controller_release_key (self->desktop_controller, self->keysym);
+  if (self->modifiers & GDK_ALT_MASK)
+    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Alt_L);
+  if (self->modifiers & GDK_SHIFT_MASK)
+    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Shift_L);
+  if (self->modifiers & GDK_CONTROL_MASK)
+    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Control_L);
+  if (self->modifiers & GDK_SUPER_MASK)
+    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Super_L);
+}
+
 
 /*
  * Callbacks
@@ -176,29 +206,20 @@ desktop_keyboard_shortcut_action_handle_event (BsAction *action,
   switch (bs_event_get_event_type (event))
     {
     case BS_BUTTON_PRESS:
-      if (self->modifiers & GDK_SUPER_MASK)
-        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Super_L);
-      if (self->modifiers & GDK_CONTROL_MASK)
-        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Control_L);
-      if (self->modifiers & GDK_SHIFT_MASK)
-        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Shift_L);
-      if (self->modifiers & GDK_ALT_MASK)
-        bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Alt_L);
-      if (self->keysym != 0)
-        bs_desktop_controller_press_key (self->desktop_controller, self->keysym);
+      activate_shortcut (self);
       break;
 
     case BS_BUTTON_RELEASE:
-      if (self->keysym != 0)
-        bs_desktop_controller_release_key (self->desktop_controller, self->keysym);
-      if (self->modifiers & GDK_ALT_MASK)
-        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Alt_L);
-      if (self->modifiers & GDK_SHIFT_MASK)
-        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Shift_L);
-      if (self->modifiers & GDK_CONTROL_MASK)
-        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Control_L);
-      if (self->modifiers & GDK_SUPER_MASK)
-        bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Super_L);
+      deactivate_shortcut (self);
+      break;
+
+    case BS_TOUCHSCREEN_SHORT_PRESS:
+    case BS_TOUCHSCREEN_LONG_PRESS:
+      activate_shortcut (self);
+      deactivate_shortcut (self);
+      break;
+
+    case BS_TOUCHSCREEN_SWIPE:
       break;
     }
 }

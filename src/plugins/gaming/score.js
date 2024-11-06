@@ -217,7 +217,7 @@ export const GamingScoreAction = GObject.registerClass({
 
     vfunc_handle_event(event) {
         switch (event.get_event_type()) {
-        case Bs.EventType.PRESS:
+        case Bs.EventType.BUTTON_PRESS:
             console.assert(this._timeoutId === undefined);
             console.assert(this._state === TimeoutState.DISABLED);
 
@@ -244,7 +244,7 @@ export const GamingScoreAction = GObject.registerClass({
             );
             break;
 
-        case Bs.EventType.RELEASE:
+        case Bs.EventType.BUTTON_RELEASE:
             switch (this._state) {
             case TimeoutState.SHORT:
                 this._applyAction(ScoreAction.INCREMENT);
@@ -263,7 +263,18 @@ export const GamingScoreAction = GObject.registerClass({
                 GLib.source_remove(this._timeoutId);
                 delete this._timeoutId;
             }
-        break;
+            break;
+
+        case Bs.EventType.TOUCHSCREEN_SHORT_PRESS:
+            this._applyAction(ScoreAction.INCREMENT);
+            break;
+
+        case Bs.EventType.TOUCHSCREEN_LONG_PRESS:
+            this._applyAction(ScoreAction.DECREMENT);
+            break;
+
+        case Bs.EventType.TOUCHSCREEN_SWIPE:
+            break;
     }
 
     }

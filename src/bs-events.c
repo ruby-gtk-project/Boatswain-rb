@@ -23,9 +23,10 @@
 
 #include "bs-button.h"
 #include "bs-stream-deck.h"
+#include "bs-touchscreen-slot.h"
 
 /* Map BsEventType to the appropriate GType */
-#define BS_N_EVENTS (BS_BUTTON_RELEASE + 1)
+#define BS_N_EVENTS (BS_TOUCHSCREEN_SWIPE + 1)
 static GType bs_event_types[BS_N_EVENTS];
 #define BS_EVENT_TYPE_SLOT(ETYPE) { bs_event_types[ETYPE] = g_define_type_id; }
 
@@ -34,6 +35,7 @@ bs_event_init_types_once (void)
 {
   g_type_ensure (BS_TYPE_EVENT);
   g_type_ensure (BS_TYPE_BUTTON_EVENT);
+  g_type_ensure (BS_TYPE_TOUCHSCREEN_EVENT);
 }
 
 
@@ -162,4 +164,103 @@ bs_button_event_get_button (BsButtonEvent *self)
   g_return_val_if_fail (BS_IS_BUTTON_EVENT (self), NULL);
 
   return self->button;
+}
+
+
+/*
+ * BsTouchscreenEvent
+ */
+
+struct _BsTouchscreenEvent
+{
+  BsEvent parent_instance;
+
+  BsTouchscreenSlot *slot;
+  graphene_point_t start;
+  graphene_point_t end;
+};
+
+struct _BsTouchscreenEventClass
+{
+  BsEventClass parent_class;
+};
+
+G_DEFINE_FINAL_TYPE_WITH_CODE (BsTouchscreenEvent, bs_touchscreen_event, BS_TYPE_EVENT,
+                               BS_EVENT_TYPE_SLOT (BS_TOUCHSCREEN_SHORT_PRESS)
+                               BS_EVENT_TYPE_SLOT (BS_TOUCHSCREEN_LONG_PRESS)
+                               BS_EVENT_TYPE_SLOT (BS_TOUCHSCREEN_SWIPE))
+
+static void
+bs_touchscreen_event_class_init (BsTouchscreenEventClass *klass)
+{
+}
+
+static void
+bs_touchscreen_event_init (BsTouchscreenEvent *self)
+{
+}
+
+BsEvent *
+bs_touchscreen_event_new (BsEventType             event_type,
+                          BsStreamDeck           *device,
+                          BsTouchscreenSlot      *slot,
+                          const graphene_point_t *start,
+                          const graphene_point_t *end)
+{
+  g_autoptr (BsTouchscreenEvent) touchscreen_event = NULL;
+
+  g_assert (event_type == BS_TOUCHSCREEN_SHORT_PRESS ||
+            event_type == BS_TOUCHSCREEN_LONG_PRESS ||
+            event_type == BS_TOUCHSCREEN_SWIPE);
+  g_assert (BS_IS_STREAM_DECK (device));
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (slot));
+  g_assert (start != NULL);
+  g_assert (end != NULL);
+
+  touchscreen_event = bs_event_alloc (event_type, device);
+  g_assert (BS_IS_TOUCHSCREEN_EVENT (touchscreen_event));
+
+  touchscreen_event->slot = slot;
+  graphene_point_init_from_point (&touchscreen_event->start, start);
+  graphene_point_init_from_point (&touchscreen_event->end, end);
+
+  return (BsEvent *) g_steal_pointer (&touchscreen_event);
+}
+
+/**
+ * bs_touchscreen_event_get_slot:
+ *
+ * Retrieves the #BsTouchscreenSlot that generated this event.
+ *
+ * Returns: (transfer none): a #BsTouchscreenSlot
+ */
+BsTouchscreenSlot *
+bs_touchscreen_event_get_slot (BsTouchscreenEvent *self)
+{
+  g_return_val_if_fail (BS_IS_TOUCHSCREEN_EVENT (self), NULL);
+
+  return self->slot;
+}
+
+/**
+ * bs_touchscreen_event_get_points:
+ * @out_start: (nullable)(out): return location for a #graphene_point_t
+ * @out_end: (nullable)(out): return location for a #graphene_point_t
+ *
+ * Retrieves the start and end points of this event. These points are
+ * in touchscreen coordinate space, with (0, 0) being the top left of
+ * the touchscreen.
+ */
+void
+bs_touchscreen_event_get_points (BsTouchscreenEvent *self,
+                                 graphene_point_t   *out_start,
+                                 graphene_point_t   *out_end)
+{
+  g_return_if_fail (BS_IS_TOUCHSCREEN_EVENT (self));
+
+  if (out_start)
+    *out_start = self->start;
+
+  if (out_end)
+    *out_end = self->end;
 }
