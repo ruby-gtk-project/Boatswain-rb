@@ -46,7 +46,8 @@ default_page_up_action_handle_event (BsAction *action,
 {
   BsStreamDeck *device;
 
-  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
+  if (bs_event_get_event_type (event) != BS_BUTTON_PRESS &&
+      bs_event_get_event_type (event) != BS_CURSOR_DOUBLE_CLICK)
     return;
 
   device = bs_event_get_device (event);
