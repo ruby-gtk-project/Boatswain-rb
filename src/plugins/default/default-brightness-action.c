@@ -97,15 +97,13 @@ default_brightness_action_handle_event (BsAction *action,
                                         BsEvent  *event)
 {
   DefaultBrightnessAction *self = DEFAULT_BRIGHTNESS_ACTION (action);
-  BsButton *button;
   BsStreamDeck *stream_deck;
   double brightness;
 
   if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
     return;
 
-  button = bs_action_get_button (action);
-  stream_deck = bs_button_get_stream_deck (button);
+  stream_deck = bs_event_get_device (event);
   brightness = bs_stream_deck_get_brightness (stream_deck);
 
   switch (self->mode)
