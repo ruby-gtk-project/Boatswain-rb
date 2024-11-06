@@ -29,6 +29,7 @@
 #include "bs-button-grid-region.h"
 #include "bs-button-widget.h"
 #include "bs-debug.h"
+#include "bs-events-private.h"
 #include "bs-selection-controller.h"
 
 #include <libpeas.h>
@@ -57,24 +58,6 @@ static GParamSpec *properties [N_PROPS];
 
 
 /*
- * Auxiliary methods
- */
-
-static inline gboolean
-is_switch_page_action (BsAction *action)
-{
-  const PeasPluginInfo *plugin_info;
-  BsActionFactory *factory;
-
-  factory = bs_action_get_factory (action);
-  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
-
-  return g_strcmp0 (peas_plugin_info_get_module_name (plugin_info), "default") == 0 &&
-         g_strcmp0 (bs_action_get_id (action), "default-switch-page-action") == 0;
-}
-
-
-/*
  * Callbacks
  */
 
@@ -83,17 +66,22 @@ on_flowbox_child_activated_cb (GtkFlowBox         *flowbox,
                                GtkFlowBoxChild    *child,
                                BsButtonGridWidget *self)
 {
-  BS_TODO ("Implement page changing");
-#if 0
   BsButton *button;
   BsAction *action;
 
   button = bs_button_widget_get_button (BS_BUTTON_WIDGET (child));
   action = bs_actionable_get_action (BS_ACTIONABLE (button));
 
-  if (action && is_switch_page_action (action))
-    bs_action_activate (action);
-#endif
+  if (action)
+    {
+      g_autoptr (BsEvent) cursor_event = NULL;
+      BsStreamDeck *device;
+
+      device = bs_device_region_get_stream_deck (BS_DEVICE_REGION (self->button_grid));
+      cursor_event = bs_cursor_event_new (BS_CURSOR_DOUBLE_CLICK, device);
+
+      bs_action_handle_event (action, cursor_event);
+    }
 }
 
 static void
