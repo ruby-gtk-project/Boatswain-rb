@@ -215,7 +215,7 @@ bs_page_new_root (JsonNode *node)
       if (!JSON_NODE_HOLDS_ARRAY (node))
         {
           g_warning ("JSON node is not an array");
-          goto out;
+          return g_steal_pointer (&page);
         }
 
       array = json_node_get_array (node);
@@ -226,9 +226,6 @@ bs_page_new_root (JsonNode *node)
           g_ptr_array_insert (page->items, i, bs_page_item_new_from_json (page, button_node));
         }
     }
-
-out:
-  ensure_first_subpage_item_is_move_up (page);
 
   return g_steal_pointer (&page);
 }
