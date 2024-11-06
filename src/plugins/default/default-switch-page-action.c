@@ -119,8 +119,7 @@ default_switch_page_action_deserialize_settings (BsAction   *action,
   if (json_object_has_member (object, "page"))
     {
       g_clear_object (&self->page);
-      self->page = bs_page_new_from_json (bs_stream_deck_get_active_profile (stream_deck),
-                                          bs_stream_deck_get_active_page (stream_deck),
+      self->page = bs_page_new_from_json (bs_stream_deck_get_active_page (stream_deck),
                                           json_object_get_member (object, "page"));
     }
 #endif
@@ -159,8 +158,7 @@ default_switch_page_action_constructed (GObject *object)
 
       bs_icon_set_icon_name (bs_action_get_icon (BS_ACTION (self)), "folder-symbolic");
 
-      self->page = bs_page_new_empty (bs_stream_deck_get_active_profile (stream_deck),
-                                      bs_stream_deck_get_active_page (stream_deck));
+      self->page = bs_page_new_empty (bs_stream_deck_get_active_page (stream_deck));
     }
   else
     {

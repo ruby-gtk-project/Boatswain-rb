@@ -185,7 +185,7 @@ bs_profile_new_empty (BsStreamDeck *stream_deck)
                           "stream-deck", stream_deck,
                           NULL);
 
-  profile->root_page = bs_page_new_empty (profile, NULL);
+  profile->root_page = bs_page_new_empty (NULL);
 
   return g_steal_pointer (&profile);
 }
@@ -212,7 +212,7 @@ bs_profile_new_from_json (BsStreamDeck *stream_deck,
                           "stream-deck", stream_deck,
                           NULL);
 
-  profile->root_page = bs_page_new_from_json (profile, NULL, json_object_get_member (object, "page"));
+  profile->root_page = bs_page_new_from_json (NULL, json_object_get_member (object, "page"));
 
   return g_steal_pointer (&profile);
 }

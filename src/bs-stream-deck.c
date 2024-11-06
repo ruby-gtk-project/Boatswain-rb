@@ -2099,7 +2099,6 @@ bs_stream_deck_push_page (BsStreamDeck  *self,
 {
   g_return_if_fail (BS_IS_STREAM_DECK (self));
   g_return_if_fail (BS_IS_PAGE (page));
-  g_return_if_fail (bs_page_get_profile (page) == self->active_profile);
   g_return_if_fail (g_queue_find (self->active_pages, page) == NULL);
   g_return_if_fail (bs_page_get_parent (page) == bs_stream_deck_get_active_page (self));
 

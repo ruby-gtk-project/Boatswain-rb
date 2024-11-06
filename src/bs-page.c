@@ -25,7 +25,6 @@
 #include "bs-empty-action.h"
 #include "bs-icon.h"
 #include "bs-page-item.h"
-#include "bs-profile.h"
 #include "bs-button.h"
 
 #include <libpeas.h>
@@ -35,7 +34,6 @@ struct _BsPage
   GObject parent_instance;
 
   GPtrArray *items;
-  BsProfile *profile;
   BsPage *parent;
 };
 
@@ -45,7 +43,6 @@ enum
 {
   PROP_0,
   PROP_PARENT,
-  PROP_PROFILE,
   N_PROPS
 };
 
@@ -120,10 +117,6 @@ bs_page_get_property (GObject    *object,
       g_value_set_object (value, self->parent);
       break;
 
-    case PROP_PROFILE:
-      g_value_set_object (value, self->profile);
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -144,11 +137,6 @@ bs_page_set_property (GObject      *object,
       self->parent = g_value_get_object (value);
       break;
 
-    case PROP_PROFILE:
-      g_assert (self->profile == NULL);
-      self->profile = g_value_get_object (value);
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -167,10 +155,6 @@ bs_page_class_init (BsPageClass *klass)
                                                  BS_TYPE_PAGE,
                                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
-  properties[PROP_PROFILE] = g_param_spec_object ("profile", NULL, NULL,
-                                                  BS_TYPE_PROFILE,
-                                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
-
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
@@ -187,13 +171,11 @@ bs_page_new (void)
 }
 
 BsPage *
-bs_page_new_empty (BsProfile *profile,
-                   BsPage    *parent)
+bs_page_new_empty (BsPage *parent)
 {
   g_autoptr (BsPage) page = NULL;
 
   page = g_object_new (BS_TYPE_PAGE,
-                       "profile", profile,
                        "parent", parent,
                        NULL);
 
@@ -203,16 +185,14 @@ bs_page_new_empty (BsProfile *profile,
 }
 
 BsPage *
-bs_page_new_from_json (BsProfile *profile,
-                       BsPage    *parent,
-                       JsonNode  *node)
+bs_page_new_from_json (BsPage   *parent,
+                       JsonNode *node)
 {
   g_autoptr (BsPage) page = NULL;
   JsonArray *array;
   guint i;
 
   page = g_object_new (BS_TYPE_PAGE,
-                       "profile", profile,
                        "parent", parent,
                        NULL);
 
@@ -287,14 +267,6 @@ bs_page_get_parent (BsPage *self)
   g_return_val_if_fail (BS_IS_PAGE (self), NULL);
 
   return self->parent;
-}
-
-BsProfile *
-bs_page_get_profile (BsPage *self)
-{
-  g_return_val_if_fail (BS_IS_PAGE (self), NULL);
-
-  return self->profile;
 }
 
 void
