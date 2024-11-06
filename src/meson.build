@@ -99,6 +99,7 @@ gir_headers = [
   'bs-action.h',
   'bs-action-factory.h',
   'bs-action-info.h',
+  'bs-button.h',
   'bs-desktop-controller.h',
   'bs-empty-action.h',
   'bs-events.h',
@@ -107,7 +108,6 @@ gir_headers = [
   'bs-page-item.h',
   'bs-profile.h',
   'bs-stream-deck.h',
-  'bs-button.h',
 ]
 
 gnome.generate_gir(
