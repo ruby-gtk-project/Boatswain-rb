@@ -188,6 +188,13 @@ bs_touchscreen_slot_new (BsTouchscreen *touchscreen,
   return g_steal_pointer (&slot);
 }
 
+/**
+ * bs_touchscreen_slot_get_touchscreen:
+ *
+ * Retrieves the #BsTouchscreen of @self.
+ *
+ * Returns: (transfer none): the #BsTouchscreen this slot belongs to
+ */
 BsTouchscreen *
 bs_touchscreen_slot_get_touchscreen (BsTouchscreenSlot *self)
 {
