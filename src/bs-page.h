@@ -46,8 +46,10 @@ BsProfile * bs_page_get_profile (BsPage *self);
 BsPageItem * bs_page_get_item (BsPage  *self,
                                uint8_t  position);
 
-void bs_page_update_item_from_button (BsPage   *self,
-                                      BsButton *button);
+void bs_page_update_item (BsPage   *self,
+                          size_t    position,
+                          BsAction *action,
+                          BsIcon   *custom_icon);
 
 void bs_page_update_all_items (BsPage *self);
 

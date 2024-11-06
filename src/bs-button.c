@@ -88,7 +88,7 @@ update_page (BsButton *self)
 
   if (page && self->inhibit_page_updates_counter == 0)
     {
-      bs_page_update_item_from_button (page, self);
+      bs_page_update_item (page, self->position, self->action, self->custom_icon);
       bs_stream_deck_save (self->stream_deck);
     }
 }

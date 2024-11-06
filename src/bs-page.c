@@ -298,19 +298,17 @@ bs_page_get_profile (BsPage *self)
 }
 
 void
-bs_page_update_item_from_button (BsPage   *self,
-                                 BsButton *button)
+bs_page_update_item (BsPage   *self,
+                     size_t    position,
+                     BsAction *action,
+                     BsIcon   *custom_icon)
+
 {
   BsPageItem *item;
-  BsAction *action;
-  BsIcon *custom_icon;
-  GType action_type;
-  uint8_t position;
 
   g_return_if_fail (BS_IS_PAGE (self));
-  g_return_if_fail (BS_IS_BUTTON (button));
+  g_return_if_fail (!custom_icon || BS_IS_ICON (custom_icon));
 
-  position = bs_button_get_position (button);
   item = get_item (self, position);
 
   if (!item)
@@ -319,13 +317,9 @@ bs_page_update_item_from_button (BsPage   *self,
       g_ptr_array_insert (self->items, position, item);
     }
 
-  action = bs_actionable_get_action (BS_ACTIONABLE (button));
-  action_type = G_OBJECT_TYPE (action);
-
-  custom_icon = bs_button_get_custom_icon (button);
   bs_page_item_set_custom_icon (item, custom_icon ? bs_icon_to_json (custom_icon) : NULL);
 
-  if (action_type == BS_TYPE_EMPTY_ACTION)
+  if (BS_IS_EMPTY_ACTION (action))
     {
       bs_page_item_set_item_type (item, BS_PAGE_ITEM_EMPTY);
       bs_page_item_set_factory (item, NULL);

@@ -209,7 +209,11 @@ update_pages (BsStreamDeck *self)
   for (size_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
     {
       BsButton *button = find_button_at_region (self, "main-button-grid", i);
-      bs_page_update_item_from_button (active_page, button);
+
+      bs_page_update_item (active_page,
+                           i,
+                           bs_actionable_get_action (BS_ACTIONABLE (button)),
+                           bs_button_get_custom_icon (button));
     }
 
   for (GList *l = g_queue_peek_head_link (self->active_pages); l; l = l->next)
@@ -2126,7 +2130,14 @@ bs_stream_deck_pop_page (BsStreamDeck *self)
   page = g_queue_pop_head (self->active_pages);
 
   for (size_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
-    bs_page_update_item_from_button (page, find_button_at_region (self, "main-button-grid", i));
+    {
+      BsButton *button = find_button_at_region (self, "main-button-grid", i);
+
+      bs_page_update_item (page,
+                           i,
+                           bs_actionable_get_action (BS_ACTIONABLE (button)),
+                           bs_button_get_custom_icon (button));
+    }
 
   bs_page_update_all_items (g_queue_peek_head (self->active_pages));
 
