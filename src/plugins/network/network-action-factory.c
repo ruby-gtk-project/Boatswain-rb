@@ -45,7 +45,6 @@ static const BsActionEntry entries[] = {
 
 static BsAction *
 network_action_factory_create_action (BsActionFactory *action_factory,
-                                      BsButton        *button,
                                       BsActionInfo    *action_info)
 {
   NetworkActionFactory *self = (NetworkActionFactory *)action_factory;
@@ -53,7 +52,7 @@ network_action_factory_create_action (BsActionFactory *action_factory,
   g_assert (NETWORK_IS_ACTION_FACTORY (self));
 
   if (g_strcmp0 (bs_action_info_get_id (action_info), "network-http-action") == 0)
-    return network_http_action_new (button, self->session);
+    return network_http_action_new (self->session);
 
   return NULL;
 }

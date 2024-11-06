@@ -31,6 +31,6 @@ G_DECLARE_FINAL_TYPE (LauncherOpenFileAction,
                       LAUNCHER, OPEN_FILE_ACTION,
                       BsAction)
 
-BsAction * launcher_open_file_action_new (BsButton *button);
+BsAction * launcher_open_file_action_new (void);
 
 G_END_DECLS

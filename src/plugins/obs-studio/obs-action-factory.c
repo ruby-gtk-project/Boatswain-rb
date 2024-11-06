@@ -82,23 +82,22 @@ static const BsActionEntry entries[] = {
 
 static BsAction *
 obs_action_factory_create_action (BsActionFactory *action_factory,
-                                  BsButton        *button,
                                   BsActionInfo    *action_info)
 {
   ObsActionFactory *self = OBS_ACTION_FACTORY (action_factory);
 
   if (g_strcmp0 (bs_action_info_get_id (action_info), "obs-switch-scene-action") == 0)
-    return obs_switch_scene_action_new (button, self->connection_manager);
+    return obs_switch_scene_action_new (self->connection_manager);
   else if (g_strcmp0 (bs_action_info_get_id (action_info), "obs-record-action") == 0)
-    return obs_record_action_new (button, self->connection_manager);
+    return obs_record_action_new (self->connection_manager);
   else if (g_strcmp0 (bs_action_info_get_id (action_info), "obs-stream-action") == 0)
-    return obs_stream_action_new (button, self->connection_manager);
+    return obs_stream_action_new (self->connection_manager);
   else if (g_strcmp0 (bs_action_info_get_id (action_info), "obs-virtualcam-action") == 0)
-    return obs_virtualcam_action_new (button, self->connection_manager);
+    return obs_virtualcam_action_new (self->connection_manager);
   else if (g_strcmp0 (bs_action_info_get_id (action_info), "obs-toggle-mute-action") == 0)
-    return obs_toggle_source_action_new (button, self->connection_manager, OBS_SOURCE_CAP_AUDIO);
+    return obs_toggle_source_action_new (self->connection_manager, OBS_SOURCE_CAP_AUDIO);
   else if (g_strcmp0 (bs_action_info_get_id (action_info), "obs-toggle-source-action") == 0)
-    return obs_toggle_source_action_new (button, self->connection_manager, OBS_SOURCE_CAP_VIDEO);
+    return obs_toggle_source_action_new (self->connection_manager, OBS_SOURCE_CAP_VIDEO);
 
   return NULL;
 }

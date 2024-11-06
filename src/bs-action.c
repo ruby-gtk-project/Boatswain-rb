@@ -40,19 +40,11 @@ G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (BsAction, bs_action, G_TYPE_OBJECT)
 
 enum
 {
-  PROP_0,
-  PROP_BUTTON,
-  N_PROPS,
-};
-
-enum
-{
   CHANGED,
   N_SIGNALS,
 };
 
 static guint signals[N_SIGNALS];
-static GParamSpec* properties[N_PROPS];
 
 
 /*
@@ -91,62 +83,13 @@ bs_action_finalize (GObject *object)
 }
 
 static void
-bs_action_get_property (GObject    *object,
-                        guint       prop_id,
-                        GValue     *value,
-                        GParamSpec *pspec)
-{
-  BsAction *self = BS_ACTION (object);
-  BsActionPrivate *priv = bs_action_get_instance_private (self);
-
-  switch (prop_id)
-    {
-    case PROP_BUTTON:
-      g_value_set_object (value, priv->button);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-bs_action_set_property (GObject      *object,
-                        guint         prop_id,
-                        const GValue *value,
-                        GParamSpec   *pspec)
-{
-  BsAction *self = BS_ACTION (object);
-  BsActionPrivate *priv = bs_action_get_instance_private (self);
-
-  switch (prop_id)
-    {
-    case PROP_BUTTON:
-      g_assert (priv->button == NULL);
-      priv->button = g_value_get_object (value);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
 bs_action_class_init (BsActionClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = bs_action_finalize;
-  object_class->get_property = bs_action_get_property;
-  object_class->set_property = bs_action_set_property;
 
   klass->get_icon = bs_action_real_get_icon;
-
-  properties[PROP_BUTTON] = g_param_spec_object ("button", NULL, NULL,
-                                                 BS_TYPE_BUTTON,
-                                                 G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
-
-  g_object_class_install_properties (object_class, N_PROPS, properties);
 
   signals[CHANGED] = g_signal_new ("changed",
                                    BS_TYPE_ACTION,
@@ -325,26 +268,6 @@ bs_action_deserialize_settings (BsAction   *self,
     BS_ACTION_GET_CLASS (self)->deserialize_settings (self, settings);
 
   BS_EXIT;
-}
-
-/**
- * bs_action_get_button:
- * @self: a #BsAction
- *
- * Retrieves the #BsButton that @self is attached
- * to, or %NULL if it's not attached to any physical button.
- *
- * Returns: (transfer none)(nullable): a #BsButton
- */
-BsButton *
-bs_action_get_button (BsAction *self)
-{
-  BsActionPrivate *priv;
-
-  g_return_val_if_fail (BS_IS_ACTION (self), NULL);
-
-  priv = bs_action_get_instance_private (self);
-  return priv->button;
 }
 
 /**

@@ -27,6 +27,6 @@ G_BEGIN_DECLS
 #define LAUNCHER_TYPE_OPEN_URL_ACTION (launcher_open_url_action_get_type())
 G_DECLARE_FINAL_TYPE (LauncherOpenUrlAction, launcher_open_url_action, LAUNCHER, OPEN_URL_ACTION, BsAction)
 
-BsAction * launcher_open_url_action_new (BsButton *button);
+BsAction * launcher_open_url_action_new (void);
 
 G_END_DECLS

@@ -29,6 +29,6 @@ G_BEGIN_DECLS
 #define BS_TYPE_EMPTY_ACTION (bs_empty_action_get_type())
 G_DECLARE_FINAL_TYPE (BsEmptyAction, bs_empty_action, BS, EMPTY_ACTION, BsAction)
 
-BsAction * bs_empty_action_new (BsButton *button);
+BsAction * bs_empty_action_new (void);
 
 G_END_DECLS

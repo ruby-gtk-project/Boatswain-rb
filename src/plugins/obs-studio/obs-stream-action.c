@@ -166,11 +166,9 @@ obs_stream_action_init (ObsStreamAction *self)
 }
 
 BsAction *
-obs_stream_action_new (BsButton             *button,
-                       ObsConnectionManager *connection_manager)
+obs_stream_action_new (ObsConnectionManager *connection_manager)
 {
   return g_object_new (OBS_TYPE_STREAM_ACTION,
-                       "button", button,
                        "connection-manager", connection_manager,
                        NULL);
 }

@@ -243,13 +243,15 @@ on_action_row_activated_cb (GtkListBoxRow  *row,
   BsPageItem *item;
   BsIcon *custom_icon;
   BsPage *active_page;
+  size_t position;
 
   stream_deck = bs_button_get_stream_deck (self->button);
   active_page = bs_stream_deck_get_active_page (stream_deck);
   plugin_info = g_object_get_data (G_OBJECT (row), "plugin-info");
   action_info = g_object_get_data (G_OBJECT (row), "action-info");
 
-  item = bs_page_get_item (active_page, bs_button_get_position (self->button));
+  position = bs_button_get_position (self->button);
+  item = bs_page_get_item (active_page, position);
   bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
   bs_page_item_set_factory (item, peas_plugin_info_get_module_name (plugin_info));
   bs_page_item_set_action (item, bs_action_info_get_id (action_info));
@@ -258,7 +260,7 @@ on_action_row_activated_cb (GtkListBoxRow  *row,
   if (custom_icon)
     bs_page_item_set_custom_icon (item, bs_icon_to_json (custom_icon));
 
-  bs_page_realize (active_page, self->button, &new_custom_icon, &new_action, &error);
+  bs_page_realize (active_page, position, &new_custom_icon, &new_action, &error);
 
   if (error)
     g_warning ("Error realizing action: %s", error->message);
@@ -468,7 +470,7 @@ on_remove_row_activated_cb (GtkButton      *button,
 {
   g_autoptr (BsAction) empty_action = NULL;
 
-  empty_action = bs_empty_action_new (self->button);
+  empty_action = bs_empty_action_new ();
   bs_actionable_set_action (BS_ACTIONABLE (self->button), empty_action);
 }
 

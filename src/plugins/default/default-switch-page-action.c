@@ -44,6 +44,7 @@ G_DEFINE_FINAL_TYPE (DefaultSwitchPageAction, default_switch_page_action, BS_TYP
 static gboolean
 is_enter_folder_action (DefaultSwitchPageAction *self)
 {
+#if 0
   BsButton *button;
   BsStreamDeck *stream_deck;
   BsPage *active_page;
@@ -54,6 +55,9 @@ is_enter_folder_action (DefaultSwitchPageAction *self)
 
   return bs_button_get_position (button) != 0 ||
          bs_page_get_parent (active_page) == NULL;
+#else
+  return FALSE;
+#endif
 }
 
 
@@ -104,6 +108,7 @@ static void
 default_switch_page_action_deserialize_settings (BsAction   *action,
                                                  JsonObject *object)
 {
+#if 0
   DefaultSwitchPageAction *self = DEFAULT_SWITCH_PAGE_ACTION (action);
   BsButton *button;
   BsStreamDeck *stream_deck;
@@ -118,6 +123,7 @@ default_switch_page_action_deserialize_settings (BsAction   *action,
                                           bs_stream_deck_get_active_page (stream_deck),
                                           json_object_get_member (object, "page"));
     }
+#endif
 }
 
 
@@ -138,9 +144,10 @@ default_switch_page_action_finalize (GObject *object)
 static void
 default_switch_page_action_constructed (GObject *object)
 {
-  DefaultSwitchPageAction *self = (DefaultSwitchPageAction *)object;
-
   G_OBJECT_CLASS (default_switch_page_action_parent_class)->constructed (object);
+
+#if 0
+  DefaultSwitchPageAction *self = (DefaultSwitchPageAction *)object;
 
   if (is_enter_folder_action (self))
     {
@@ -159,6 +166,7 @@ default_switch_page_action_constructed (GObject *object)
     {
       bs_icon_set_icon_name (bs_action_get_icon (BS_ACTION (self)), "go-up-symbolic");
     }
+#endif
 }
 
 static void
@@ -181,11 +189,9 @@ default_switch_page_action_init (DefaultSwitchPageAction *self)
 }
 
 BsAction *
-default_switch_page_action_new (BsButton *button)
+default_switch_page_action_new (void)
 {
-  return g_object_new (DEFAULT_TYPE_SWITCH_PAGE_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (DEFAULT_TYPE_SWITCH_PAGE_ACTION, NULL);
 }
 
 BsPage *

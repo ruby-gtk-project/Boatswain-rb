@@ -353,14 +353,14 @@ load_active_page (BsStreamDeck *self)
 
   for (uint8_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
     {
-      BsButton *button;
       g_autoptr (BsAction) action = NULL;
       g_autoptr (BsIcon) custom_icon = NULL;
       g_autoptr (GError) error = NULL;
+      BsButton *button;
 
       button = find_button_at_region (self, "main-button-grid", i);
 
-      bs_page_realize (active_page, button, &custom_icon, &action, &error);
+      bs_page_realize (active_page, i, &custom_icon, &action, &error);
 
       if (error)
         {

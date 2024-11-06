@@ -36,7 +36,7 @@ typedef enum
 #define SOUNDBOARD_TYPE_PLAY_ACTION (soundboard_play_action_get_type())
 G_DECLARE_FINAL_TYPE (SoundboardPlayAction, soundboard_play_action, SOUNDBOARD, PLAY_ACTION, BsAction)
 
-BsAction * soundboard_play_action_new (BsButton *button);
+BsAction * soundboard_play_action_new (void);
 
 void soundboard_play_action_set_file (SoundboardPlayAction *self,
                                       GFile                *file);

@@ -309,18 +309,16 @@ default_multi_action_deserialize_settings (BsAction   *action,
         }
       else if (g_strcmp0 (type, "action") == 0)
         {
-          BsButton *button;
           BsActionFactory *factory;
           BsActionInfo *action_info;
           JsonNode *settings;
 
-          button = bs_action_get_button (action);
           factory = get_action_factory (json_object_get_string_member (json_entry, "factory"));
           action_info = bs_action_factory_get_info (factory, json_object_get_string_member (json_entry, "action"));
 
           entry = g_new0 (MultiActionEntry, 1);
           entry->entry_type = MULTI_ACTION_ENTRY_ACTION;
-          entry->v.action = bs_action_factory_create_action (factory, button, action_info);
+          entry->v.action = bs_action_factory_create_action (factory, action_info);
 
           settings = json_object_get_member (json_entry, "settings");
           if (settings)
@@ -386,11 +384,9 @@ default_multi_action_init (DefaultMultiAction *self)
 }
 
 BsAction *
-default_multi_action_new (BsButton *button)
+default_multi_action_new (void)
 {
-  return g_object_new (DEFAULT_TYPE_MULTI_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (DEFAULT_TYPE_MULTI_ACTION, NULL);
 }
 
 GPtrArray *

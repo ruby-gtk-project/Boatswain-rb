@@ -46,15 +46,15 @@ BsProfile * bs_page_get_profile (BsPage *self);
 BsPageItem * bs_page_get_item (BsPage  *self,
                                uint8_t  position);
 
-void bs_page_update_item_from_button (BsPage             *self,
+void bs_page_update_item_from_button (BsPage   *self,
                                       BsButton *button);
 
 void bs_page_update_all_items (BsPage *self);
 
-gboolean bs_page_realize (BsPage              *self,
-                          BsButton  *button,
-                          BsIcon             **out_custom_icon,
-                          BsAction           **out_action,
-                          GError             **error);
+gboolean bs_page_realize (BsPage    *self,
+                          size_t     position,
+                          BsIcon   **out_custom_icon,
+                          BsAction **out_action,
+                          GError   **error);
 
 G_END_DECLS

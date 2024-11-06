@@ -30,6 +30,6 @@ G_BEGIN_DECLS
 #define DEFAULT_TYPE_MULTI_ACTION (default_multi_action_get_type())
 G_DECLARE_FINAL_TYPE (DefaultMultiAction, default_multi_action, DEFAULT, MULTI_ACTION, BsAction)
 
-BsAction * default_multi_action_new (BsButton *button);
+BsAction * default_multi_action_new (void);
 
 G_END_DECLS

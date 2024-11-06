@@ -45,7 +45,6 @@ static const BsActionEntry entries[] = {
 
 static BsAction *
 desktop_action_factory_create_action (BsActionFactory *action_factory,
-                                      BsButton        *button,
                                       BsActionInfo    *action_info)
 {
   DesktopActionFactory *self = (DesktopActionFactory *)action_factory;

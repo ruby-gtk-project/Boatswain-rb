@@ -367,11 +367,9 @@ obs_switch_scene_action_init (ObsSwitchSceneAction *self)
 }
 
 BsAction *
-obs_switch_scene_action_new (BsButton             *button,
-                             ObsConnectionManager *connection_manager)
+obs_switch_scene_action_new (ObsConnectionManager *connection_manager)
 {
   return g_object_new (OBS_TYPE_SWITCH_SCENE_ACTION,
-                       "button", button,
                        "connection-manager", connection_manager,
                        NULL);
 }

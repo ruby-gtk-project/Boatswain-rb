@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 #define LAUNCHER_TYPE_LAUNCH_ACTION (launcher_launch_action_get_type())
 G_DECLARE_FINAL_TYPE (LauncherLaunchAction, launcher_launch_action, LAUNCHER, LAUNCH_ACTION, BsAction)
 
-BsAction * launcher_launch_action_new (BsButton *button);
+BsAction * launcher_launch_action_new (void);
 
 void launcher_launch_action_set_app (LauncherLaunchAction *self,
                                      GAppInfo             *app_info);

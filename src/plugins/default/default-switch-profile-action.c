@@ -229,16 +229,6 @@ on_device_manager_device_removed_cb (BsDeviceManager            *device_manager,
   update_active_profile (self);
 }
 
-static void
-on_profiles_items_changed_cb (GListModel                 *list,
-                              unsigned int                position,
-                              unsigned int                removed,
-                              unsigned int                added,
-                              DefaultSwitchProfileAction *self)
-{
-  update_active_profile (self);
-}
-
 
 /*
  * BsAction overrides
@@ -403,29 +393,14 @@ static void
 default_switch_profile_action_constructed (GObject *object)
 {
   DefaultSwitchProfileAction *self = (DefaultSwitchProfileAction *)object;
-  BsButton *button;
-  BsStreamDeck *stream_deck;
-  GListModel *profiles;
   BsIcon *icon;
 
   G_OBJECT_CLASS (default_switch_profile_action_parent_class)->constructed (object);
 
-  button = bs_action_get_button (BS_ACTION (self));
-  stream_deck = bs_button_get_stream_deck (button);
-
-  self->serial_number = g_strdup (bs_stream_deck_get_serial_number (stream_deck));
-  if (bs_stream_deck_get_active_profile (stream_deck))
-    self->profile_id = g_strdup (bs_profile_get_id (bs_stream_deck_get_active_profile (stream_deck)));
-
-  profiles = bs_stream_deck_get_profiles (stream_deck);
-  g_signal_connect_object (profiles,
-                           "items-changed",
-                           G_CALLBACK (on_profiles_items_changed_cb),
-                           self,
-                           0);
-
   icon = bs_action_get_icon (BS_ACTION (self));
   bs_icon_set_icon_name (icon, "preferences-desktop-apps-symbolic");
+
+  update_active_profile (self);
 }
 
 
@@ -463,9 +438,7 @@ default_switch_profile_action_init (DefaultSwitchProfileAction *self)
 }
 
 BsAction *
-default_switch_profile_action_new (BsButton *button)
+default_switch_profile_action_new (void)
 {
-  return g_object_new (DEFAULT_TYPE_SWITCH_PROFILE_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (DEFAULT_TYPE_SWITCH_PROFILE_ACTION, NULL);
 }

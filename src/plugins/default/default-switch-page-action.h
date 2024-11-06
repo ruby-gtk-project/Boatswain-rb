@@ -31,6 +31,6 @@ G_BEGIN_DECLS
 #define DEFAULT_TYPE_SWITCH_PAGE_ACTION (default_switch_page_action_get_type())
 G_DECLARE_FINAL_TYPE (DefaultSwitchPageAction, default_switch_page_action, DEFAULT, SWITCH_PAGE_ACTION, BsAction)
 
-BsAction * default_switch_page_action_new (BsButton *button);
+BsAction * default_switch_page_action_new (void);
 
 G_END_DECLS

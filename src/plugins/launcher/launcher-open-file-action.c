@@ -316,10 +316,8 @@ launcher_open_file_action_init (LauncherOpenFileAction *self)
 }
 
 BsAction *
-launcher_open_file_action_new (BsButton *button)
+launcher_open_file_action_new (void)
 {
-  return g_object_new (LAUNCHER_TYPE_OPEN_FILE_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (LAUNCHER_TYPE_OPEN_FILE_ACTION, NULL);
 }
 

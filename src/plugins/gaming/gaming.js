@@ -43,10 +43,10 @@ export const GamingActionFactory = GObject.registerClass({
             this.add_action(new Bs.ActionInfo(entry));
     }
 
-    vfunc_create_action(button, info) {
+    vfunc_create_action(info) {
         switch (info.id) {
         case 'gaming-score-action':
-            return new GamingScoreAction(button);
+            return new GamingScoreAction();
         default:
             return null;
         }

@@ -29,7 +29,6 @@ G_BEGIN_DECLS
 #define OBS_TYPE_SWITCH_SCENE_ACTION (obs_switch_scene_action_get_type())
 G_DECLARE_FINAL_TYPE (ObsSwitchSceneAction, obs_switch_scene_action, OBS, SWITCH_SCENE_ACTION, ObsAction)
 
-BsAction * obs_switch_scene_action_new (BsButton             *button,
-                                        ObsConnectionManager *connection_manager);
+BsAction * obs_switch_scene_action_new (ObsConnectionManager *connection_manager);
 
 G_END_DECLS

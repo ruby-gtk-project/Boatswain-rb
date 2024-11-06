@@ -29,7 +29,6 @@ G_BEGIN_DECLS
 #define OBS_TYPE_STREAM_ACTION (obs_stream_action_get_type())
 G_DECLARE_FINAL_TYPE (ObsStreamAction, obs_stream_action, OBS, STREAM_ACTION, ObsAction)
 
-BsAction *obs_stream_action_new (BsButton             *button,
-                                 ObsConnectionManager *connection_manager);
+BsAction *obs_stream_action_new (ObsConnectionManager *connection_manager);
 
 G_END_DECLS

@@ -208,11 +208,9 @@ launcher_launch_action_init (LauncherLaunchAction *self)
 }
 
 BsAction *
-launcher_launch_action_new (BsButton *button)
+launcher_launch_action_new (void)
 {
-  return g_object_new (LAUNCHER_TYPE_LAUNCH_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (LAUNCHER_TYPE_LAUNCH_ACTION, NULL);
 }
 
 void

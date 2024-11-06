@@ -383,11 +383,9 @@ network_http_action_init (NetworkHttpAction *self)
 }
 
 BsAction *
-network_http_action_new (BsButton *button,
-                         SoupSession        *session)
+network_http_action_new (SoupSession *session)
 {
   return g_object_new (NETWORK_TYPE_HTTP_ACTION,
-                       "button", button,
                        "session", session,
                        NULL);
 }

@@ -349,11 +349,9 @@ soundboard_play_action_init (SoundboardPlayAction *self)
 }
 
 BsAction *
-soundboard_play_action_new (BsButton *button)
+soundboard_play_action_new (void)
 {
-  return g_object_new (SOUNDBOARD_TYPE_PLAY_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (SOUNDBOARD_TYPE_PLAY_ACTION, NULL);
 }
 
 void

@@ -43,8 +43,7 @@ typedef enum
 #define NETWORK_TYPE_HTTP_ACTION (network_http_action_get_type())
 G_DECLARE_FINAL_TYPE (NetworkHttpAction, network_http_action, NETWORK, HTTP_ACTION, BsAction)
 
-BsAction * network_http_action_new (BsButton *button,
-                                    SoupSession        *session);
+BsAction * network_http_action_new (SoupSession *session);
 
 GFile * network_http_action_get_file (NetworkHttpAction *self);
 void    network_http_action_set_file (NetworkHttpAction *self,

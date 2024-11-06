@@ -29,7 +29,6 @@ G_BEGIN_DECLS
 #define OBS_TYPE_VIRTUALCAM_ACTION (obs_virtualcam_action_get_type())
 G_DECLARE_FINAL_TYPE (ObsVirtualCamAction, obs_virtualcam_action, OBS, VIRTUALCAM_ACTION, ObsAction)
 
-BsAction *obs_virtualcam_action_new (BsButton             *button,
-                                     ObsConnectionManager *connection_manager);
+BsAction *obs_virtualcam_action_new (ObsConnectionManager *connection_manager);
 
 G_END_DECLS

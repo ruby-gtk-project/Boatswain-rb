@@ -30,6 +30,6 @@ G_BEGIN_DECLS
 #define DEFAULT_TYPE_BRIGHTNESS_ACTION (default_brightness_action_get_type())
 G_DECLARE_FINAL_TYPE (DefaultBrightnessAction, default_brightness_action, DEFAULT, BRIGHTNESS_ACTION, BsAction)
 
-BsAction * default_brightness_action_new (BsButton *button);
+BsAction * default_brightness_action_new (void);
 
 G_END_DECLS

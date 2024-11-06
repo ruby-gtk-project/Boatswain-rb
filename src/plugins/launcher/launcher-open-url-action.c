@@ -187,10 +187,8 @@ launcher_open_url_action_init (LauncherOpenUrlAction *self)
 }
 
 BsAction *
-launcher_open_url_action_new (BsButton *button)
+launcher_open_url_action_new (void)
 {
-  return g_object_new (LAUNCHER_TYPE_OPEN_URL_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (LAUNCHER_TYPE_OPEN_URL_ACTION, NULL);
 }
 

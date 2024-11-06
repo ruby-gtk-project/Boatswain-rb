@@ -297,9 +297,7 @@ default_brightness_action_init (DefaultBrightnessAction *self)
 }
 
 BsAction *
-default_brightness_action_new (BsButton *button)
+default_brightness_action_new (void)
 {
-  return g_object_new (DEFAULT_TYPE_BRIGHTNESS_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (DEFAULT_TYPE_BRIGHTNESS_ACTION, NULL);
 }

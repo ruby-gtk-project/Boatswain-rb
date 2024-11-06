@@ -38,9 +38,7 @@ bs_empty_action_init (BsEmptyAction *self)
 }
 
 BsAction *
-bs_empty_action_new (BsButton *button)
+bs_empty_action_new (void)
 {
-  return g_object_new (BS_TYPE_EMPTY_ACTION,
-                       "button", button,
-                       NULL);
+  return g_object_new (BS_TYPE_EMPTY_ACTION, NULL);
 }

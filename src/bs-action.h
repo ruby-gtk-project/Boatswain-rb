@@ -49,7 +49,6 @@ struct _BsActionClass
 BsIcon * bs_action_get_icon (BsAction *self);
 const char * bs_action_get_id (BsAction *self);
 const char * bs_action_get_name (BsAction *self);
-BsButton * bs_action_get_button (BsAction *self);
 GtkWidget * bs_action_get_preferences (BsAction *self);
 void bs_action_changed (BsAction *self);
 

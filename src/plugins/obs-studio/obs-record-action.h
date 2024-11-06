@@ -29,7 +29,6 @@ G_BEGIN_DECLS
 #define OBS_TYPE_RECORD_ACTION (obs_record_action_get_type())
 G_DECLARE_FINAL_TYPE (ObsRecordAction, obs_record_action, OBS, RECORD_ACTION, ObsAction)
 
-BsAction *obs_record_action_new (BsButton             *button,
-                                 ObsConnectionManager *connection_manager);
+BsAction *obs_record_action_new (ObsConnectionManager *connection_manager);
 
 G_END_DECLS

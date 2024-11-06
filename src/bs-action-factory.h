@@ -41,17 +41,15 @@ struct _BsActionFactoryClass
 {
   PeasExtensionBaseClass parent_class;
 
-  BsAction * (*create_action) (BsActionFactory    *self,
-                               BsButton *button,
-                               BsActionInfo       *action_info);
+  BsAction * (*create_action) (BsActionFactory *self,
+                               BsActionInfo    *action_info);
 };
 
 BsActionInfo * bs_action_factory_get_info (BsActionFactory *self,
                                            const char      *id);
 
-BsAction * bs_action_factory_create_action (BsActionFactory    *self,
-                                            BsButton *button,
-                                            BsActionInfo       *action_info);
+BsAction * bs_action_factory_create_action (BsActionFactory *self,
+                                            BsActionInfo    *action_info);
 
 
 void bs_action_factory_add_action (BsActionFactory *self,

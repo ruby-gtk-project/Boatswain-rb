@@ -30,6 +30,6 @@ G_BEGIN_DECLS
 #define DEFAULT_TYPE_SWITCH_PROFILE_ACTION (default_switch_profile_action_get_type())
 G_DECLARE_FINAL_TYPE (DefaultSwitchProfileAction, default_switch_profile_action, DEFAULT, SWITCH_PROFILE_ACTION, BsAction)
 
-BsAction * default_switch_profile_action_new (BsButton *button);
+BsAction * default_switch_profile_action_new (void);
 
 G_END_DECLS

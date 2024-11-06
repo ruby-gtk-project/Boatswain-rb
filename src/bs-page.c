@@ -298,7 +298,7 @@ bs_page_get_profile (BsPage *self)
 }
 
 void
-bs_page_update_item_from_button (BsPage             *self,
+bs_page_update_item_from_button (BsPage   *self,
                                  BsButton *button)
 {
   BsPageItem *item;
@@ -365,11 +365,11 @@ bs_page_update_all_items (BsPage *self)
 }
 
 gboolean
-bs_page_realize (BsPage              *self,
-                 BsButton  *button,
-                 BsIcon             **out_custom_icon,
-                 BsAction           **out_action,
-                 GError             **error)
+bs_page_realize (BsPage    *self,
+                 size_t     position,
+                 BsIcon   **out_custom_icon,
+                 BsAction **out_action,
+                 GError   **error)
 {
   BsPageItem *item;
 
@@ -377,17 +377,16 @@ bs_page_realize (BsPage              *self,
   g_return_val_if_fail (out_custom_icon != NULL, FALSE);
   g_return_val_if_fail (out_action != NULL, FALSE);
 
-  item = get_item (self, bs_button_get_position (button));
+  item = get_item (self, position);
 
   if (!item)
     {
       *out_custom_icon = NULL;
-      *out_action = bs_empty_action_new (button);
+      *out_action = bs_empty_action_new ();
       return FALSE;
     }
 
   return bs_page_item_realize (item,
-                               button,
                                out_custom_icon,
                                out_action,
                                error);

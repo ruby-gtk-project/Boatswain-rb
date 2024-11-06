@@ -57,15 +57,14 @@ static const BsActionEntry entries[] = {
 
 static BsAction *
 soundboard_action_factory_create_action (BsActionFactory *action_factory,
-                                         BsButton        *button,
                                          BsActionInfo    *action_info)
 {
   SoundboardActionFactory *self = SOUNDBOARD_ACTION_FACTORY (action_factory);
 
   if (g_strcmp0 (bs_action_info_get_id (action_info), "soundboard-play-action") == 0)
-    return soundboard_play_action_new (button);
+    return soundboard_play_action_new ();
   else if (g_strcmp0 (bs_action_info_get_id (action_info), "soundboard-mpris-action") == 0)
-    return soundboard_mpris_action_new (button, self->mpris_controller);
+    return soundboard_mpris_action_new (self->mpris_controller);
 
   return NULL;
 }

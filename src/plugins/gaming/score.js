@@ -141,8 +141,8 @@ export const GamingScoreAction = GObject.registerClass({
             0, GLib.MAXINT64_BIGINT, 0),
     }
 }, class GamingScoreAction extends Bs.Action {
-    constructor(streamDeckButton) {
-        super({button: streamDeckButton});
+    constructor() {
+        super();
 
         this._paintable = new GamingScorePaintable();
         this.get_icon().paintable = this._paintable;

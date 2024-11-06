@@ -29,8 +29,7 @@ G_BEGIN_DECLS
 #define OBS_TYPE_TOGGLE_SOURCE_ACTION (obs_toggle_source_action_get_type())
 G_DECLARE_FINAL_TYPE (ObsToggleSourceAction, obs_toggle_source_action, OBS, TOGGLE_SOURCE_ACTION, ObsAction)
 
-BsAction * obs_toggle_source_action_new (BsButton             *button,
-                                         ObsConnectionManager *connection_manager,
+BsAction * obs_toggle_source_action_new (ObsConnectionManager *connection_manager,
                                          ObsSourceCaps         source_caps);
 
 G_END_DECLS

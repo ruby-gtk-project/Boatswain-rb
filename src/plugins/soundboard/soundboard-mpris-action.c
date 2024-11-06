@@ -286,14 +286,11 @@ soundboard_mpris_action_init (SoundboardMprisAction *self)
 }
 
 BsAction *
-soundboard_mpris_action_new (BsButton        *button,
-                             MprisController *mpris_controller)
+soundboard_mpris_action_new (MprisController *mpris_controller)
 {
   SoundboardMprisAction *self;
 
-  self = g_object_new (SOUNDBOARD_TYPE_MPRIS_ACTION,
-                       "button", button,
-                       NULL);
+  self = g_object_new (SOUNDBOARD_TYPE_MPRIS_ACTION, NULL);
 
   self->mpris_controller = g_object_ref (mpris_controller);
   g_signal_connect_object (self->mpris_controller,

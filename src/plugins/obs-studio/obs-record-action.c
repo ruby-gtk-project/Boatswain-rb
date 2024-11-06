@@ -187,11 +187,9 @@ obs_record_action_init (ObsRecordAction *self)
 }
 
 BsAction *
-obs_record_action_new (BsButton             *button,
-                       ObsConnectionManager *connection_manager)
+obs_record_action_new (ObsConnectionManager *connection_manager)
 {
   return g_object_new (OBS_TYPE_RECORD_ACTION,
-                       "button", button,
                        "connection-manager", connection_manager,
                        NULL);
 }

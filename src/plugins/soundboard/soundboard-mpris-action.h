@@ -28,7 +28,6 @@ G_BEGIN_DECLS
 #define SOUNDBOARD_TYPE_MPRIS_ACTION (soundboard_mpris_action_get_type())
 G_DECLARE_FINAL_TYPE (SoundboardMprisAction, soundboard_mpris_action, SOUNDBOARD, MPRIS_ACTION, BsAction)
 
-BsAction * soundboard_mpris_action_new (BsButton        *button,
-                                        MprisController *mpris_controller);
+BsAction * soundboard_mpris_action_new (MprisController *mpris_controller);
 
 G_END_DECLS
