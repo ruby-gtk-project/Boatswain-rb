@@ -370,7 +370,10 @@ bs_action_handle_event (BsAction *self,
 
   BS_ENTRY;
 
-  g_debug ("Action %s handling event %s", G_OBJECT_TYPE_NAME (self), G_OBJECT_TYPE_NAME (event));
+  g_debug ("Action %s (%p) handling event %s",
+           G_OBJECT_TYPE_NAME (self),
+           self,
+           G_OBJECT_TYPE_NAME (event));
 
   if (BS_ACTION_GET_CLASS (self)->handle_event)
     BS_ACTION_GET_CLASS (self)->handle_event (self, event);
