@@ -31,11 +31,13 @@ G_DECLARE_FINAL_TYPE (BsActionInfo, bs_action_info, BS, ACTION_INFO, GObject)
 BsActionInfo * bs_action_info_new (const char *id,
                                    const char *name,
                                    const char *description,
-                                   const char *icon_name);
+                                   const char *icon_name,
+                                   gboolean    hidden);
 
 const char * bs_action_info_get_id (BsActionInfo *self);
 const char * bs_action_info_get_name (BsActionInfo *self);
 const char * bs_action_info_get_description (BsActionInfo *self);
 const char * bs_action_info_get_icon_name (BsActionInfo *self);
+gboolean bs_action_info_get_hidden (BsActionInfo *self);
 
 G_END_DECLS

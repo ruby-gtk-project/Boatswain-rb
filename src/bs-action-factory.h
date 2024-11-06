@@ -35,6 +35,7 @@ typedef struct
   const char *icon_name;
   const char *name;
   const char *description;
+  gboolean hidden;
 } BsActionEntry;
 
 struct _BsActionFactoryClass

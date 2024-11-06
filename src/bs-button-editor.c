@@ -110,6 +110,9 @@ add_action_factory (BsButtonEditor  *self,
 
       info = g_list_model_get_item (G_LIST_MODEL (action_factory), i);
 
+      if (bs_action_info_get_hidden (info))
+        continue;
+
       row = adw_action_row_new ();
       adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), bs_action_info_get_name (info));
       adw_action_row_set_subtitle (ADW_ACTION_ROW (row), bs_action_info_get_description (info));

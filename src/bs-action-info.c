@@ -29,6 +29,7 @@ struct _BsActionInfo
   char *name;
   char *description;
   char *icon_name;
+  gboolean hidden;
 };
 
 G_DEFINE_FINAL_TYPE (BsActionInfo, bs_action_info, G_TYPE_OBJECT)
@@ -40,6 +41,7 @@ enum
   PROP_NAME,
   PROP_DESCRIPTION,
   PROP_ICON_NAME,
+  PROP_HIDDEN,
   N_PROPS,
 };
 
@@ -84,6 +86,10 @@ bs_action_info_get_property (GObject    *object,
       g_value_set_string (value, self->icon_name);
       break;
 
+    case PROP_HIDDEN:
+      g_value_set_boolean (value, self->hidden);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -122,6 +128,10 @@ bs_action_info_set_property (GObject      *object,
       g_assert (self->icon_name != NULL);
       break;
 
+    case PROP_HIDDEN:
+      self->hidden = g_value_get_boolean (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -153,6 +163,11 @@ bs_action_info_class_init (BsActionInfoClass *klass)
     g_param_spec_string ("icon-name",
                          NULL, NULL, NULL,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+  properties[PROP_HIDDEN] =
+    g_param_spec_boolean ("hidden",
+                          NULL, NULL, FALSE,
+                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
@@ -167,13 +182,15 @@ BsActionInfo *
 bs_action_info_new (const char *id,
                     const char *name,
                     const char *description,
-                    const char *icon_name)
+                    const char *icon_name,
+                    gboolean    hidden)
 {
   return g_object_new (BS_TYPE_ACTION_INFO,
                        "id", id,
                        "name", name,
                        "description", description,
                        "icon-name", icon_name,
+                       "hidden", hidden,
                        NULL);
 }
 
@@ -207,4 +224,12 @@ bs_action_info_get_icon_name (BsActionInfo *self)
   g_return_val_if_fail (BS_IS_ACTION_INFO (self), NULL);
 
   return self->icon_name;
+}
+
+gboolean
+bs_action_info_get_hidden (BsActionInfo *self)
+{
+  g_return_val_if_fail (BS_IS_ACTION_INFO (self), FALSE);
+
+  return self->hidden;
 }

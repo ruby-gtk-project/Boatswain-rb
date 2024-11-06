@@ -197,7 +197,8 @@ bs_action_factory_add_action_entries (BsActionFactory     *self,
       info = bs_action_info_new (entry->id,
                                  gettext (entry->name),
                                  gettext (entry->description),
-                                 entry->icon_name);
+                                 entry->icon_name,
+                                 entry->hidden);
 
       bs_action_factory_add_action (self, info);
     }
