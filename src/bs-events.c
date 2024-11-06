@@ -149,3 +149,17 @@ bs_button_event_new (BsEventType   event_type,
   return (BsEvent *) g_steal_pointer (&button_event);
 }
 
+/**
+ * bs_button_event_get_button:
+ *
+ * Retrieves the #BsButton that generated this event.
+ *
+ * Returns: (transfer none): a #BsButton
+ */
+BsButton *
+bs_button_event_get_button (BsButtonEvent *self)
+{
+  g_return_val_if_fail (BS_IS_BUTTON_EVENT (self), NULL);
+
+  return self->button;
+}

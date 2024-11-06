@@ -80,7 +80,7 @@ typedef struct _BsButtonEventClass BsButtonEventClass;
 
 GType bs_button_event_get_type (void) G_GNUC_CONST;
 
-BsButton * bs_button_event_get_button (BsButtonEvent *event);
+BsButton * bs_button_event_get_button (BsButtonEvent *self);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsButtonEvent, g_object_unref)
 
