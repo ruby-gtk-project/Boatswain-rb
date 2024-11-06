@@ -30,14 +30,13 @@ G_BEGIN_DECLS
 #define BS_TYPE_PAGE (bs_page_get_type())
 G_DECLARE_FINAL_TYPE (BsPage, bs_page, BS, PAGE, GObject)
 
-BsPage * bs_page_new_empty (BsPage *parent);
+BsPage * bs_page_new_empty (void);
 
-BsPage * bs_page_new_from_json (BsPage   *parent,
-                                JsonNode *node);
+BsPage * bs_page_new_from_json (JsonNode *node);
 
 JsonNode * bs_page_to_json (BsPage *self);
 
-BsPage * bs_page_get_parent (BsPage *self);
+gboolean bs_page_is_root (BsPage *self);
 
 BsPageItem * bs_page_get_item (BsPage  *self,
                                uint8_t  position);

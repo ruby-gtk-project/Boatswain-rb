@@ -137,7 +137,7 @@ setup_button (BsButtonEditor *self)
 
   gtk_widget_set_sensitive (GTK_WIDGET (self),
                             bs_button_get_position (self->button) != 0 ||
-                            bs_page_get_parent (bs_stream_deck_get_active_page (stream_deck)) == NULL);
+                            bs_page_is_root (bs_stream_deck_get_active_page (stream_deck)));
 
   gtk_widget_set_visible (self->remove_custom_icon_button, custom_icon != NULL);
 

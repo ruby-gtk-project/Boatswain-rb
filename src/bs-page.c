@@ -18,7 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-page.h"
+#include "bs-page-private.h"
 
 #include "bs-actionable.h"
 #include "bs-action-private.h"
@@ -34,7 +34,8 @@ struct _BsPage
   GObject parent_instance;
 
   GPtrArray *items;
-  BsPage *parent;
+
+  gboolean root;
 };
 
 G_DEFINE_FINAL_TYPE (BsPage, bs_page, G_TYPE_OBJECT)
@@ -42,7 +43,7 @@ G_DEFINE_FINAL_TYPE (BsPage, bs_page, G_TYPE_OBJECT)
 enum
 {
   PROP_0,
-  PROP_PARENT,
+  PROP_ROOT,
   N_PROPS
 };
 
@@ -68,7 +69,7 @@ ensure_first_subpage_item_is_move_up (BsPage *self)
 {
   BsPageItem *item;
 
-  if (!self->parent)
+  if (self->root)
     return;
 
   item = get_item (self, 0);
@@ -113,8 +114,8 @@ bs_page_get_property (GObject    *object,
 
   switch (prop_id)
     {
-    case PROP_PARENT:
-      g_value_set_object (value, self->parent);
+    case PROP_ROOT:
+      g_value_set_boolean (value, self->root);
       break;
 
     default:
@@ -128,18 +129,7 @@ bs_page_set_property (GObject      *object,
                       const GValue *value,
                       GParamSpec   *pspec)
 {
-  BsPage *self = BS_PAGE (object);
-
-  switch (prop_id)
-    {
-    case PROP_PARENT:
-      g_assert (self->parent == NULL);
-      self->parent = g_value_get_object (value);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
+  G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 }
 
 static void
@@ -151,9 +141,9 @@ bs_page_class_init (BsPageClass *klass)
   object_class->get_property = bs_page_get_property;
   object_class->set_property = bs_page_set_property;
 
-  properties[PROP_PARENT] = g_param_spec_object ("parent", NULL, NULL,
-                                                 BS_TYPE_PAGE,
-                                                 G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+  properties[PROP_ROOT] = g_param_spec_boolean ("root", NULL, NULL,
+                                                FALSE,
+                                                G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
@@ -171,30 +161,24 @@ bs_page_new (void)
 }
 
 BsPage *
-bs_page_new_empty (BsPage *parent)
+bs_page_new_empty (void)
 {
   g_autoptr (BsPage) page = NULL;
 
-  page = g_object_new (BS_TYPE_PAGE,
-                       "parent", parent,
-                       NULL);
-
+  page = g_object_new (BS_TYPE_PAGE, NULL);
   ensure_first_subpage_item_is_move_up (page);
 
   return g_steal_pointer (&page);
 }
 
 BsPage *
-bs_page_new_from_json (BsPage   *parent,
-                       JsonNode *node)
+bs_page_new_from_json (JsonNode *node)
 {
   g_autoptr (BsPage) page = NULL;
   JsonArray *array;
   guint i;
 
-  page = g_object_new (BS_TYPE_PAGE,
-                       "parent", parent,
-                       NULL);
+  page = g_object_new (BS_TYPE_PAGE, NULL);
 
   if (!JSON_NODE_HOLDS_ARRAY (node))
     {
@@ -208,6 +192,39 @@ bs_page_new_from_json (BsPage   *parent,
       JsonNode *button_node = json_array_get_element (array, i);
 
       g_ptr_array_insert (page->items, i, bs_page_item_new_from_json (page, button_node));
+    }
+
+out:
+  ensure_first_subpage_item_is_move_up (page);
+
+  return g_steal_pointer (&page);
+}
+
+BsPage *
+bs_page_new_root (JsonNode *node)
+{
+  g_autoptr (BsPage) page = NULL;
+
+  page = g_object_new (BS_TYPE_PAGE, NULL);
+  page->root = TRUE;
+
+  if (node)
+    {
+      JsonArray *array;
+
+      if (!JSON_NODE_HOLDS_ARRAY (node))
+        {
+          g_warning ("JSON node is not an array");
+          goto out;
+        }
+
+      array = json_node_get_array (node);
+      for (size_t i = 0; i < json_array_get_length (array); i++)
+        {
+          JsonNode *button_node = json_array_get_element (array, i);
+
+          g_ptr_array_insert (page->items, i, bs_page_item_new_from_json (page, button_node));
+        }
     }
 
 out:
@@ -261,12 +278,12 @@ bs_page_get_item (BsPage  *self,
   return item;
 }
 
-BsPage *
-bs_page_get_parent (BsPage *self)
+gboolean
+bs_page_is_root (BsPage *self)
 {
-  g_return_val_if_fail (BS_IS_PAGE (self), NULL);
+  g_return_val_if_fail (BS_IS_PAGE (self), FALSE);
 
-  return self->parent;
+  return self->root;
 }
 
 void

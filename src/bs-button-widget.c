@@ -80,7 +80,7 @@ is_move_page_up_action (BsButtonWidget *self)
   active_page = bs_stream_deck_get_active_page (stream_deck);
 
   return bs_button_get_position (self->button) == 0 &&
-         bs_page_get_parent (active_page) != NULL &&
+         !bs_page_is_root (active_page) &&
          g_strcmp0 (peas_plugin_info_get_module_name (plugin_info), "default") == 0 &&
          g_strcmp0 (bs_action_get_id (action), "default-switch-page-action") == 0;
 }

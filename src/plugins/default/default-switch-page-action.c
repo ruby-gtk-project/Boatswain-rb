@@ -38,30 +38,6 @@ G_DEFINE_FINAL_TYPE (DefaultSwitchPageAction, default_switch_page_action, BS_TYP
 
 
 /*
- * Auxiliary methods
- */
-
-static gboolean
-is_enter_folder_action (DefaultSwitchPageAction *self)
-{
-#if 0
-  BsButton *button;
-  BsStreamDeck *stream_deck;
-  BsPage *active_page;
-
-  button = bs_action_get_button (BS_ACTION (self));
-  stream_deck = bs_button_get_stream_deck (button);
-  active_page = bs_stream_deck_get_active_page (stream_deck);
-
-  return bs_button_get_position (button) != 0 ||
-         bs_page_get_parent (active_page) == NULL;
-#else
-  return FALSE;
-#endif
-}
-
-
-/*
  * BsAction overrides
  */
 
@@ -77,10 +53,7 @@ default_switch_page_action_handle_event (BsAction *action,
 
   stream_deck = bs_event_get_device (event);
 
-  if (is_enter_folder_action (self))
-    bs_stream_deck_push_page (stream_deck, self->page);
-  else
-    bs_stream_deck_pop_page (stream_deck);
+  bs_stream_deck_push_page (stream_deck, self->page);
 }
 
 static JsonNode *
@@ -108,21 +81,13 @@ static void
 default_switch_page_action_deserialize_settings (BsAction   *action,
                                                  JsonObject *object)
 {
-#if 0
   DefaultSwitchPageAction *self = DEFAULT_SWITCH_PAGE_ACTION (action);
-  BsButton *button;
-  BsStreamDeck *stream_deck;
-
-  button = bs_action_get_button (BS_ACTION (self));
-  stream_deck = bs_button_get_stream_deck (button);
 
   if (json_object_has_member (object, "page"))
     {
       g_clear_object (&self->page);
-      self->page = bs_page_new_from_json (bs_stream_deck_get_active_page (stream_deck),
-                                          json_object_get_member (object, "page"));
+      self->page = bs_page_new_from_json (json_object_get_member (object, "page"));
     }
-#endif
 }
 
 
@@ -143,28 +108,13 @@ default_switch_page_action_finalize (GObject *object)
 static void
 default_switch_page_action_constructed (GObject *object)
 {
-  G_OBJECT_CLASS (default_switch_page_action_parent_class)->constructed (object);
-
-#if 0
   DefaultSwitchPageAction *self = (DefaultSwitchPageAction *)object;
 
-  if (is_enter_folder_action (self))
-    {
-      BsButton *button;
-      BsStreamDeck *stream_deck;
+  G_OBJECT_CLASS (default_switch_page_action_parent_class)->constructed (object);
 
-      button = bs_action_get_button (BS_ACTION (self));
-      stream_deck = bs_button_get_stream_deck (button);
+  self->page = bs_page_new_empty ();
 
-      bs_icon_set_icon_name (bs_action_get_icon (BS_ACTION (self)), "folder-symbolic");
-
-      self->page = bs_page_new_empty (bs_stream_deck_get_active_page (stream_deck));
-    }
-  else
-    {
-      bs_icon_set_icon_name (bs_action_get_icon (BS_ACTION (self)), "go-up-symbolic");
-    }
-#endif
+  bs_icon_set_icon_name (bs_action_get_icon (BS_ACTION (self)), "folder-symbolic");
 }
 
 static void
