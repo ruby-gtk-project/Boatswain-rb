@@ -77,15 +77,29 @@ ensure_first_subpage_item_is_move_up (BsPage *self)
   if (!item ||
       bs_page_item_get_item_type (item) != BS_PAGE_ITEM_ACTION ||
       g_strcmp0 (bs_page_item_get_factory (item), "default") != 0 ||
-      g_strcmp0 (bs_page_item_get_action (item), "default-switch-page-action") != 0)
+      g_strcmp0 (bs_page_item_get_action (item), "default-page-up-action") != 0)
     {
-      item = bs_page_item_new (self);
-      bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
-      bs_page_item_set_factory (item, "default");
-      bs_page_item_set_action (item, "default-switch-page-action");
-      bs_page_item_set_settings (item, NULL);
+      /* Compatibility code: we used to use the swich-page action for this */
+      if (item &&
+          bs_page_item_get_item_type (item) != BS_PAGE_ITEM_ACTION &&
+          g_strcmp0 (bs_page_item_get_factory (item), "default") != 0 &&
+          g_strcmp0 (bs_page_item_get_action (item), "default-switch-page-action") != 0)
+        {
+          bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
+          bs_page_item_set_factory (item, "default");
+          bs_page_item_set_action (item, "default-page-up-action");
+          bs_page_item_set_settings (item, NULL);
+        }
+      else
+        {
+          item = bs_page_item_new (self);
+          bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
+          bs_page_item_set_factory (item, "default");
+          bs_page_item_set_action (item, "default-page-up-action");
+          bs_page_item_set_settings (item, NULL);
 
-      g_ptr_array_insert (self->items, 0, item);
+          g_ptr_array_insert (self->items, 0, item);
+        }
     }
 }
 
