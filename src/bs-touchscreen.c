@@ -22,6 +22,7 @@
 #define G_LOG_DOMAIN "Touchscreen"
 
 #include "bs-device-region.h"
+#include "bs-debug.h"
 #include "bs-stream-deck-private.h"
 #include "bs-touchscreen.h"
 #include "bs-touchscreen-content.h"
@@ -222,6 +223,27 @@ bs_touchscreen_get_slots (BsTouchscreen *self)
   g_assert (BS_IS_TOUCHSCREEN (self));
 
   return G_LIST_MODEL (self->slots);
+}
+
+BsTouchscreenSlot *
+bs_touchscreen_pick_slot (BsTouchscreen          *self,
+                          const graphene_point_t *point)
+{
+  g_autoptr (BsTouchscreenSlot) slot = NULL;
+  size_t position;
+  size_t n_slots;
+
+  g_assert (BS_IS_TOUCHSCREEN (self));
+
+  n_slots = g_list_model_get_n_items (G_LIST_MODEL (self->slots));
+  position = floorf ((point->x / (float) self->width) * n_slots);
+  g_assert (position >= 0 && position < n_slots);
+
+  BS_TRACE_MSG ("Picking slot at %.0fx%.0f -> slot %lu", point->x, point->y, position);
+
+  slot = g_list_model_get_item (G_LIST_MODEL (self->slots), position);
+
+  return g_steal_pointer (&slot);
 }
 
 void

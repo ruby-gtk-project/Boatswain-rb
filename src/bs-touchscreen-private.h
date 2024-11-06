@@ -42,6 +42,9 @@ BsTouchscreenContent * bs_touchscreen_get_content (BsTouchscreen *self);
 
 GListModel * bs_touchscreen_get_slots (BsTouchscreen *self);
 
+BsTouchscreenSlot * bs_touchscreen_pick_slot (BsTouchscreen          *self,
+                                              const graphene_point_t *point);
+
 void bs_touchscreen_handle_short_press (BsTouchscreen          *self,
                                         const graphene_point_t *point);
 

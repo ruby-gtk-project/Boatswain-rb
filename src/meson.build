@@ -46,6 +46,7 @@ boatswain_deps = [
   dependency('gtk4', version: '>= 4.12'),
   dependency('hidapi-libusb'),
   dependency('json-glib-1.0'),
+  meson.get_compiler('c').find_library('m'),
 ]
 
 subdir('plugins')
