@@ -39,6 +39,9 @@ typedef enum
   //BS_DIAL_ROTATION_EVENT,
   //BS_DIAL_PRESS_EVENT,
   //BS_DIAL_RELEASE_EVENT,
+
+  /* Synthetic (non-hardware) events */
+  BS_CURSOR_DOUBLE_CLICK,
 } BsEventType;
 
 
@@ -83,6 +86,25 @@ GType bs_button_event_get_type (void) G_GNUC_CONST;
 BsButton * bs_button_event_get_button (BsButtonEvent *self);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsButtonEvent, g_object_unref)
+
+
+/*
+ * BsCursorEvent
+ */
+
+#define BS_TYPE_CURSOR_EVENT         (bs_cursor_event_get_type())
+#define BS_CURSOR_EVENT(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), BS_TYPE_CURSOR_EVENT, BsCursorEvent))
+#define BS_CURSOR_EVENT_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), BS_TYPE_CURSOR_EVENT, BsCursorEventClass))
+#define BS_IS_CURSOR_EVENT(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), BS_TYPE_CURSOR_EVENT))
+#define BS_IS_CURSOR_EVENT_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), BS_TYPE_CURSOR_EVENT))
+#define BS_CURSOR_EVENT_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), BS_TYPE_CURSOR_EVENT, BsCursorEventClass))
+
+typedef struct _BsCursorEvent BsCursorEvent;
+typedef struct _BsCursorEventClass BsCursorEventClass;
+
+GType bs_cursor_event_get_type (void) G_GNUC_CONST;
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsCursorEvent, g_object_unref)
 
 
 /*

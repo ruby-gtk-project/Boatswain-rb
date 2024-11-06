@@ -36,6 +36,13 @@ BsEvent * bs_button_event_new (BsEventType   event_type,
                                BsButton     *button);
 
 /*
+ * BsCursorEvent
+ */
+
+BsEvent * bs_cursor_event_new (BsEventType   event_type,
+                               BsStreamDeck *device);
+
+/*
  * BsTouchscreenEvent
  */
 

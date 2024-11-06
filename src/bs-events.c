@@ -26,7 +26,7 @@
 #include "bs-touchscreen-slot.h"
 
 /* Map BsEventType to the appropriate GType */
-#define BS_N_EVENTS (BS_TOUCHSCREEN_SWIPE + 1)
+#define BS_N_EVENTS (BS_CURSOR_DOUBLE_CLICK + 1)
 static GType bs_event_types[BS_N_EVENTS];
 #define BS_EVENT_TYPE_SLOT(ETYPE) { bs_event_types[ETYPE] = g_define_type_id; }
 
@@ -35,6 +35,7 @@ bs_event_init_types_once (void)
 {
   g_type_ensure (BS_TYPE_EVENT);
   g_type_ensure (BS_TYPE_BUTTON_EVENT);
+  g_type_ensure (BS_TYPE_CURSOR_EVENT);
   g_type_ensure (BS_TYPE_TOUCHSCREEN_EVENT);
 }
 
@@ -164,6 +165,49 @@ bs_button_event_get_button (BsButtonEvent *self)
   g_return_val_if_fail (BS_IS_BUTTON_EVENT (self), NULL);
 
   return self->button;
+}
+
+
+/*
+ * BsCursorEvent
+ */
+
+struct _BsCursorEvent
+{
+  BsEvent parent_instance;
+};
+
+struct _BsCursorEventClass
+{
+  BsEventClass parent_class;
+};
+
+G_DEFINE_FINAL_TYPE_WITH_CODE (BsCursorEvent, bs_cursor_event, BS_TYPE_EVENT,
+                               BS_EVENT_TYPE_SLOT (BS_CURSOR_DOUBLE_CLICK))
+
+static void
+bs_cursor_event_class_init (BsCursorEventClass *klass)
+{
+}
+
+static void
+bs_cursor_event_init (BsCursorEvent *self)
+{
+}
+
+BsEvent *
+bs_cursor_event_new (BsEventType   event_type,
+                     BsStreamDeck *device)
+{
+  g_autoptr (BsCursorEvent) cursor_event = NULL;
+
+  g_assert (event_type == BS_CURSOR_DOUBLE_CLICK);
+  g_assert (BS_IS_STREAM_DECK (device));
+
+  cursor_event = bs_event_alloc (event_type, device);
+  g_assert (BS_IS_CURSOR_EVENT (cursor_event));
+
+  return (BsEvent *) g_steal_pointer (&cursor_event);
 }
 
 

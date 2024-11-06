@@ -243,6 +243,7 @@ soundboard_play_action_handle_event (BsAction *action,
       break;
 
     case BS_TOUCHSCREEN_SWIPE:
+    case BS_CURSOR_DOUBLE_CLICK:
       break;
     }
 
