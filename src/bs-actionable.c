@@ -19,6 +19,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#define G_LOG_DOMAIN "Actionable"
+
 #include "bs-actionable-private.h"
 
 #include "bs-action-private.h"
