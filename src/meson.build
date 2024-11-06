@@ -108,6 +108,8 @@ gir_headers = [
   'bs-page-item.h',
   'bs-profile.h',
   'bs-stream-deck.h',
+  'bs-touchscreen.h',
+  'bs-touchscreen-slot.h',
 ]
 
 gnome.generate_gir(
