@@ -36,6 +36,12 @@ typedef struct
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (BsAction, bs_action, G_TYPE_OBJECT)
 
+enum {
+  PROP_0,
+  PROP_ICON,
+  N_PROPS,
+};
+
 enum
 {
   CHANGED,
@@ -43,6 +49,8 @@ enum
 };
 
 static guint signals[N_SIGNALS];
+static GParamSpec *properties [N_PROPS];
+
 
 
 /*
@@ -81,13 +89,49 @@ bs_action_finalize (GObject *object)
 }
 
 static void
+bs_action_get_property (GObject    *object,
+                        guint       prop_id,
+                        GValue     *value,
+                        GParamSpec *pspec)
+{
+  BsAction *self = BS_ACTION (object);
+
+  switch (prop_id)
+    {
+    case PROP_ICON:
+      g_value_set_object (value, bs_action_get_icon (self));
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
+bs_action_set_property (GObject      *object,
+                        guint         prop_id,
+                        const GValue *value,
+                        GParamSpec   *pspec)
+{
+  G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+}
+
+static void
 bs_action_class_init (BsActionClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = bs_action_finalize;
+  object_class->get_property = bs_action_get_property;
+  object_class->set_property = bs_action_set_property;
 
   klass->get_icon = bs_action_real_get_icon;
+
+  properties[PROP_ICON] = g_param_spec_object ("icon", NULL, NULL,
+                                               BS_TYPE_ICON,
+                                               G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties (object_class, N_PROPS, properties);
 
   signals[CHANGED] = g_signal_new ("changed",
                                    BS_TYPE_ACTION,
