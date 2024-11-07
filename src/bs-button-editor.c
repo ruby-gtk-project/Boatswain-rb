@@ -176,7 +176,7 @@ update_action_preferences_group (BsButtonEditor *self)
   GtkWidget *action_preferences;
   BsAction *action;
 
-  action = self->button ? bs_actionable_get_action (BS_ACTIONABLE (self->button)) : NULL;
+  action = bs_actionable_get_action (BS_ACTIONABLE (self->button));
   action_preferences = action ? bs_action_get_preferences (action) : NULL;
 
   gtk_widget_set_visible (self->remove_group,
@@ -530,8 +530,6 @@ bs_button_editor_constructed (GObject *object)
   setup_button (self);
   update_icon (self);
 
-  adw_navigation_view_pop (self->navigation_view);
-
   self->action_changed_id = g_signal_connect (self->button,
                                               "notify::action",
                                               G_CALLBACK (on_action_changed_cb),
@@ -546,8 +544,6 @@ bs_button_editor_constructed (GObject *object)
                                             "icon-changed",
                                             G_CALLBACK (on_button_icon_changed_cb),
                                             self);
-
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_BUTTON]);
 }
 
 static void
