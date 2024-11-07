@@ -9,11 +9,7 @@
     <child>
       <object class="GtkPicture" id="picture">
         <binding name="paintable">
-          <lookup type="BsAction" name="icon">
-            <lookup type="BsActionable" name="action">
-              <lookup name="touchscreen-slot">BsTouchscreenSlotWidget</lookup>
-            </lookup>
-          </lookup>
+          <lookup name="touchscreen-slot">BsTouchscreenSlotWidget</lookup>
         </binding>
       </object>
     </child>
