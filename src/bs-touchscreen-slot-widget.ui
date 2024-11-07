@@ -2,16 +2,19 @@
 <interface>
   <requires lib="gtk" version="4.0"/>
   <template class="BsTouchscreenSlotWidget" parent="GtkFlowBoxChild">
+    <property name="hexpand">True</property>
+    <property name="vexpand">True</property>
+    <property name="width-request">1</property>
 
     <child>
       <object class="GtkPicture" id="picture">
-        <property name="halign">center</property>
-      </object>
-    </child>
-
-    <child>
-      <object class="GtkLabel" id="label">
-        <property name="label">Slot</property>
+        <binding name="paintable">
+          <lookup type="BsAction" name="icon">
+            <lookup type="BsActionable" name="action">
+              <lookup name="touchscreen-slot">BsTouchscreenSlotWidget</lookup>
+            </lookup>
+          </lookup>
+        </binding>
       </object>
     </child>
 
