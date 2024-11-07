@@ -21,6 +21,8 @@
 
 #include "bs-touchscreen-content.h"
 
+#include "bs-actionable.h"
+#include "bs-action.h"
 #include "bs-touchscreen-slot-private.h"
 
 #include <gtk/gtk.h>
@@ -61,8 +63,8 @@ static GParamSpec *properties [N_PROPS];
  */
 
 static void
-on_background_invalidate_contents_cb (GdkPaintable         *paintable,
-                                      BsTouchscreenContent *self)
+on_paintable_invalidate_contents_cb (GdkPaintable         *paintable,
+                                     BsTouchscreenContent *self)
 {
   gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
 }
@@ -79,12 +81,28 @@ bs_touchscreen_content_snapshot (GdkPaintable *paintable,
                                  double        height)
 {
   BsTouchscreenContent *self = (BsTouchscreenContent *) paintable;
+  double slot_width;
+  size_t n_slots;
 
   g_assert (BS_IS_TOUCHSCREEN_CONTENT (self));
 
   if (self->background.paintable)
     gdk_paintable_snapshot (self->background.paintable, snapshot, width, height);
 
+  n_slots = g_list_model_get_n_items (self->slots);
+  slot_width = width / n_slots;
+
+  for (size_t i = 0; i < n_slots; i++)
+    {
+      g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (self->slots, i);
+
+      gtk_snapshot_save (snapshot);
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (i * slot_width, 0));
+
+      gdk_paintable_snapshot (GDK_PAINTABLE (slot), snapshot, slot_width, height);
+
+      gtk_snapshot_restore (snapshot);
+    }
 }
 
 static int
@@ -231,6 +249,7 @@ bs_touchscreen_content_new (GListModel *slots,
                             uint32_t    height)
 {
   g_autoptr (BsTouchscreenContent) self = NULL;
+  size_t n_slots;
 
   g_assert (width > 0);
   g_assert (height > 0);
@@ -242,6 +261,14 @@ bs_touchscreen_content_new (GListModel *slots,
                        "height", height,
                        NULL);
   self->slots = g_object_ref (slots);
+
+  n_slots = g_list_model_get_n_items (self->slots);
+
+  for (size_t i = 0; i < n_slots; i++)
+    {
+      g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (self->slots, i);
+      g_signal_connect_object (slot, "invalidate-contents", G_CALLBACK (on_paintable_invalidate_contents_cb), self, 0);
+    }
 
   return g_steal_pointer (&self);
 }
@@ -273,7 +300,7 @@ bs_touchscreen_content_set_background (BsTouchscreenContent *self,
       self->background.content_invalidated_id =
         g_signal_connect (paintable,
                           "invalidate-contents",
-                          G_CALLBACK (on_background_invalidate_contents_cb),
+                          G_CALLBACK (on_paintable_invalidate_contents_cb),
                           self);
     }
 
