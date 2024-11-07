@@ -73,8 +73,8 @@ touchscreenslotwidget {
 
 touchscreenslotwidget:first-child,
 touchscreenslotwidget:dir(rtl):last-child {
-  border-top-left-radius: var(--window-radius);
-  border-bottom-left-radius: var(--window-radius);
+  border-top-left-radius: calc(var(--window-radius) - 3px);
+  border-bottom-left-radius: calc(var(--window-radius) - 3px);
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -83,8 +83,8 @@ touchscreenslotwidget:last-child,
 touchscreenslotwidget:dir(rtl):first-child {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  border-top-right-radius: var(--window-radius);
-  border-bottom-right-radius: var(--window-radius);
+  border-top-right-radius: calc(var(--window-radius) - 3px);
+  border-bottom-right-radius: calc(var(--window-radius) - 3px);
 }
 
 touchscreenslotwidget:selected {
