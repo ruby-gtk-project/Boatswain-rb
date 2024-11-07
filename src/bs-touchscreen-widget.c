@@ -93,6 +93,77 @@ on_selection_controller_selection_changed_cb (BsSelectionController *selection_c
 
 
 /*
+ * GtkWidget overrides
+ */
+
+static GtkSizeRequestMode
+bs_touchscreen_widget_get_request_mode (GtkWidget *widget)
+{
+  return GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH;
+}
+
+static void
+bs_touchscreen_widget_measure (GtkWidget      *widget,
+                               GtkOrientation  orientation,
+                               int             for_size,
+                               int            *minimum,
+                               int            *natural,
+                               int            *minimum_baseline,
+                               int            *natural_baseline)
+{
+  BsTouchscreenWidget *self = (BsTouchscreenWidget *)widget;
+  BsTouchscreen *touchscreen;
+  float ratio;
+  int picture_min;
+  int flowbox_min;
+
+  touchscreen = bs_touchscreen_region_get_touchscreen (self->touchscreen_region);
+  ratio = (float) bs_touchscreen_get_width (touchscreen) /
+          (float) bs_touchscreen_get_height (touchscreen);
+
+  switch (orientation)
+    {
+    case GTK_ORIENTATION_HORIZONTAL:
+      gtk_widget_measure (GTK_WIDGET (self->picture),
+                          orientation,
+                          for_size,
+                          &picture_min, NULL,
+                          NULL, NULL);
+      gtk_widget_measure (GTK_WIDGET (self->slots_flowbox),
+                          orientation,
+                          for_size,
+                          &flowbox_min, NULL,
+                          NULL, NULL);
+
+      if (minimum)
+        *minimum = MAX (picture_min, flowbox_min);
+      if (natural)
+        *natural = MAX (picture_min, flowbox_min);
+      break;
+
+    case GTK_ORIENTATION_VERTICAL:
+      if (minimum)
+        *minimum = for_size / ratio;
+      if (natural)
+        *natural = for_size / ratio;
+      break;
+    }
+}
+
+static void
+bs_touchscreen_widget_size_allocate (GtkWidget *widget,
+                                     int        width,
+                                     int        height,
+                                     int        baseline)
+{
+  BsTouchscreenWidget *self = (BsTouchscreenWidget *)widget;
+
+  gtk_widget_allocate (GTK_WIDGET (self->picture), width, height, baseline, NULL);
+  gtk_widget_allocate (GTK_WIDGET (self->slots_flowbox), width, height, baseline, NULL);
+}
+
+
+/*
  * GObject overrides
  */
 
@@ -206,6 +277,10 @@ bs_touchscreen_widget_class_init (BsTouchscreenWidgetClass *klass)
   object_class->get_property = bs_touchscreen_widget_get_property;
   object_class->set_property = bs_touchscreen_widget_set_property;
 
+  widget_class->get_request_mode = bs_touchscreen_widget_get_request_mode;
+  widget_class->measure = bs_touchscreen_widget_measure;
+  widget_class->size_allocate = bs_touchscreen_widget_size_allocate;
+
   properties[PROP_TOUCHSCREEN_REGION] =
     g_param_spec_object ("touchscreen-region", NULL, NULL,
                          BS_TYPE_TOUCHSCREEN_REGION,
@@ -225,8 +300,6 @@ bs_touchscreen_widget_class_init (BsTouchscreenWidgetClass *klass)
 
   gtk_widget_class_bind_template_callback (widget_class, on_slots_flowbox_selected_children_changed_cb);
 
-  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
-
   gtk_widget_class_set_css_name (widget_class, "touchscreenwidget");
 }
 
@@ -234,9 +307,6 @@ static void
 bs_touchscreen_widget_init (BsTouchscreenWidget *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
-
-  gtk_widget_set_size_request (GTK_WIDGET (self), -1, 100);
-  gtk_widget_add_css_class (GTK_WIDGET (self), "card");
 }
 
 GtkWidget *
