@@ -29,6 +29,11 @@ struct _BsTouchscreenContent
 {
   GObject parent_instance;
 
+  struct {
+    GdkPaintable *paintable;
+    gulong content_invalidated_id;
+  } background;
+
   GListModel *slots;
   uint32_t width;
   uint32_t height;
@@ -42,12 +47,25 @@ G_DEFINE_FINAL_TYPE_WITH_CODE (BsTouchscreenContent, bs_touchscreen_content, G_T
 enum
 {
   PROP_0,
+  PROP_BACKGROUND_PAINTABLE,
   PROP_WIDTH,
   PROP_HEIGHT,
   N_PROPS,
 };
 
 static GParamSpec *properties [N_PROPS];
+
+
+/*
+ * Callbacks
+ */
+
+static void
+on_background_invalidate_contents_cb (GdkPaintable         *paintable,
+                                      BsTouchscreenContent *self)
+{
+  gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
+}
 
 
 /*
@@ -64,10 +82,8 @@ bs_touchscreen_content_snapshot (GdkPaintable *paintable,
 
   g_assert (BS_IS_TOUCHSCREEN_CONTENT (self));
 
-  /* FIXME: actually render a background and each slot's action icon */
-  gtk_snapshot_append_color (snapshot,
-                             &(GdkRGBA) { 0.0, 1.0, 0.0, 1.0, },
-                             &GRAPHENE_RECT_INIT (0, 0, width, height));
+  if (self->background.paintable)
+    gdk_paintable_snapshot (self->background.paintable, snapshot, width, height);
 
 }
 
@@ -115,6 +131,9 @@ bs_touchscreen_content_finalize (GObject *object)
 {
   BsTouchscreenContent *self = (BsTouchscreenContent *)object;
 
+  g_clear_signal_handler (&self->background.content_invalidated_id, self->background.paintable);
+
+  g_clear_object (&self->background.paintable);
   g_clear_object (&self->slots);
 
   G_OBJECT_CLASS (bs_touchscreen_content_parent_class)->finalize (object);
@@ -130,6 +149,10 @@ bs_touchscreen_content_get_property (GObject    *object,
 
   switch (prop_id)
     {
+    case PROP_BACKGROUND_PAINTABLE:
+      g_value_set_object (value, self->background.paintable);
+      break;
+
     case PROP_HEIGHT:
       g_value_set_uint (value, self->height);
       break;
@@ -153,6 +176,10 @@ bs_touchscreen_content_set_property (GObject      *object,
 
   switch (prop_id)
     {
+    case PROP_BACKGROUND_PAINTABLE:
+      bs_touchscreen_content_set_background (self, g_value_get_object (value));
+      break;
+
     case PROP_HEIGHT:
       self->height = g_value_get_uint (value);
       g_assert (self->height > 0);
@@ -176,6 +203,11 @@ bs_touchscreen_content_class_init (BsTouchscreenContentClass *klass)
   object_class->finalize = bs_touchscreen_content_finalize;
   object_class->get_property = bs_touchscreen_content_get_property;
   object_class->set_property = bs_touchscreen_content_set_property;
+
+  properties[PROP_BACKGROUND_PAINTABLE] =
+    g_param_spec_object ("background-paintable", NULL, NULL,
+                         GDK_TYPE_PAINTABLE,
+                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_WIDTH] = g_param_spec_uint ("width", NULL, NULL,
                                               1, G_MAXUINT, 1,
@@ -212,4 +244,40 @@ bs_touchscreen_content_new (GListModel *slots,
   self->slots = g_object_ref (slots);
 
   return g_steal_pointer (&self);
+}
+
+GdkPaintable *
+bs_touchscreen_content_get_background (BsTouchscreenContent *self)
+{
+  g_return_val_if_fail (BS_IS_TOUCHSCREEN_CONTENT (self), NULL);
+
+  return self->background.paintable;
+}
+
+void
+bs_touchscreen_content_set_background (BsTouchscreenContent *self,
+                                       GdkPaintable         *paintable)
+{
+  g_return_if_fail (BS_IS_TOUCHSCREEN_CONTENT (self));
+  g_return_if_fail (!paintable || GDK_IS_PAINTABLE (paintable));
+
+  if (self->background.paintable == paintable)
+    return;
+
+  g_clear_signal_handler (&self->background.content_invalidated_id, self->background.paintable);
+
+  g_set_object (&self->background.paintable, paintable);
+
+  if (paintable)
+    {
+      self->background.content_invalidated_id =
+        g_signal_connect (paintable,
+                          "invalidate-contents",
+                          G_CALLBACK (on_background_invalidate_contents_cb),
+                          self);
+    }
+
+  gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
+
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_BACKGROUND_PAINTABLE]);
 }

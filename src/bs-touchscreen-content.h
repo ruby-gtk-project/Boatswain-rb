@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <gio/gio.h>
+#include <gdk/gdk.h>
 #include <stdint.h>
 
 G_BEGIN_DECLS
@@ -32,5 +32,9 @@ G_DECLARE_FINAL_TYPE (BsTouchscreenContent, bs_touchscreen_content, BS, TOUCHSCR
 BsTouchscreenContent * bs_touchscreen_content_new (GListModel *slots,
                                                    uint32_t    width,
                                                    uint32_t    height);
+
+GdkPaintable * bs_touchscreen_content_get_background (BsTouchscreenContent *self);
+void bs_touchscreen_content_set_background (BsTouchscreenContent *self,
+                                            GdkPaintable         *paintable);
 
 G_END_DECLS
