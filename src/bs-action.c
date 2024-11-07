@@ -25,7 +25,6 @@
 #include "bs-debug.h"
 #include "bs-events.h"
 #include "bs-icon.h"
-#include "bs-button.h"
 
 typedef struct
 {
@@ -33,7 +32,6 @@ typedef struct
   char *name;
   BsActionFactory *factory;
   BsIcon *icon;
-  BsButton *button;
 } BsActionPrivate;
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (BsAction, bs_action, G_TYPE_OBJECT)
