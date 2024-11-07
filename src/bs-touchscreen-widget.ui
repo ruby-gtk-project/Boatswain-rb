@@ -2,14 +2,33 @@
 <interface>
   <requires lib="gtk" version="4.0"/>
   <template class="BsTouchscreenWidget" parent="GtkWidget">
+    <property name="overflow">hidden</property>
+    <property name="hexpand">False</property>
+    <property name="vexpand">False</property>
 
     <child>
-      <object class="GtkFlowBox" id="slots_flowbox">
-        <property name="selection-mode">single</property>
-        <property name="homogeneous">True</property>
-        <property name="min-children-per-line">1</property>
-        <property name="max-children-per-line">4</property>
-        <signal name="selected-children-changed" handler="on_slots_flowbox_selected_children_changed_cb" object="BsTouchscreenWidget" swapped="no" />
+      <object class="GtkOverlay">
+        <property name="hexpand">True</property>
+        <property name="vexpand">True</property>
+
+        <property name="child">
+          <object class="GtkPicture" id="picture">
+            <property name="content-fit">fill</property>
+          </object>
+        </property>
+
+        <child type="overlay">
+          <object class="GtkFlowBox" id="slots_flowbox">
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="selection-mode">single</property>
+            <property name="homogeneous">True</property>
+            <property name="min-children-per-line">1</property>
+            <property name="max-children-per-line">4</property>
+            <signal name="selected-children-changed" handler="on_slots_flowbox_selected_children_changed_cb" object="BsTouchscreenWidget" swapped="no" />
+          </object>
+        </child>
+
       </object>
     </child>
 

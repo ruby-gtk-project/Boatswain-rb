@@ -32,6 +32,7 @@ struct _BsTouchscreenWidget
 {
   GtkWidget parent_instance;
 
+  GtkPicture *picture;
   GtkFlowBox *slots_flowbox;
 
   BsTouchscreenRegion *touchscreen_region;
@@ -130,6 +131,12 @@ bs_touchscreen_widget_constructed (GObject *object)
 
       gtk_flow_box_append (self->slots_flowbox, child);
     }
+
+  g_object_bind_property (bs_touchscreen_get_content (touchscreen),
+                          "background-paintable",
+                          self->picture,
+                          "paintable",
+                          G_BINDING_SYNC_CREATE);
 }
 
 static void
@@ -213,6 +220,7 @@ bs_touchscreen_widget_class_init (BsTouchscreenWidgetClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/com/feaneron/Boatswain/bs-touchscreen-widget.ui");
 
+  gtk_widget_class_bind_template_child (widget_class, BsTouchscreenWidget, picture);
   gtk_widget_class_bind_template_child (widget_class, BsTouchscreenWidget, slots_flowbox);
 
   gtk_widget_class_bind_template_callback (widget_class, on_slots_flowbox_selected_children_changed_cb);
