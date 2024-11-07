@@ -35,12 +35,16 @@ struct _BsTouchscreenSlot
 
   BsAction *action; /* (transfer full)(nullable) */
   BsTouchscreen *touchscreen; /* (transfer none) */
+
+  gulong content_invalidated_id;
 };
 
 static void bs_actionable_interface_init (BsActionableInterface *iface);
+static void gdk_paintable_interface_init (GdkPaintableInterface *iface);
 
 G_DEFINE_FINAL_TYPE_WITH_CODE (BsTouchscreenSlot, bs_touchscreen_slot, G_TYPE_OBJECT,
-                               G_IMPLEMENT_INTERFACE (BS_TYPE_ACTIONABLE, bs_actionable_interface_init))
+                               G_IMPLEMENT_INTERFACE (BS_TYPE_ACTIONABLE, bs_actionable_interface_init)
+                               G_IMPLEMENT_INTERFACE (GDK_TYPE_PAINTABLE, gdk_paintable_interface_init))
 
 enum {
   PROP_0,
@@ -52,6 +56,77 @@ enum {
 };
 
 static GParamSpec *properties [N_PROPS];
+
+
+/*
+ * Callbacks
+ */
+
+static void
+on_action_icon_invalidate_contents_cb (GdkPaintable         *paintable,
+                                       BsTouchscreenContent *self)
+{
+  gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
+}
+
+
+/*
+ * GdkPaintable interface
+ */
+
+static void
+bs_touchscreen_content_snapshot (GdkPaintable *paintable,
+                                 GdkSnapshot  *snapshot,
+                                 double        width,
+                                 double        height)
+{
+  BsTouchscreenSlot *self = (BsTouchscreenSlot *) paintable;
+  BsIcon *icon;
+
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (self));
+
+  if (!self->action)
+    return;
+
+  icon = bs_action_get_icon (self->action);
+
+  gdk_paintable_snapshot (GDK_PAINTABLE (icon), snapshot, width, height);
+}
+
+static int
+bs_touchscreen_content_get_intrinsic_width (GdkPaintable *paintable)
+{
+  BsTouchscreenSlot *self = (BsTouchscreenSlot *) paintable;
+
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (self));
+
+  return self->size.width;
+}
+
+static int
+bs_touchscreen_content_get_intrinsic_height (GdkPaintable *paintable)
+{
+  BsTouchscreenSlot *self = (BsTouchscreenSlot *) paintable;
+
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (self));
+
+  return self->size.height;
+}
+
+static GdkPaintableFlags
+bs_touchscreen_content_get_flags (GdkPaintable *paintable)
+{
+  return GDK_PAINTABLE_STATIC_SIZE;
+}
+
+static void
+gdk_paintable_interface_init (GdkPaintableInterface *iface)
+{
+  iface->snapshot = bs_touchscreen_content_snapshot;
+  iface->get_intrinsic_width = bs_touchscreen_content_get_intrinsic_width;
+  iface->get_intrinsic_height = bs_touchscreen_content_get_intrinsic_height;
+  iface->get_flags = bs_touchscreen_content_get_flags;
+}
 
 
 /*
@@ -79,8 +154,20 @@ bs_touchscreen_slot_actionable_set_action (BsActionable *actionable,
   if (self->action == action)
     return;
 
+  if (self->action)
+    g_clear_signal_handler (&self->content_invalidated_id, bs_action_get_icon (self->action));
+
   g_set_object (&self->action, action);
 
+  if (self->action)
+    {
+      self->content_invalidated_id = g_signal_connect (bs_action_get_icon (self->action),
+                                                       "invalidate-contents",
+                                                       G_CALLBACK (on_action_icon_invalidate_contents_cb),
+                                                       self);
+    }
+
+  gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
   g_object_notify (G_OBJECT (self), "action");
 }
 
@@ -100,6 +187,9 @@ static void
 bs_touchscreen_slot_finalize (GObject *object)
 {
   BsTouchscreenSlot *self = (BsTouchscreenSlot *)object;
+
+  if (self->action)
+    g_clear_signal_handler (&self->content_invalidated_id, bs_action_get_icon (self->action));
 
   g_clear_object (&self->action);
 
