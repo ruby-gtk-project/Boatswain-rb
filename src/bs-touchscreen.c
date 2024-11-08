@@ -245,35 +245,3 @@ bs_touchscreen_pick_slot (BsTouchscreen          *self,
 
   return g_steal_pointer (&slot);
 }
-
-void
-bs_touchscreen_handle_short_press (BsTouchscreen          *self,
-                                   const graphene_point_t *point)
-{
-  g_assert (BS_IS_TOUCHSCREEN (self));
-  g_assert (point != NULL);
-
-  g_debug ("  Short press");
-}
-
-void
-bs_touchscreen_handle_long_press (BsTouchscreen          *self,
-                                  const graphene_point_t *point)
-{
-  g_assert (BS_IS_TOUCHSCREEN (self));
-  g_assert (point != NULL);
-
-  g_debug ("  Long press");
-}
-
-void
-bs_touchscreen_handle_swipe (BsTouchscreen          *self,
-                             const graphene_point_t *touch_position,
-                             const graphene_point_t *release_position)
-{
-  g_assert (BS_IS_TOUCHSCREEN (self));
-  g_assert (touch_position != NULL);
-  g_assert (release_position != NULL);
-
-  g_debug ("  Swipe (released position: %.0fx%.0f)", release_position->x, release_position->y);
-}
