@@ -39,6 +39,7 @@
 #include "bs-stream-deck-private.h"
 #include "bs-touchscreen-region.h"
 #include "bs-touchscreen-slot.h"
+#include "bs-touchscreen-slot-editor.h"
 #include "bs-touchscreen-widget.h"
 
 #include <glib/gi18n.h>
@@ -94,8 +95,8 @@ set_selected_item (BsDeviceEditor *self,
     }
   else if (BS_IS_TOUCHSCREEN_SLOT (selected_item))
     {
-      BS_TODO ("Touchscreen slot editor");
-      adw_bin_set_child (self->editor_bin, GTK_WIDGET (self->empty_page));
+      GtkWidget *touchscreen_slot_editor = bs_touchscreen_slot_editor_new (selected_item);
+      adw_bin_set_child (self->editor_bin, touchscreen_slot_editor);
     }
   else
     {

@@ -10,6 +10,7 @@
     <file>bs-dial-widget.ui</file>
     <file>bs-profile-row.ui</file>
     <file>bs-touchscreen-widget.ui</file>
+    <file>bs-touchscreen-slot-editor.ui</file>
     <file>bs-touchscreen-slot-widget.ui</file>
     <file>bs-window.ui</file>
     <file>gtk/help-overlay.ui</file>
