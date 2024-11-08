@@ -52,7 +52,7 @@ const GamingScorePaintable = GObject.registerClass({
         'score': GObject.ParamSpec.int64(
             'score', null, null,
             GObject.ParamFlags.READWRITE,
-            0, GLib.MAXINT64_BIGINT, 0),
+            GLib.MININT64_BIGINT, GLib.MAXINT64_BIGINT, 0),
     }
 }, class GamingScorePaintable extends GObject.Object {
     constructor(params={}) {
