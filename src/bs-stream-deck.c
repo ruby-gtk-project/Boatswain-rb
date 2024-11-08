@@ -1051,30 +1051,57 @@ read_state_plus (BsStreamDeck *self)
     case DIAL_EVENT:
       {
         BsDialGridRegion *dial_grid;
+        BsDeviceRegion *touchscreen_region;
+        BsTouchscreen *touchscreen;
+        GListModel *touchscreen_slots;
         GListModel *dials;
 
         dial_grid = BS_DIAL_GRID_REGION (bs_stream_deck_get_region (self, "dial-grid"));
         dials = bs_dial_grid_region_get_dials (dial_grid);
-
         g_assert (g_list_model_get_n_items (dials) == 4);
+
+        touchscreen_region = bs_stream_deck_get_region (self, "touchscreen");
+        touchscreen = bs_touchscreen_region_get_touchscreen (BS_TOUCHSCREEN_REGION (touchscreen_region));
+        touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+        g_assert (g_list_model_get_n_items (touchscreen_slots) == 4);
 
         for (uint8_t i = 0; i < 4; i++)
           {
-            g_autoptr (BsDial) dial = g_list_model_get_item (dials, i);
+            g_autoptr (BsTouchscreenSlot) slot = NULL;
+            g_autoptr (BsEvent) dial_event = NULL;
+            g_autoptr (BsDial) dial = NULL;
+            BsEventType event_type;
+            int rotation = 0;
+
+            dial = g_list_model_get_item (dials, i);
 
             if (states[4] == 0x01)
               {
-                int rotation = convert_dial_value (states[i + 5]);
+                event_type = BS_DIAL_ROTATE;
+                rotation = convert_dial_value (states[i + 5]);
 
-                g_debug ("  Dial %u rotation: %d", i, rotation);
+                if (rotation == 0)
+                  continue;
 
                 bs_dial_rotate (dial, rotation);
               }
             else
               {
-                g_debug ("  Dial %u pressed: %u", i, states[i + 5]);
+                if (bs_dial_get_pressed (dial) == (gboolean) states[i + 5])
+                  continue;
+
                 bs_dial_set_pressed (dial, (gboolean) states[i + 5]);
+
+                event_type = states[i + 5] ? BS_DIAL_PRESS : BS_DIAL_RELEASE;
               }
+
+            /* Hardcode routing dial events to the touchscreen slot. In the
+             * future this may become configurable, but for now, it is not.
+             */
+            dial_event = bs_dial_event_new (event_type, self, dial, rotation);
+
+            slot = g_list_model_get_item (touchscreen_slots, i);
+            bs_actionable_handle_event (BS_ACTIONABLE (slot), dial_event);
           }
       }
       break;
