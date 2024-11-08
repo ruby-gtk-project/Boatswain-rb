@@ -231,7 +231,8 @@
                           <object class="AdwButtonRow">
                             <property name="title" translatable="yes">Select Action</property>
                             <property name="end-icon-name">go-next-symbolic</property>
-                            <signal name="activated" handler="on_select_row_activated_cb" object="BsButtonEditor" swapped="no" />
+                            <property name="action-name">navigation.push</property>
+                            <property name="action-target">'actions'</property>
                             <style>
                               <class name="suggested-action"/>
                             </style>

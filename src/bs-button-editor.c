@@ -486,21 +486,6 @@ on_remove_custom_icon_button_clicked_cb (GtkButton      *button,
                                     &(GdkRGBA) { 0.0, 0.0, 0.0, 0.0 });
 }
 
-static void
-on_select_row_activated_cb (GtkListBoxRow  *row,
-                            BsButtonEditor *self)
-{
-  /* Collapse all expander rows */
-  for (GtkWidget *child = gtk_widget_get_first_child (GTK_WIDGET (self->actions_listbox));
-       child;
-       child = gtk_widget_get_next_sibling (child))
-    {
-      adw_expander_row_set_expanded (ADW_EXPANDER_ROW (child), FALSE);
-    }
-
-  adw_navigation_view_push_by_tag (self->navigation_view, "actions");
-}
-
 
 /*
  * GObject overrides
@@ -623,7 +608,6 @@ bs_button_editor_class_init (BsButtonEditorClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, on_icons_gridview_activate_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_remove_row_activated_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_remove_custom_icon_button_clicked_cb);
-  gtk_widget_class_bind_template_callback (widget_class, on_select_row_activated_cb);
 
   gtk_widget_class_set_css_name (widget_class, "streamdeckbuttoneditor");
 }
