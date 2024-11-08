@@ -172,8 +172,13 @@ bs_touchscreen_widget_dispose (GObject *object)
 {
   BsTouchscreenWidget *self = (BsTouchscreenWidget *)object;
 
+  g_clear_pointer ((GtkWidget **) &self->picture, gtk_widget_unparent);
+  g_clear_pointer ((GtkWidget **) &self->slots_flowbox, gtk_widget_unparent);
+
   g_clear_object (&self->touchscreen_region);
   g_clear_object (&self->selection_controller);
+
+  gtk_widget_dispose_template (GTK_WIDGET (self), BS_TYPE_TOUCHSCREEN_WIDGET);
 
   G_OBJECT_CLASS (bs_touchscreen_widget_parent_class)->dispose (object);
 }
