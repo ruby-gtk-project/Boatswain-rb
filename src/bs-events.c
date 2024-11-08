@@ -36,6 +36,7 @@ bs_event_init_types_once (void)
   g_type_ensure (BS_TYPE_EVENT);
   g_type_ensure (BS_TYPE_BUTTON_EVENT);
   g_type_ensure (BS_TYPE_CURSOR_EVENT);
+  g_type_ensure (BS_TYPE_DIAL_EVENT);
   g_type_ensure (BS_TYPE_TOUCHSCREEN_EVENT);
 }
 
@@ -210,6 +211,93 @@ bs_cursor_event_new (BsEventType   event_type,
   return (BsEvent *) g_steal_pointer (&cursor_event);
 }
 
+
+/*
+ * BsDialEvent
+ */
+
+struct _BsDialEvent
+{
+  BsEvent parent_instance;
+
+  BsDial *dial;
+  int rotation;
+};
+
+struct _BsDialEventClass
+{
+  BsEventClass parent_class;
+};
+
+G_DEFINE_FINAL_TYPE_WITH_CODE (BsDialEvent, bs_dial_event, BS_TYPE_EVENT,
+                               BS_EVENT_TYPE_SLOT (BS_DIAL_ROTATE)
+                               BS_EVENT_TYPE_SLOT (BS_DIAL_PRESS)
+                               BS_EVENT_TYPE_SLOT (BS_DIAL_RELEASE))
+
+static void
+bs_dial_event_class_init (BsDialEventClass *klass)
+{
+}
+
+static void
+bs_dial_event_init (BsDialEvent *self)
+{
+}
+
+BsEvent *
+bs_dial_event_new (BsEventType   event_type,
+                   BsStreamDeck *device,
+                   BsDial       *dial,
+                   int           rotation)
+{
+  g_autoptr (BsDialEvent) dial_event = NULL;
+
+  g_assert (event_type == BS_DIAL_ROTATE ||
+            event_type == BS_DIAL_PRESS ||
+            event_type == BS_DIAL_RELEASE);
+  g_assert (BS_IS_STREAM_DECK (device));
+
+  dial_event = bs_event_alloc (event_type, device);
+  g_assert (BS_IS_DIAL_EVENT (dial_event));
+
+  dial_event->dial = dial;
+  dial_event->rotation = rotation;
+
+  return (BsEvent *) g_steal_pointer (&dial_event);
+}
+
+/**
+ * bs_dial_event_get_dial:
+ * @self: a #BsDialEvent
+ *
+ * Retrieves the dial that generated this event.
+ *
+ * Returns: (transfer none): a #BsDial
+ */
+BsDial *
+bs_dial_event_get_dial (BsDialEvent *self)
+{
+  g_return_val_if_fail (BS_IS_DIAL_EVENT (self), NULL);
+
+  return self->dial;
+}
+
+/**
+ * bs_dial_event_get_rotation:
+ * @self: a #BsDialEvent
+ *
+ * Retrieves the number of rotation steps that the dial
+ * rotated. Only non-zero for @BS_DIAL_ROTATE events.
+ *
+ * Returns: the number of rotation steps
+ */
+int
+bs_dial_event_get_rotation (BsDialEvent *self)
+{
+  g_return_val_if_fail (BS_IS_DIAL_EVENT (self), 0);
+
+  return self->rotation;
+}
 
 /*
  * BsTouchscreenEvent

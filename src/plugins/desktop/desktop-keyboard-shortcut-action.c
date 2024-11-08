@@ -206,10 +206,12 @@ desktop_keyboard_shortcut_action_handle_event (BsAction *action,
   switch (bs_event_get_event_type (event))
     {
     case BS_BUTTON_PRESS:
+    case BS_DIAL_PRESS:
       activate_shortcut (self);
       break;
 
     case BS_BUTTON_RELEASE:
+    case BS_DIAL_RELEASE:
       deactivate_shortcut (self);
       break;
 
@@ -219,6 +221,7 @@ desktop_keyboard_shortcut_action_handle_event (BsAction *action,
       deactivate_shortcut (self);
       break;
 
+    case BS_DIAL_ROTATE:
     case BS_TOUCHSCREEN_SWIPE:
     case BS_CURSOR_DOUBLE_CLICK:
       break;

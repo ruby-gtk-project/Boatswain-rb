@@ -31,14 +31,12 @@ typedef enum
 {
   BS_BUTTON_PRESS,
   BS_BUTTON_RELEASE,
+  BS_DIAL_ROTATE,
+  BS_DIAL_PRESS,
+  BS_DIAL_RELEASE,
   BS_TOUCHSCREEN_SHORT_PRESS,
   BS_TOUCHSCREEN_LONG_PRESS,
   BS_TOUCHSCREEN_SWIPE,
-
-  // TODO: implement them
-  //BS_DIAL_ROTATION_EVENT,
-  //BS_DIAL_PRESS_EVENT,
-  //BS_DIAL_RELEASE_EVENT,
 
   /* Synthetic (non-hardware) events */
   BS_CURSOR_DOUBLE_CLICK,
@@ -105,6 +103,28 @@ typedef struct _BsCursorEventClass BsCursorEventClass;
 GType bs_cursor_event_get_type (void) G_GNUC_CONST;
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsCursorEvent, g_object_unref)
+
+
+/*
+ * BsDialEvent
+ */
+
+#define BS_TYPE_DIAL_EVENT         (bs_dial_event_get_type())
+#define BS_DIAL_EVENT(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), BS_TYPE_DIAL_EVENT, BsDialEvent))
+#define BS_DIAL_EVENT_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), BS_TYPE_DIAL_EVENT, BsDialEventClass))
+#define BS_IS_DIAL_EVENT(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), BS_TYPE_DIAL_EVENT))
+#define BS_IS_DIAL_EVENT_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), BS_TYPE_DIAL_EVENT))
+#define BS_DIAL_EVENT_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), BS_TYPE_DIAL_EVENT, BsDialEventClass))
+
+typedef struct _BsDialEvent BsDialEvent;
+typedef struct _BsDialEventClass BsDialEventClass;
+
+GType bs_dial_event_get_type (void) G_GNUC_CONST;
+
+BsDial * bs_dial_event_get_dial (BsDialEvent *self);
+int bs_dial_event_get_rotation (BsDialEvent *self);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsDialEvent, g_object_unref)
 
 
 /*

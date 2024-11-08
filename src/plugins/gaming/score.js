@@ -273,6 +273,20 @@ export const GamingScoreAction = GObject.registerClass({
             this._applyAction(ScoreAction.DECREMENT);
             break;
 
+        case Bs.EventType.DIAL_ROTATE:
+            console.log(event.get_rotation());
+            let rotation = event.get_rotation();
+            if (rotation > 0) {
+                while (rotation--)
+                    this._applyAction(ScoreAction.INCREMENT);
+            } else {
+                while (rotation++)
+                    this._applyAction(ScoreAction.DECREMENT);
+            }
+            break;
+
+        case Bs.EventType.DIAL_PRESS:
+        case Bs.EventType.DIAL_RELEASE:
         case Bs.EventType.TOUCHSCREEN_SWIPE:
             break;
     }

@@ -233,17 +233,20 @@ soundboard_play_action_handle_event (BsAction *action,
   switch (bs_event_get_event_type (event))
     {
     case BS_BUTTON_PRESS:
+    case BS_DIAL_PRESS:
     case BS_TOUCHSCREEN_SHORT_PRESS:
       activate_play_action (self);
       break;
 
-    case BS_TOUCHSCREEN_LONG_PRESS:
     case BS_BUTTON_RELEASE:
+    case BS_DIAL_RELEASE:
+    case BS_TOUCHSCREEN_LONG_PRESS:
       deactivate_play_action (self);
       break;
 
-    case BS_TOUCHSCREEN_SWIPE:
     case BS_CURSOR_DOUBLE_CLICK:
+    case BS_DIAL_ROTATE:
+    case BS_TOUCHSCREEN_SWIPE:
       break;
     }
 

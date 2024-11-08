@@ -41,6 +41,7 @@ typedef struct _BsDeviceEditor BsDeviceEditor;
 typedef struct _BsDeviceManager BsDeviceManager;
 typedef struct _BsDeviceRegion BsDeviceRegion;
 typedef struct _BsDial BsDial;
+typedef struct _BsDialEvent BsDialEvent;
 typedef struct _BsEmptyAction BsEmptyAction;
 typedef struct _BsEvent BsEvent;
 typedef struct _BsIcon BsIcon;

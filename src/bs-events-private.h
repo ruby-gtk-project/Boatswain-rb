@@ -43,6 +43,15 @@ BsEvent * bs_cursor_event_new (BsEventType   event_type,
                                BsStreamDeck *device);
 
 /*
+ * BsDialEvent
+ */
+
+BsEvent * bs_dial_event_new (BsEventType   event_type,
+                             BsStreamDeck *device,
+                             BsDial       *dial,
+                             int           rotation);
+
+/*
  * BsTouchscreenEvent
  */
 
