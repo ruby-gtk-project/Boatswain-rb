@@ -55,14 +55,6 @@ static GParamSpec *properties [N_PROPS];
  */
 
 static void
-bs_dial_finalize (GObject *object)
-{
-  //BsDial *self = (BsDial *)object;
-
-  G_OBJECT_CLASS (bs_dial_parent_class)->finalize (object);
-}
-
-static void
 bs_dial_get_property (GObject    *object,
                       guint       prop_id,
                       GValue     *value,
@@ -87,13 +79,7 @@ bs_dial_set_property (GObject      *object,
                       const GValue *value,
                       GParamSpec   *pspec)
 {
-  //BsDial *self = BS_DIAL (object);
-
-  switch (prop_id)
-    {
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
+  G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 }
 
 static void
@@ -101,7 +87,6 @@ bs_dial_class_init (BsDialClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = bs_dial_finalize;
   object_class->get_property = bs_dial_get_property;
   object_class->set_property = bs_dial_set_property;
 
