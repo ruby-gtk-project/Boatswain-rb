@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-10-26 14:21+0000\n"
-"PO-Revision-Date: 2024-10-27 07:52+0800\n"
+"POT-Creation-Date: 2024-11-06 22:36+0000\n"
+"PO-Revision-Date: 2024-11-08 18:08+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -79,31 +79,31 @@ msgstr "保持对您游戏分数的追踪"
 msgid "Open files and launch applications"
 msgstr "打开文件和启动应用程序"
 
-#: src/bs-application.c:54
+#: src/bs-application.c:55
 msgid "Enable debug messages"
 msgstr "启用调试消息"
 
-#: src/bs-application.c:117
+#: src/bs-application.c:118
 #, c-format
 msgid "Connected to %d device"
 msgid_plural "Connected to %d devices"
 msgstr[0] "已连接到 %d 个设备"
 
-#: src/bs-application.c:169
+#: src/bs-application.c:170
 msgid ""
 "Boatswain needs to run in background to detect and execute Stream Deck "
 "actions."
 msgstr "Boatswain 需要在后台运行以检测和执行 Stream Deck 动作。"
 
-#: src/bs-button-editor.c:388
+#: src/bs-button-editor.c:395
 msgid "All supported formats"
 msgstr "所有支持的格式"
 
-#: src/bs-button-editor.c:397
+#: src/bs-button-editor.c:404
 msgid "Select icon"
 msgstr "选择图标"
 
-#: src/bs-button-editor.c:398
+#: src/bs-button-editor.c:405
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "打开"
@@ -137,7 +137,7 @@ msgstr "动作"
 msgid "Select a button"
 msgstr "选择按钮"
 
-#: src/bs-profile.c:184
+#: src/bs-profile.c:185
 msgid "Unnamed profile"
 msgstr "未命名配置文件"
 
@@ -157,22 +157,22 @@ msgstr "下移"
 msgid "Delete"
 msgstr "删除"
 
-#: src/bs-stream-deck.c:320
+#: src/bs-stream-deck.c:340
 msgid "Default"
 msgstr "默认"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1073 src/bs-stream-deck.c:1098
+#: src/bs-stream-deck.c:1166 src/bs-stream-deck.c:1191
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1123 src/bs-stream-deck.c:1148
-#: src/plugins/default/default-switch-profile-action.c:283
+#: src/bs-stream-deck.c:1216 src/bs-stream-deck.c:1241
+#: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
 msgstr "Stream Deck"
@@ -180,43 +180,43 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1173 src/bs-stream-deck.c:1198
+#: src/bs-stream-deck.c:1266 src/bs-stream-deck.c:1291
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1223
+#: src/bs-stream-deck.c:1316
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1248
+#: src/bs-stream-deck.c:1341
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1273
+#: src/bs-stream-deck.c:1366
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1314
+#: src/bs-stream-deck.c:1407
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1383
+#: src/bs-stream-deck.c:1476
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1405
+#: src/bs-stream-deck.c:1498
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
@@ -224,7 +224,7 @@ msgstr "Feaneron Hangar XL"
 msgid "New profile…"
 msgstr "新建配置文件…"
 
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:54
+#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:55
 msgid "Brightness"
 msgstr "亮度"
 
@@ -267,40 +267,44 @@ msgctxt "shortcut window"
 msgid "Quit"
 msgstr "退出"
 
-#: src/plugins/default/default-action-factory.c:42
+#: src/plugins/default/default-action-factory.c:43
 msgid "Folder"
 msgstr "文件夹"
 
-#: src/plugins/default/default-action-factory.c:48
+#: src/plugins/default/default-action-factory.c:49
 msgid "Switch Profile"
 msgstr "切换配置文件"
 
-#: src/plugins/default/default-action-factory.c:60
+#: src/plugins/default/default-action-factory.c:61
 msgid "Multiple Actions"
 msgstr "多个动作"
 
+#: src/plugins/default/default-action-factory.c:67
+msgid "Go Up"
+msgstr "上翻页"
+
 #. Translators: "Constant" as in "Constant value of brightness"
-#: src/plugins/default/default-brightness-action.c:141
+#: src/plugins/default/default-brightness-action.c:144
 msgid "Constant"
 msgstr "恒定"
 
-#: src/plugins/default/default-brightness-action.c:142
+#: src/plugins/default/default-brightness-action.c:145
 msgid "Increase"
 msgstr "增加"
 
-#: src/plugins/default/default-brightness-action.c:143
+#: src/plugins/default/default-brightness-action.c:146
 msgid "Decrease"
 msgstr "降低"
 
-#: src/plugins/default/default-brightness-action.c:146
+#: src/plugins/default/default-brightness-action.c:149
 msgid "Mode"
 msgstr "模式"
 
-#: src/plugins/default/default-brightness-action.c:153
+#: src/plugins/default/default-brightness-action.c:156
 msgid "Value"
 msgstr "值"
 
-#: src/plugins/default/default-multi-action-editor.c:310
+#: src/plugins/default/default-multi-action-editor.c:307
 #: src/plugins/default/default-multi-action-row.c:143
 msgid "Delay"
 msgstr "延迟"
@@ -315,18 +319,18 @@ msgstr "添加动作"
 
 #: src/plugins/default/default-multi-action-editor.ui:73
 msgid "Others"
-msgstr "其他"
+msgstr "其它"
 
 #: src/plugins/default/default-multi-action-editor.ui:83
 msgid "Settings"
 msgstr "设置"
 
-#: src/plugins/default/default-switch-profile-action.c:306
+#: src/plugins/default/default-switch-profile-action.c:301
 msgid "Profile"
 msgstr "配置文件"
 
 #: src/plugins/desktop/desktop-action-factory.c:41
-#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:257
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:274
 msgid "Keyboard Shortcut"
 msgstr "键盘快捷键"
 
@@ -371,31 +375,31 @@ msgid "score.txt"
 msgstr "分数.txt"
 
 #. Restore score
-#: src/plugins/gaming/score.js:322
+#: src/plugins/gaming/score.js:338
 msgid "Restore Score"
 msgstr "恢复分数"
 
-#: src/plugins/gaming/score.js:341
+#: src/plugins/gaming/score.js:357
 msgid "Text Color"
 msgstr "文字颜色"
 
-#: src/plugins/gaming/score.js:354
+#: src/plugins/gaming/score.js:370
 msgid "Save to File"
 msgstr "保存到文件"
 
-#: src/plugins/gaming/score.js:355
+#: src/plugins/gaming/score.js:371
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr "保存分数到文本文件。其它应用比如 OBS Studio 可以读取它。"
 
-#: src/plugins/gaming/score.js:364
-#: src/plugins/launcher/launcher-open-file-action.c:209
+#: src/plugins/gaming/score.js:380
+#: src/plugins/launcher/launcher-open-file-action.c:214
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
 msgstr "文件"
 
-#: src/plugins/gaming/score.js:383
+#: src/plugins/gaming/score.js:399
 msgid "Text File (.txt)"
 msgstr "文本文件（.txt）"
 
@@ -415,15 +419,15 @@ msgstr "打开 URL"
 msgid "Choose Application"
 msgstr "选择应用程序"
 
-#: src/plugins/launcher/launcher-open-file-action.c:68
+#: src/plugins/launcher/launcher-open-file-action.c:69
 msgid "No file selected"
 msgstr "未选择文件"
 
-#: src/plugins/launcher/launcher-open-file-action.c:156
+#: src/plugins/launcher/launcher-open-file-action.c:157
 msgid "Select File"
 msgstr "选择文件"
 
-#: src/plugins/launcher/launcher-open-url-action.c:104
+#: src/plugins/launcher/launcher-open-url-action.c:109
 msgid "URL"
 msgstr "URL"
 
@@ -513,44 +517,44 @@ msgstr "端口"
 msgid "Password"
 msgstr "密码"
 
-#: src/plugins/obs-studio/obs-switch-scene-action.c:283
+#: src/plugins/obs-studio/obs-switch-scene-action.c:288
 msgid "Scene"
 msgstr "场景"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:124
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
 msgid "Toggle mute"
 msgstr "切换静音"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+#: src/plugins/obs-studio/obs-toggle-source-action.c:126
 msgid "Mute"
 msgstr "静音"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+#: src/plugins/obs-studio/obs-toggle-source-action.c:127
 msgid "Unmute"
 msgstr "取消静音"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:130
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
 msgid "Toggle visibility"
 msgstr "切换可见性"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+#: src/plugins/obs-studio/obs-toggle-source-action.c:132
 msgid "Hide"
 msgstr "隐藏"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+#: src/plugins/obs-studio/obs-toggle-source-action.c:133
 msgid "Show"
 msgstr "显示"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:479
+#: src/plugins/obs-studio/obs-toggle-source-action.c:484
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
 msgid "Behavior"
 msgstr "行为"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:490
+#: src/plugins/obs-studio/obs-toggle-source-action.c:495
 msgid "Audio Source"
 msgstr "音频源"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:492
+#: src/plugins/obs-studio/obs-toggle-source-action.c:497
 msgid "Source"
 msgstr "源"
 
@@ -570,31 +574,31 @@ msgstr "控制活动的音乐播放器"
 msgid "Play Audio"
 msgstr "播放音频"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:197
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
 msgid "Next"
 msgstr "下一个"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:198
+#: src/plugins/soundboard/soundboard-mpris-action.c:203
 msgid "Pause"
 msgstr "暂停"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:199
+#: src/plugins/soundboard/soundboard-mpris-action.c:204
 msgid "Play"
 msgstr "播放"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:200
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
 msgid "Previous"
 msgstr "上一个"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:201
+#: src/plugins/soundboard/soundboard-mpris-action.c:206
 msgid "Stop"
 msgstr "停止"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:202
+#: src/plugins/soundboard/soundboard-mpris-action.c:207
 msgid "Play / Pause"
 msgstr "播放 / 暂停"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:205
+#: src/plugins/soundboard/soundboard-mpris-action.c:210
 msgid "Playback Action"
 msgstr "播放动作"
 
