@@ -1082,8 +1082,6 @@ read_state_plus (BsStreamDeck *self)
 
                 if (rotation == 0)
                   continue;
-
-                bs_dial_rotate (dial, rotation);
               }
             else
               {

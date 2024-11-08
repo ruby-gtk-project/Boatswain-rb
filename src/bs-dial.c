@@ -41,12 +41,6 @@ enum {
   N_PROPS,
 };
 
-enum {
-  ROTATED,
-  N_SIGNALS,
-};
-
-static guint signals [N_SIGNALS];
 static GParamSpec *properties [N_PROPS];
 
 
@@ -95,14 +89,6 @@ bs_dial_class_init (BsDialClass *klass)
                                                    G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
-
-  signals[ROTATED] = g_signal_new ("rotated",
-                                   BS_TYPE_DIAL,
-                                   G_SIGNAL_RUN_LAST,
-                                   0, NULL, NULL, NULL,
-                                   G_TYPE_NONE,
-                                   1,
-                                   G_TYPE_INT);
 }
 
 static void
@@ -142,13 +128,4 @@ bs_dial_set_pressed (BsDial   *self,
 
   self->pressed = pressed;
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_PRESSED]);
-}
-
-void
-bs_dial_rotate (BsDial *self,
-                int     rotation)
-{
-  g_assert (BS_IS_DIAL (self));
-
-  g_signal_emit (self, signals[ROTATED], 0, rotation);
 }
