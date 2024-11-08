@@ -5,6 +5,7 @@ boatswain_sources = [
   'bs-action.c',
   'bs-action-factory.c',
   'bs-action-info.c',
+  'bs-action-selector.c',
   'bs-application.c',
   'bs-button.c',
   'bs-button-editor.c',

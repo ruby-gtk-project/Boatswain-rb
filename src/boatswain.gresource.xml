@@ -2,6 +2,7 @@
 <gresources>
 
   <gresource prefix="/com/feaneron/Boatswain">
+    <file>bs-action-selector.ui</file>
     <file>bs-button-editor.ui</file>
     <file>bs-button-grid-widget.ui</file>
     <file>bs-button-widget.ui</file>
