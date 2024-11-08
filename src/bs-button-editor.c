@@ -60,9 +60,6 @@ struct _BsButtonEditor
   gulong icon_changed_id;
 };
 
-static void on_action_row_activated_cb (GtkListBoxRow  *row,
-                                        BsButtonEditor *self);
-
 static void on_custom_icon_text_row_text_changed_cb (GtkEditable    *entry,
                                                      GParamSpec     *pspec,
                                                      BsButtonEditor *self);
