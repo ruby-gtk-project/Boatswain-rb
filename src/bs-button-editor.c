@@ -25,6 +25,7 @@
 #include "bs-action-factory.h"
 #include "bs-action-info.h"
 #include "bs-action-private.h"
+#include "bs-action-selector.h"
 #include "bs-application-private.h"
 #include "bs-empty-action.h"
 #include "bs-icon.h"
@@ -41,7 +42,6 @@ struct _BsButtonEditor
   AdwBin parent_instance;
 
   AdwPreferencesGroup *action_preferences_group;
-  GtkListBox *actions_listbox;
   GtkColorDialogButton *background_color_dialog_button;
   AdwPreferencesPage *button_preferences_page;
   GtkMenuButton *custom_icon_menubutton;
@@ -82,52 +82,6 @@ static GParamSpec *properties [N_PROPS];
 /*
  * Auxiliary methods
  */
-
-static void
-add_action_factory (BsButtonEditor  *self,
-                    BsActionFactory *action_factory)
-{
-  PeasPluginInfo *plugin_info;
-  GtkWidget *expander_row;
-  GtkWidget *image;
-
-  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (action_factory));
-
-  expander_row = adw_expander_row_new ();
-  adw_preferences_row_set_title (ADW_PREFERENCES_ROW (expander_row),
-                                 peas_plugin_info_get_name (plugin_info));
-
-  image = gtk_image_new_from_icon_name (peas_plugin_info_get_icon_name (plugin_info));
-  adw_expander_row_add_prefix (ADW_EXPANDER_ROW (expander_row), image);
-
-  gtk_list_box_append (self->actions_listbox, expander_row);
-
-  for (uint32_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (action_factory)); i++)
-    {
-      g_autoptr (BsActionInfo) info = NULL;
-      GtkWidget *image;
-      GtkWidget *row;
-
-      info = g_list_model_get_item (G_LIST_MODEL (action_factory), i);
-
-      if (bs_action_info_get_hidden (info))
-        continue;
-
-      row = adw_action_row_new ();
-      adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), bs_action_info_get_name (info));
-      adw_action_row_set_subtitle (ADW_ACTION_ROW (row), bs_action_info_get_description (info));
-      gtk_list_box_row_set_activatable (GTK_LIST_BOX_ROW (row), TRUE);
-      g_object_set_data (G_OBJECT (row), "factory", action_factory);
-      g_object_set_data (G_OBJECT (row), "action-info", (gpointer) info);
-      g_object_set_data (G_OBJECT (row), "plugin-info", (gpointer) plugin_info);
-      g_signal_connect (row, "activated", G_CALLBACK (on_action_row_activated_cb), self);
-
-      image = gtk_image_new_from_icon_name (bs_action_info_get_icon_name (info));
-      adw_action_row_add_prefix (ADW_ACTION_ROW (row), image);
-
-      adw_expander_row_add_row (ADW_EXPANDER_ROW (expander_row), row);
-    }
-}
 
 static void
 setup_button (BsButtonEditor *self)
@@ -234,14 +188,15 @@ maybe_remove_custom_icon (BsButtonEditor *self)
  */
 
 static void
-on_action_row_activated_cb (GtkListBoxRow  *row,
-                            BsButtonEditor *self)
+on_action_selector_action_selected_cb (BsActionSelector *selector,
+                                       BsActionFactory  *factory,
+                                       BsActionInfo     *action_info,
+                                       BsButtonEditor   *self)
 {
   g_autoptr (BsAction) new_action = NULL;
   g_autoptr (BsIcon) new_custom_icon = NULL;
   g_autoptr (GError) error = NULL;
   PeasPluginInfo *plugin_info;
-  BsActionInfo *action_info;
   BsStreamDeck *stream_deck;
   BsPageItem *item;
   BsIcon *custom_icon;
@@ -250,8 +205,7 @@ on_action_row_activated_cb (GtkListBoxRow  *row,
 
   stream_deck = bs_button_get_stream_deck (self->button);
   active_page = bs_stream_deck_get_active_page (stream_deck);
-  plugin_info = g_object_get_data (G_OBJECT (row), "plugin-info");
-  action_info = g_object_get_data (G_OBJECT (row), "action-info");
+  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
 
   position = bs_button_get_position (self->button);
   item = bs_page_get_item (active_page, position);
@@ -273,25 +227,6 @@ on_action_row_activated_cb (GtkListBoxRow  *row,
   update_action_preferences_group (self);
 
   adw_navigation_view_pop (self->navigation_view);
-}
-
-static void
-on_action_factory_added_cb (PeasExtensionSet *extension_set,
-                            PeasPluginInfo   *plugin_info,
-                            GObject          *extension,
-                            gpointer          user_data)
-{
-  BsButtonEditor *self = BS_BUTTON_EDITOR (user_data);
-
-  add_action_factory (self, BS_ACTION_FACTORY (extension));
-}
-
-static void
-on_action_factory_removed_cb (PeasExtensionSet *extension_set,
-                              PeasPluginInfo   *plugin_info,
-                              GObject          *extension,
-                              gpointer          user_data)
-{
 }
 
 static void
@@ -591,7 +526,6 @@ bs_button_editor_class_init (BsButtonEditorClass *klass)
   gtk_widget_class_set_template_from_resource (widget_class, "/com/feaneron/Boatswain/bs-button-editor.ui");
 
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, action_preferences_group);
-  gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, actions_listbox);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, background_color_dialog_button);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, button_preferences_page);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, custom_icon_menubutton);
@@ -602,6 +536,7 @@ bs_button_editor_class_init (BsButtonEditorClass *klass)
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, remove_group);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, remove_custom_icon_button);
 
+  gtk_widget_class_bind_template_callback (widget_class, on_action_selector_action_selected_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_background_color_dialog_button_rgba_changed_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_custom_icon_button_clicked_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_custom_icon_text_row_text_changed_cb);
@@ -616,20 +551,8 @@ static void
 bs_button_editor_init (BsButtonEditor *self)
 {
   static GtkStringList *builtin_icons_list = NULL;
-  PeasExtensionSet *extension_set;
-  GApplication *application;
 
   gtk_widget_init_template (GTK_WIDGET (self));
-
-  application = g_application_get_default ();
-  extension_set = bs_application_get_action_factory_set (BS_APPLICATION (application));
-
-  peas_extension_set_foreach (extension_set,
-                              (PeasExtensionSetForeachFunc) on_action_factory_added_cb,
-                              self);
-
-  g_signal_connect (extension_set, "extension-added", G_CALLBACK (on_action_factory_added_cb), self);
-  g_signal_connect (extension_set, "extension-removed", G_CALLBACK (on_action_factory_removed_cb), self);
 
   if (g_once_init_enter_pointer (&builtin_icons_list))
     {
