@@ -38,7 +38,7 @@ struct _BsButtonGridWidget
 {
   GtkWidget parent_instance;
 
-  GtkFlowBox *flowbox;
+  GtkWidget *flowbox;
 
   BsButtonGridRegion *button_grid;
   BsSelectionController *selection_controller;
@@ -113,7 +113,7 @@ on_selection_controller_selection_changed_cb (BsSelectionController *selection_c
   if (!bs_selection_controller_get_selection (selection_controller, &owner, &item) ||
       owner != self->button_grid)
     {
-      gtk_flow_box_unselect_all (self->flowbox);
+      gtk_flow_box_unselect_all (GTK_FLOW_BOX (self->flowbox));
     }
 }
 
@@ -123,14 +123,18 @@ on_selection_controller_selection_changed_cb (BsSelectionController *selection_c
  */
 
 static void
-bs_button_grid_widget_finalize (GObject *object)
+bs_button_grid_widget_dispose (GObject *object)
 {
   BsButtonGridWidget *self = (BsButtonGridWidget *)object;
+
+  g_clear_pointer (&self->flowbox, gtk_widget_unparent);
 
   g_clear_object (&self->button_grid);
   g_clear_object (&self->selection_controller);
 
-  G_OBJECT_CLASS (bs_button_grid_widget_parent_class)->finalize (object);
+  gtk_widget_dispose_template (GTK_WIDGET (self), BS_TYPE_BUTTON_GRID_WIDGET);
+
+  G_OBJECT_CLASS (bs_button_grid_widget_parent_class)->dispose (object);
 }
 
 static void
@@ -143,8 +147,8 @@ bs_button_grid_widget_constructed (GObject *object)
   G_OBJECT_CLASS (bs_button_grid_widget_parent_class)->constructed (object);
 
   grid_columns = bs_button_grid_region_get_grid_columns (self->button_grid);
-  gtk_flow_box_set_min_children_per_line (self->flowbox, grid_columns);
-  gtk_flow_box_set_max_children_per_line (self->flowbox, grid_columns);
+  gtk_flow_box_set_min_children_per_line (GTK_FLOW_BOX (self->flowbox), grid_columns);
+  gtk_flow_box_set_max_children_per_line (GTK_FLOW_BOX (self->flowbox), grid_columns);
 
   buttons = bs_button_grid_region_get_buttons (self->button_grid);
 
@@ -156,7 +160,7 @@ bs_button_grid_widget_constructed (GObject *object)
       button = g_list_model_get_item (buttons, i);
 
       widget = bs_button_widget_new (button);
-      gtk_flow_box_append (self->flowbox, widget);
+      gtk_flow_box_append (GTK_FLOW_BOX (self->flowbox), widget);
     }
 }
 
@@ -222,7 +226,7 @@ bs_button_grid_widget_class_init (BsButtonGridWidgetClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
-  object_class->finalize = bs_button_grid_widget_finalize;
+  object_class->dispose = bs_button_grid_widget_dispose;
   object_class->constructed = bs_button_grid_widget_constructed;
   object_class->get_property = bs_button_grid_widget_get_property;
   object_class->set_property = bs_button_grid_widget_set_property;
