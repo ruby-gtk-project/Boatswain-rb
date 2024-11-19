@@ -13,6 +13,7 @@
 
             <child type="top">
               <object class="AdwHeaderBar">
+                <property name="show-title">False</property>
                 <property name="show-start-title-buttons">False</property>
                 <property name="show-end-title-buttons">False</property>
               </object>
@@ -54,6 +55,7 @@
 
                 <child type="top">
                   <object class="AdwHeaderBar">
+                    <property name="show-title">False</property>
                     <property name="show-start-title-buttons">False</property>
                   </object>
                 </child>

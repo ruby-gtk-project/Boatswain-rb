@@ -13,6 +13,7 @@
         <!-- Sidebar -->
         <property name="sidebar">
           <object class="AdwNavigationPage">
+            <property name="title">Devices</property>
             <property name="tag">sidebar</property>
             <property name="child">
               <object class="AdwToolbarView">
@@ -206,6 +207,7 @@
         <!-- Main view -->
         <property name="content">
           <object class="AdwNavigationPage">
+            <property name="title">Device</property>
             <property name="tag">content</property>
             <property name="child">
               <object class="GtkBox">
@@ -222,7 +224,9 @@
 
                         <!-- Header bar -->
                         <child>
-                          <object class="AdwHeaderBar" />
+                          <object class="AdwHeaderBar">
+                            <property name="show-title">False</property>
+                          </object>
                         </child>
 
                         <child>
