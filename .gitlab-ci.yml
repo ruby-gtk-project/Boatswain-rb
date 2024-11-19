@@ -1,34 +1,35 @@
 ---
 
-include: 'https://gitlab.gnome.org/GNOME/citemplates/raw/master/flatpak/flatpak_ci_initiative.yml'
+include:
+  - project: 'gnome/citemplates'
+    file: 'flatpak/flatpak_ci_initiative.yml'
 
 variables:
-  GIT_SUBMODULE_STRATEGY: normal
+  APP_ID: "com.feaneron.Boatswain.Devel"
   BUNDLE: "com.feaneron.Boatswain.Devel.flatpak"
+  FLATPAK_MODULE: "boatswain"
+  GIT_SUBMODULE_STRATEGY: normal
+  MANIFEST_PATH: "build-aux/com.feaneron.Boatswain.Devel.json"
+  RUNTIME_REPO: "https://nightly.gnome.org/gnome-nightly.flatpakrepo"
 
 stages:
-  - flatpak
+  - build
   - deploy
 
+build-flatpak:
+  extends: '.flatpak@x86_64'
+  stage: build
+  before_script: []
 
-##################
-# Flatpak Bundle #
-##################
+build-flatpak-aarch64:
+  extends: '.flatpak@aarch64'
+  stage: build
+  before_script: []
 
-flatpak:master:
-  extends: .flatpak
-  stage: flatpak
-  variables:
-    MANIFEST_PATH: "build-aux/com.feaneron.Boatswain.Devel.json"
-    RUNTIME_REPO: "https://nightly.gnome.org/gnome-nightly.flatpakrepo"
-    # Replace with your application name, as written in the manifest
-    FLATPAK_MODULE: "boatswain"
-    # Make sure to keep this in sync with the Flatpak manifest, all arguments
-    # are passed except the config-args because we build it ourselves
-    MESON_ARGS: ""
-    APP_ID: "com.feaneron.Boatswain.Devel"
+nightly:
+  extends: '.publish_nightly'
+  needs: ['build-flatpak']
 
-flatpak:nightly:
-  extends: .publish_nightly
-  dependencies:
-    - flatpak:master
+nightly-aarch64:
+  extends: '.publish_nightly'
+  needs: ['build-flatpak-aarch64']
