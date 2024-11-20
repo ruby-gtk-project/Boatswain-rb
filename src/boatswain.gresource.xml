@@ -40,4 +40,12 @@
     <file alias="youtube-symbolic.svg">icons/youtube-symbolic.svg</file>
   </gresource>
 
+  <gresource prefix="/com/feaneron/Boatswain/assets/backgrounds">
+    <file alias="adwaita.png">assets/adwaita.png</file>
+    <file alias="glass2.png">assets/glass2.png</file>
+    <file alias="oh-sheet.png">assets/oh-sheet.png</file>
+    <file alias="pills.png">assets/pills.png</file>
+    <file alias="swoosh.png">assets/swoosh.png</file>
+  </gresource>
+
 </gresources>
