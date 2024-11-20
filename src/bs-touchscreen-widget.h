@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 #define BS_TYPE_TOUCHSCREEN_WIDGET (bs_touchscreen_widget_get_type())
 G_DECLARE_FINAL_TYPE (BsTouchscreenWidget, bs_touchscreen_widget, BS, TOUCHSCREEN_WIDGET, GtkWidget)
 
-GtkWidget * bs_touchscreen_widget_new (BsTouchscreenRegion *touchscreen_region,
+GtkWidget * bs_touchscreen_widget_new (BsTouchscreen         *touchscreen,
                                        BsSelectionController *selection_controller);
 
 G_END_DECLS

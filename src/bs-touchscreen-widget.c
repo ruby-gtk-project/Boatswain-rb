@@ -23,7 +23,6 @@
 
 #include "bs-selection-controller.h"
 #include "bs-touchscreen-private.h"
-#include "bs-touchscreen-region.h"
 #include "bs-touchscreen-slot-widget.h"
 #include "bs-touchscreen-slot.h"
 #include "bs-debug.h"
@@ -35,7 +34,7 @@ struct _BsTouchscreenWidget
   GtkPicture *picture;
   GtkFlowBox *slots_flowbox;
 
-  BsTouchscreenRegion *touchscreen_region;
+  BsTouchscreen *touchscreen;
   BsSelectionController *selection_controller;
 };
 
@@ -43,7 +42,7 @@ G_DEFINE_FINAL_TYPE (BsTouchscreenWidget, bs_touchscreen_widget, GTK_TYPE_WIDGET
 
 enum {
   PROP_0,
-  PROP_TOUCHSCREEN_REGION,
+  PROP_TOUCHSCREEN,
   PROP_SELECTION_CONTROLLER,
   N_PROPS
 };
@@ -74,7 +73,7 @@ on_slots_flowbox_selected_children_changed_cb (GtkFlowBox          *flowbox,
       slot = bs_touchscreen_slot_widget_get_slot (BS_TOUCHSCREEN_SLOT_WIDGET (child));
 
       bs_selection_controller_set_selection (self->selection_controller,
-                                             self->touchscreen_region,
+                                             self->touchscreen,
                                              slot);
     }
 }
@@ -85,7 +84,7 @@ on_selection_controller_selection_changed_cb (BsSelectionController *selection_c
   gpointer owner, item;
 
   if (!bs_selection_controller_get_selection (selection_controller, &owner, &item) ||
-      owner != self->touchscreen_region)
+      owner != self->touchscreen)
     {
       gtk_flow_box_unselect_all (self->slots_flowbox);
     }
@@ -112,14 +111,12 @@ bs_touchscreen_widget_measure (GtkWidget      *widget,
                                int            *natural_baseline)
 {
   BsTouchscreenWidget *self = (BsTouchscreenWidget *)widget;
-  BsTouchscreen *touchscreen;
   float ratio;
   int picture_min;
   int flowbox_min;
 
-  touchscreen = bs_touchscreen_region_get_touchscreen (self->touchscreen_region);
-  ratio = (float) bs_touchscreen_get_width (touchscreen) /
-          (float) bs_touchscreen_get_height (touchscreen);
+  ratio = (float) bs_touchscreen_get_width (self->touchscreen) /
+          (float) bs_touchscreen_get_height (self->touchscreen);
 
   switch (orientation)
     {
@@ -175,7 +172,7 @@ bs_touchscreen_widget_dispose (GObject *object)
   g_clear_pointer ((GtkWidget **) &self->picture, gtk_widget_unparent);
   g_clear_pointer ((GtkWidget **) &self->slots_flowbox, gtk_widget_unparent);
 
-  g_clear_object (&self->touchscreen_region);
+  g_clear_object (&self->touchscreen);
   g_clear_object (&self->selection_controller);
 
   gtk_widget_dispose_template (GTK_WIDGET (self), BS_TYPE_TOUCHSCREEN_WIDGET);
@@ -187,13 +184,11 @@ static void
 bs_touchscreen_widget_constructed (GObject *object)
 {
   BsTouchscreenWidget *self = (BsTouchscreenWidget *)object;
-  BsTouchscreen *touchscreen;
   GListModel *slots;
 
   G_OBJECT_CLASS (bs_touchscreen_widget_parent_class)->constructed (object);
 
-  touchscreen = bs_touchscreen_region_get_touchscreen (self->touchscreen_region);
-  slots = bs_touchscreen_get_slots (touchscreen);
+  slots = bs_touchscreen_get_slots (self->touchscreen);
 
   gtk_flow_box_set_min_children_per_line (self->slots_flowbox, g_list_model_get_n_items (slots));
   gtk_flow_box_set_max_children_per_line (self->slots_flowbox, g_list_model_get_n_items (slots));
@@ -208,7 +203,7 @@ bs_touchscreen_widget_constructed (GObject *object)
       gtk_flow_box_append (self->slots_flowbox, child);
     }
 
-  g_object_bind_property (bs_touchscreen_get_content (touchscreen),
+  g_object_bind_property (bs_touchscreen_get_content (self->touchscreen),
                           "background-paintable",
                           self->picture,
                           "paintable",
@@ -225,8 +220,8 @@ bs_touchscreen_widget_get_property (GObject    *object,
 
   switch (prop_id)
     {
-    case PROP_TOUCHSCREEN_REGION:
-      g_value_set_object (value, self->touchscreen_region);
+    case PROP_TOUCHSCREEN:
+      g_value_set_object (value, self->touchscreen);
       break;
 
     case PROP_SELECTION_CONTROLLER:
@@ -248,10 +243,10 @@ bs_touchscreen_widget_set_property (GObject      *object,
 
   switch (prop_id)
     {
-    case PROP_TOUCHSCREEN_REGION:
-      g_assert (self->touchscreen_region == NULL);
-      self->touchscreen_region = g_value_dup_object (value);
-      g_assert (self->touchscreen_region != NULL);
+    case PROP_TOUCHSCREEN:
+      g_assert (self->touchscreen == NULL);
+      self->touchscreen = g_value_dup_object (value);
+      g_assert (self->touchscreen != NULL);
       break;
 
     case PROP_SELECTION_CONTROLLER:
@@ -286,9 +281,9 @@ bs_touchscreen_widget_class_init (BsTouchscreenWidgetClass *klass)
   widget_class->measure = bs_touchscreen_widget_measure;
   widget_class->size_allocate = bs_touchscreen_widget_size_allocate;
 
-  properties[PROP_TOUCHSCREEN_REGION] =
-    g_param_spec_object ("touchscreen-region", NULL, NULL,
-                         BS_TYPE_TOUCHSCREEN_REGION,
+  properties[PROP_TOUCHSCREEN] =
+    g_param_spec_object ("touchscreen", NULL, NULL,
+                         BS_TYPE_TOUCHSCREEN,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_SELECTION_CONTROLLER] =
@@ -315,11 +310,11 @@ bs_touchscreen_widget_init (BsTouchscreenWidget *self)
 }
 
 GtkWidget *
-bs_touchscreen_widget_new (BsTouchscreenRegion   *touchscreen_region,
+bs_touchscreen_widget_new (BsTouchscreen         *touchscreen,
                            BsSelectionController *selection_controller)
 {
   return g_object_new (BS_TYPE_TOUCHSCREEN_WIDGET,
-                       "touchscreen-region", touchscreen_region,
+                       "touchscreen", touchscreen,
                        "selection-controller", selection_controller,
                        NULL);
 }

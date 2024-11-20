@@ -36,7 +36,6 @@
 #include "bs-profile.h"
 #include "bs-renderer.h"
 #include "bs-touchscreen-private.h"
-#include "bs-touchscreen-region.h"
 #include "bs-touchscreen-slot.h"
 
 #include <glib/gi18n.h>
@@ -995,11 +994,9 @@ read_state_plus (BsStreamDeck *self)
           SWIPE = 3,
         } touch_event_type = states[4];
         graphene_point_t position;
-        BsDeviceRegion *region;
         BsTouchscreen *touchscreen;
 
-        region = bs_stream_deck_get_region (self, "touchscreen");
-        touchscreen = bs_touchscreen_region_get_touchscreen (BS_TOUCHSCREEN_REGION (region));
+        touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
 
         graphene_point_init (&position,
                              (states[7] << 8) + states[6],
@@ -1051,7 +1048,6 @@ read_state_plus (BsStreamDeck *self)
     case DIAL_EVENT:
       {
         BsDialGridRegion *dial_grid;
-        BsDeviceRegion *touchscreen_region;
         BsTouchscreen *touchscreen;
         GListModel *touchscreen_slots;
         GListModel *dials;
@@ -1060,8 +1056,7 @@ read_state_plus (BsStreamDeck *self)
         dials = bs_dial_grid_region_get_dials (dial_grid);
         g_assert (g_list_model_get_n_items (dials) == 4);
 
-        touchscreen_region = bs_stream_deck_get_region (self, "touchscreen");
-        touchscreen = bs_touchscreen_region_get_touchscreen (BS_TOUCHSCREEN_REGION (touchscreen_region));
+        touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
         touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
         g_assert (g_list_model_get_n_items (touchscreen_slots) == 4);
 
@@ -1116,7 +1111,6 @@ set_touchscreen_texture_plus (BsStreamDeck   *self,
 {
   g_autofree uint8_t *payload = NULL;
   g_autofree uint8_t *buffer = NULL;
-  BsDeviceRegion *region;
   BsRenderer *renderer;
   const size_t package_size = 1024;
   const size_t header_size = 16;
@@ -1127,8 +1121,7 @@ set_touchscreen_texture_plus (BsStreamDeck   *self,
 
   BS_ENTRY;
 
-  region = bs_touchscreen_get_region (touchscreen);
-  renderer = bs_device_region_get_renderer (region);
+  renderer = bs_device_region_get_renderer (BS_DEVICE_REGION (touchscreen));
 
   if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
     BS_RETURN (FALSE);
@@ -1685,15 +1678,15 @@ out:
 
   if (self->model_info->features & BS_STREAM_DECK_FEATURE_TOUCHSCREEN)
     {
-      g_autoptr (BsTouchscreenRegion) touchscreen_region = NULL;
+      g_autoptr (BsTouchscreen) touchscreen = NULL;
 
-      touchscreen_region = bs_touchscreen_region_new ("touchscreen",
-                                                      self,
-                                                      &self->model_info->touchscreen_layout.image_info,
-                                                      self->model_info->touchscreen_layout.n_slots,
-                                                      0, row++, 1, 1);
+      touchscreen = bs_touchscreen_new ("touchscreen",
+                                        self,
+                                        &self->model_info->touchscreen_layout.image_info,
+                                        self->model_info->touchscreen_layout.n_slots,
+                                        0, row++, 1, 1);
 
-      g_list_store_append (self->regions, touchscreen_region);
+      g_list_store_append (self->regions, touchscreen);
     }
 
   if (self->model_info->features & BS_STREAM_DECK_FEATURE_DIALS)
@@ -2053,15 +2046,13 @@ bs_stream_deck_upload_touchscreen (BsStreamDeck   *self,
 {
   g_autoptr (GdkTexture) texture = NULL;
   BsTouchscreenContent *content;
-  BsDeviceRegion *region;
   BsRenderer *renderer;
 
   g_return_val_if_fail (BS_IS_STREAM_DECK (self), FALSE);
   g_return_val_if_fail (self->model_info->set_button_texture != NULL, FALSE);
 
   content = bs_touchscreen_get_content (touchscreen);
-  region = bs_touchscreen_get_region (touchscreen);
-  renderer = bs_device_region_get_renderer (region);
+  renderer = bs_device_region_get_renderer (BS_DEVICE_REGION (touchscreen));
   texture = bs_renderer_compose_touchscreen_content (renderer, content, error);
 
   if (!texture)

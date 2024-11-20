@@ -23,12 +23,14 @@
 
 #include "bs-types.h"
 
+#include "bs-device-region.h"
+
 #include <glib-object.h>
 #include <stdint.h>
 
 G_BEGIN_DECLS
 
 #define BS_TYPE_TOUCHSCREEN (bs_touchscreen_get_type())
-G_DECLARE_FINAL_TYPE (BsTouchscreen, bs_touchscreen, BS, TOUCHSCREEN, GObject)
+G_DECLARE_FINAL_TYPE (BsTouchscreen, bs_touchscreen, BS, TOUCHSCREEN, BsDeviceRegion)
 
 G_END_DECLS

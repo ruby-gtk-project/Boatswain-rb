@@ -37,7 +37,7 @@
 #include "bs-button-widget.h"
 #include "bs-selection-controller.h"
 #include "bs-stream-deck-private.h"
-#include "bs-touchscreen-region.h"
+#include "bs-touchscreen-private.h"
 #include "bs-touchscreen-slot.h"
 #include "bs-touchscreen-slot-editor.h"
 #include "bs-touchscreen-widget.h"
@@ -169,15 +169,15 @@ add_dial_grid (BsDeviceEditor   *self,
 }
 
 static void
-add_touchscreen (BsDeviceEditor      *self,
-                 BsTouchscreenRegion *touchscreen_region)
+add_touchscreen (BsDeviceEditor *self,
+                 BsTouchscreen  *touchscreen)
 {
   BsDeviceRegion *region;
   GtkWidget *widget;
 
-  widget = bs_touchscreen_widget_new (touchscreen_region, self->selection_controller);
+  widget = bs_touchscreen_widget_new (touchscreen, self->selection_controller);
 
-  region = BS_DEVICE_REGION (touchscreen_region);
+  region = BS_DEVICE_REGION (touchscreen);
   gtk_grid_attach (self->regions_grid,
                    widget,
                    bs_device_region_get_column (region),
@@ -201,8 +201,8 @@ build_regions (BsDeviceEditor *self)
         add_button_grid (self, BS_BUTTON_GRID_REGION (region));
       else if (BS_IS_DIAL_GRID_REGION (region))
         add_dial_grid (self, BS_DIAL_GRID_REGION (region));
-      else if (BS_IS_TOUCHSCREEN_REGION (region))
-        add_touchscreen (self, BS_TOUCHSCREEN_REGION (region));
+      else if (BS_IS_TOUCHSCREEN (region))
+        add_touchscreen (self, BS_TOUCHSCREEN (region));
       else
         g_assert_not_reached ();
     }

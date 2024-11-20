@@ -23,6 +23,7 @@
 
 #include "bs-device-region.h"
 #include "bs-debug.h"
+#include "bs-renderer.h"
 #include "bs-stream-deck-private.h"
 #include "bs-touchscreen.h"
 #include "bs-touchscreen-content.h"
@@ -32,7 +33,7 @@
 
 struct _BsTouchscreen
 {
-  GObject parent_instance;
+  BsDeviceRegion parent_instance;
 
   uint32_t width;
   uint32_t height;
@@ -40,10 +41,10 @@ struct _BsTouchscreen
 
   BsTouchscreenContent *content;
 
-  BsDeviceRegion *region;
+  BsRenderer *renderer;
 };
 
-G_DEFINE_FINAL_TYPE (BsTouchscreen, bs_touchscreen, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (BsTouchscreen, bs_touchscreen, BS_TYPE_DEVICE_REGION)
 
 enum {
   PROP_0,
@@ -54,11 +55,32 @@ enum {
 
 static GParamSpec *properties [N_PROPS];
 
+
+/*
+ * BsDeviceRegion overrides
+ */
+
+static BsRenderer *
+bs_touchscreen_get_renderer (BsDeviceRegion *region)
+{
+  BsTouchscreen *self = (BsTouchscreen *) region;
+
+  g_assert (BS_IS_TOUCHSCREEN (self));
+
+  return self->renderer;
+}
+
+
+/*
+ * GObject overrides
+ */
+
 static void
 bs_touchscreen_dispose (GObject *object)
 {
   BsTouchscreen *self = (BsTouchscreen *) object;
 
+  g_clear_object (&self->renderer);
   g_clear_object (&self->slots);
 
   G_OBJECT_CLASS (bs_touchscreen_parent_class)->dispose (object);
@@ -93,39 +115,28 @@ bs_touchscreen_set_property (GObject      *object,
                              const GValue *value,
                              GParamSpec   *pspec)
 {
-  BsTouchscreen *self = BS_TOUCHSCREEN (object);
-
-  switch (prop_id)
-    {
-    case PROP_WIDTH:
-      self->width = g_value_get_uint (value);
-      break;
-
-    case PROP_HEIGHT:
-      self->height = g_value_get_uint (value);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
+  G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 }
 
 static void
 bs_touchscreen_class_init (BsTouchscreenClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  BsDeviceRegionClass *device_region_class = BS_DEVICE_REGION_CLASS (klass);
 
   object_class->dispose = bs_touchscreen_dispose;
   object_class->get_property = bs_touchscreen_get_property;
   object_class->set_property = bs_touchscreen_set_property;
 
+  device_region_class->get_renderer = bs_touchscreen_get_renderer;
+
   properties[PROP_WIDTH] = g_param_spec_uint ("width", NULL, NULL,
                                               1, G_MAXUINT, 1,
-                                              G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+                                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_HEIGHT] = g_param_spec_uint ("height", NULL, NULL,
                                                1, G_MAXUINT, 1,
-                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+                                               G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
@@ -145,7 +156,7 @@ on_contents_invalidated_cb (GdkPaintable  *paintable,
   g_autoptr (GError) error = NULL;
   BsStreamDeck *stream_deck;
 
-  stream_deck = bs_device_region_get_stream_deck (self->region);
+  stream_deck = bs_device_region_get_stream_deck (BS_DEVICE_REGION (self));
 
   if (!bs_stream_deck_is_initialized (stream_deck))
     return;
@@ -157,40 +168,43 @@ on_contents_invalidated_cb (GdkPaintable  *paintable,
 }
 
 BsTouchscreen *
-bs_touchscreen_new (BsDeviceRegion *region,
-                    uint32_t        n_slots,
-                    uint32_t        width,
-                    uint32_t        height)
+bs_touchscreen_new (const char        *id,
+                    BsStreamDeck      *stream_deck,
+                    const BsImageInfo *image_info,
+                    uint32_t           n_slots,
+                    unsigned int       column,
+                    unsigned int       row,
+                    unsigned int       column_span,
+                    unsigned int       row_span)
 {
   g_autoptr (BsTouchscreen) self = NULL;
 
   self = g_object_new (BS_TYPE_TOUCHSCREEN,
-                       "width", width,
-                       "height", height,
+                       "id", id,
+                       "stream-deck", stream_deck,
+                       "column", column,
+                       "row", row,
+                       "column-span", column_span,
+                       "row-span", row_span,
                        NULL);
-  self->region = region;
+
+  self->width = image_info->width;
+  self->height = image_info->height;
+  self->renderer = bs_renderer_new (image_info);
 
   for (uint32_t i = 0; i < n_slots; i++)
     {
       g_autoptr (BsTouchscreenSlot) slot = NULL;
 
-      slot = bs_touchscreen_slot_new (self, width / n_slots, height);
+      slot = bs_touchscreen_slot_new (self, self->width / n_slots, self->height);
 
       g_list_store_append (self->slots, slot);
     }
 
-  self->content = bs_touchscreen_content_new (G_LIST_MODEL (self->slots), width, height);
+  self->content = bs_touchscreen_content_new (G_LIST_MODEL (self->slots), self->width, self->height);
   g_signal_connect (self->content, "invalidate-contents", G_CALLBACK (on_contents_invalidated_cb), self);
 
   return g_steal_pointer (&self);
-}
-
-BsDeviceRegion *
-bs_touchscreen_get_region (BsTouchscreen *self)
-{
-  g_assert (BS_IS_TOUCHSCREEN (self));
-
-  return self->region;
 }
 
 uint32_t

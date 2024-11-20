@@ -55,7 +55,6 @@ typedef struct _BsStreamDeck BsStreamDeck;
 typedef struct _BsTouchscreen BsTouchscreen;
 typedef struct _BsTouchscreenEvent BsTouchscreenEvent;
 typedef struct _BsTouchscreenContent BsTouchscreenContent;
-typedef struct _BsTouchscreenRegion BsTouchscreenRegion;
 typedef struct _BsTouchscreenSlot BsTouchscreenSlot;
 typedef struct _BsWindow BsWindow;
 
