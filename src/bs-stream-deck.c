@@ -1032,11 +1032,11 @@ read_state_plus (BsStreamDeck *self)
                                    (states[11] << 8) + states[10],
                                    (states[13] << 8) + states[12]);
 
-            touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_SWIPE,
-                                                          self,
-                                                          touchscreen_slot,
-                                                          &position,
-                                                          &release_position);
+              touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_SWIPE,
+                                                            self,
+                                                            touchscreen_slot,
+                                                            &position,
+                                                            &release_position);
             }
             break;
           }
