@@ -29,6 +29,7 @@
 #include "bs-action-info.h"
 #include "bs-application-private.h"
 #include "bs-empty-action.h"
+#include "bs-touchscreen-background-row.h"
 #include "bs-touchscreen-content.h"
 #include "bs-touchscreen-private.h"
 #include "bs-touchscreen-slot.h"
@@ -120,115 +121,6 @@ on_action_changed_cb (BsButton                *button,
 }
 
 static void
-on_file_dialog_file_opened_cb (GObject      *source,
-                               GAsyncResult *result,
-                               gpointer      user_data)
-{
-  g_autoptr (GdkPaintable) paintable = NULL;
-  g_autoptr (GFileInfo) file_info = NULL;
-  g_autoptr (GError) error = NULL;
-  g_autoptr (GFile) file = NULL;
-  BsTouchscreenSlotEditor *self;
-  BsTouchscreenContent *content;
-  BsTouchscreen *touchscreen;
-
-  file = gtk_file_dialog_open_finish (GTK_FILE_DIALOG (source), result, &error);
-
-  if (error)
-    {
-      if (!g_error_matches (error, GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_CANCELLED) &&
-          !g_error_matches (error, GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_DISMISSED))
-        {
-          g_warning ("Error opening file: %s", error->message);
-        }
-      return;
-    }
-
-  self = BS_TOUCHSCREEN_SLOT_EDITOR (user_data);
-
-  file_info = g_file_query_info (file,
-                                 G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
-                                 G_FILE_QUERY_INFO_NONE,
-                                 NULL,
-                                 &error);
-
-  if (file_info)
-    {
-      const char * const media_stream_content_types[] = {
-        "image/gif",
-        "video/*",
-      };
-
-      g_autoptr (GtkMediaStream) media_stream = NULL;
-      const char *content_type;
-
-      content_type = g_file_info_get_content_type (file_info);
-      for (size_t i = 0; i < G_N_ELEMENTS (media_stream_content_types); i++)
-        {
-          if (!g_content_type_is_mime_type (content_type, media_stream_content_types[i]))
-            continue;
-
-          media_stream = gtk_media_file_new_for_file (file);
-          gtk_media_stream_set_volume (media_stream, 0.0);
-          gtk_media_stream_set_muted (media_stream, TRUE);
-          gtk_media_stream_set_loop (media_stream, TRUE);
-          gtk_media_stream_play (media_stream);
-
-          paintable = GDK_PAINTABLE (g_steal_pointer (&media_stream));
-          break;
-        }
-    }
-  else
-    {
-      g_warning ("Error querying file info: %s", error->message);
-    }
-
-  if (!paintable)
-    {
-      g_autoptr (GdkTexture) texture = NULL;
-
-      texture = gdk_texture_new_from_file (file, &error);
-      if (!texture)
-        return;
-
-      paintable = GDK_PAINTABLE (g_steal_pointer (&texture));
-    }
-
-  touchscreen = bs_touchscreen_slot_get_touchscreen (self->slot);
-  content = bs_touchscreen_get_content (touchscreen);
-  bs_touchscreen_content_set_background (content, paintable);
-}
-
-static void
-on_background_row_activated_cb (AdwPreferencesRow       *row,
-                                BsTouchscreenSlotEditor *self)
-{
-  g_autoptr (GtkFileDialog) dialog = NULL;
-  g_autoptr (GtkFileFilter) filter = NULL;
-  g_autoptr (GListStore) filters = NULL;
-
-  filter = gtk_file_filter_new ();
-  gtk_file_filter_set_name (filter, _("All supported formats"));
-  gtk_file_filter_add_mime_type (filter, "image/*");
-  gtk_file_filter_add_mime_type (filter, "video/*");
-
-  filters = g_list_store_new (GTK_TYPE_FILE_FILTER);
-  g_list_store_append (filters, filter);
-
-  dialog = gtk_file_dialog_new ();
-  gtk_file_dialog_set_modal (dialog, TRUE);
-  gtk_file_dialog_set_title (dialog, _("Select media file"));
-  gtk_file_dialog_set_accept_label (dialog, _("Open"));
-  gtk_file_dialog_set_filters (dialog, G_LIST_MODEL (filters));
-
-  gtk_file_dialog_open (dialog,
-                        GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (self))),
-                        NULL,
-                        on_file_dialog_file_opened_cb,
-                        self);
-}
-
-static void
 on_remove_row_activated_cb (GtkButton               *button,
                             BsTouchscreenSlotEditor *self)
 {
@@ -316,6 +208,7 @@ bs_touchscreen_slot_editor_class_init (BsTouchscreenSlotEditorClass *klass)
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   g_type_ensure (BS_TYPE_ACTION_SELECTOR);
+  g_type_ensure (BS_TYPE_TOUCHSCREEN_BACKGROUND_ROW);
 
   object_class->dispose = bs_touchscreen_slot_editor_dispose;
   object_class->constructed = bs_touchscreen_slot_editor_constructed;
@@ -336,7 +229,6 @@ bs_touchscreen_slot_editor_class_init (BsTouchscreenSlotEditorClass *klass)
   gtk_widget_class_bind_template_child (widget_class, BsTouchscreenSlotEditor, remove_action_group);
 
   gtk_widget_class_bind_template_callback (widget_class, on_action_selector_action_selected_cb);
-  gtk_widget_class_bind_template_callback (widget_class, on_background_row_activated_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_remove_row_activated_cb);
 
   gtk_widget_class_set_css_name (widget_class, "touchscreensloteditor");

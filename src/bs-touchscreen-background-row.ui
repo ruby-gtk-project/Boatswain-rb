@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="Gtk" version="4.0"/>
+  <requires lib="Adw" version="1.0"/>
+  <template class="BsTouchscreenBackgroundRow" parent="AdwPreferencesRow">
+    <property name="overflow">hidden</property>
+    <property name="action-name">backgroundrow.select-background</property>
+    <style>
+      <class name="no-padding" />
+    </style>
+
+    <property name="child">
+      <object class="GtkOverlay">
+
+        <property name="child">
+          <object class="GtkPicture">
+            <property name="content-fit">cover</property>
+            <binding name="paintable">
+              <lookup type="BsTouchscreenContent" name="background-paintable">
+                <lookup type="BsTouchscreen" name="content">
+                  <lookup name="touchscreen">BsTouchscreenBackgroundRow</lookup>
+                </lookup>
+              </lookup>
+            </binding>
+          </object>
+        </property>
+
+        <child type="overlay">
+          <object class="GtkCenterBox">
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <style>
+              <class name="header" />
+            </style>
+
+            <property name="end-widget">
+              <object class="GtkButton">
+                <property name="valign">center</property>
+                <property name="icon-name">document-open-symbolic</property>
+                <property name="action-name">backgroundrow.select-background</property>
+                <style>
+                  <class name="osd" />
+                  <class name="circular" />
+                </style>
+              </object>
+            </property>
+
+          </object>
+        </child>
+
+      </object>
+    </property>
+  </template>
+
+</interface>

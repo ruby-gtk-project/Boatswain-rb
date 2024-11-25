@@ -33,17 +33,12 @@
                         <property name="title" translatable="yes">Touchscreen</property>
 
                         <child>
-                          <object class="AdwActionRow">
-                            <property name="activatable">True</property>
-                            <property name="title" translatable="yes">Background</property>
-                            <signal name="activated" handler="on_background_row_activated_cb" object="BsTouchscreenSlotEditor" swapped="no" />
-
-                            <child type="suffix">
-                              <object class="GtkImage">
-                                <property name="icon-name">document-open-symbolic</property>
-                              </object>
-                            </child>
-
+                          <object class="BsTouchscreenBackgroundRow">
+                            <binding name="touchscreen">
+                              <lookup type="BsTouchscreenSlot" name="touchscreen">
+                                <lookup name="touchscreen-slot">BsTouchscreenSlotEditor</lookup>
+                              </lookup>
+                            </binding>
                           </object>
                         </child>
 

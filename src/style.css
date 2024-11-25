@@ -90,3 +90,14 @@ touchscreenslotwidget:dir(rtl):first-child {
 touchscreenslotwidget:selected {
   outline: 2px solid @accent_color;
 }
+
+touchscreensloteditor row.no-padding {
+  padding: 0;
+  min-height: 50px;
+}
+
+touchscreensloteditor box.header {
+  margin-left: 12px;
+  margin-right: 12px;
+  border-spacing: 6px;
+}
