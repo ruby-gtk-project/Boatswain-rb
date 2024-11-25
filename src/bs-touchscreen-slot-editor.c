@@ -327,6 +327,8 @@ bs_touchscreen_slot_editor_class_init (BsTouchscreenSlotEditorClass *klass)
 
   gtk_widget_class_bind_template_callback (widget_class, on_action_selector_action_selected_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_background_row_activated_cb);
+
+  gtk_widget_class_set_css_name (widget_class, "touchscreensloteditor");
 }
 
 static void
