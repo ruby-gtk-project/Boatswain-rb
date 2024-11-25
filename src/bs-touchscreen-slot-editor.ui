@@ -84,7 +84,7 @@
                         <child>
                           <object class="AdwButtonRow">
                             <property name="title" translatable="yes">Remove Action</property>
-                            <!-- <signal name="activated" handler="on_remove_row_activated_cb" object="BsTouchscreenSlotEditor" swapped="no" /> -->
+                            <signal name="activated" handler="on_remove_row_activated_cb" object="BsTouchscreenSlotEditor" swapped="no" />
                             <style>
                               <class name="destructive-action"/>
                             </style>

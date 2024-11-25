@@ -228,6 +228,16 @@ on_background_row_activated_cb (AdwPreferencesRow       *row,
                         self);
 }
 
+static void
+on_remove_row_activated_cb (GtkButton               *button,
+                            BsTouchscreenSlotEditor *self)
+{
+  g_autoptr (BsAction) empty_action = NULL;
+
+  empty_action = bs_empty_action_new ();
+  bs_actionable_set_action (BS_ACTIONABLE (self->slot), empty_action);
+}
+
 
 /*
  * GObject overrides
@@ -327,6 +337,7 @@ bs_touchscreen_slot_editor_class_init (BsTouchscreenSlotEditorClass *klass)
 
   gtk_widget_class_bind_template_callback (widget_class, on_action_selector_action_selected_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_background_row_activated_cb);
+  gtk_widget_class_bind_template_callback (widget_class, on_remove_row_activated_cb);
 
   gtk_widget_class_set_css_name (widget_class, "touchscreensloteditor");
 }
