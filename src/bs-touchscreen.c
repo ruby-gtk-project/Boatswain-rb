@@ -48,6 +48,7 @@ G_DEFINE_FINAL_TYPE (BsTouchscreen, bs_touchscreen, BS_TYPE_DEVICE_REGION)
 
 enum {
   PROP_0,
+  PROP_CONTENT,
   PROP_WIDTH,
   PROP_HEIGHT,
   N_PROPS,
@@ -96,6 +97,10 @@ bs_touchscreen_get_property (GObject    *object,
 
   switch (prop_id)
     {
+    case PROP_CONTENT:
+      g_value_set_object (value, self->content);
+      break;
+
     case PROP_WIDTH:
       g_value_set_uint (value, self->width);
       break;
@@ -129,6 +134,10 @@ bs_touchscreen_class_init (BsTouchscreenClass *klass)
   object_class->set_property = bs_touchscreen_set_property;
 
   device_region_class->get_renderer = bs_touchscreen_get_renderer;
+
+  properties[PROP_CONTENT] = g_param_spec_object ("content", NULL, NULL,
+                                                  BS_TYPE_TOUCHSCREEN_CONTENT,
+                                                  G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_WIDTH] = g_param_spec_uint ("width", NULL, NULL,
                                               1, G_MAXUINT, 1,
