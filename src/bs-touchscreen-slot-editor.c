@@ -19,6 +19,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#define G_LOG_DOMAIN "Touchscreen Editor"
+
 #include "bs-touchscreen-slot-editor.h"
 
 #include "bs-actionable-private.h"
