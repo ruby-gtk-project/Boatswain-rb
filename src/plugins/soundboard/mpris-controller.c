@@ -106,7 +106,7 @@ get_props_proxy (GDBusProxy   *proxy,
 static gboolean
 mpris_client_is_playing (GDBusProxy *proxy)
 {
-  g_autoptr (GVariant) playback_status;
+  g_autoptr (GVariant) playback_status = NULL;
   const gchar *status_str;
 
   playback_status = g_dbus_proxy_get_cached_property (proxy, "PlaybackStatus");
@@ -426,7 +426,7 @@ mpris_controller_toggle (MprisController *self,
   if (g_str_equal (property, "LoopStatus"))
     {
       g_autoptr (GDBusProxy) props = NULL;
-      g_autoptr (GVariant) loop_status;
+      g_autoptr (GVariant) loop_status = NULL;
       const gchar *status_str, *new_status;
 
       loop_status = g_dbus_proxy_get_cached_property (self->mpris_client_proxy, "LoopStatus");
@@ -460,7 +460,7 @@ mpris_controller_toggle (MprisController *self,
   else if (g_str_equal (property, "Shuffle"))
     {
       g_autoptr (GDBusProxy) props = NULL;
-      g_autoptr (GVariant) shuffle_status;
+      g_autoptr (GVariant) shuffle_status = NULL;
       gboolean status;
 
       shuffle_status = g_dbus_proxy_get_cached_property (self->mpris_client_proxy, "Shuffle");
