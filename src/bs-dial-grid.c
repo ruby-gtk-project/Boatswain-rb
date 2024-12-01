@@ -19,12 +19,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-dial-grid-region.h"
+#include "bs-dial-grid.h"
 
 #include "bs-dial-private.h"
 #include "bs-stream-deck.h"
 
-struct _BsDialGridRegion
+struct _BsDialGrid
 {
   BsDeviceRegion parent_instance;
 
@@ -33,7 +33,7 @@ struct _BsDialGridRegion
   unsigned int grid_columns;
 };
 
-G_DEFINE_FINAL_TYPE (BsDialGridRegion, bs_dial_grid_region, BS_TYPE_DEVICE_REGION)
+G_DEFINE_FINAL_TYPE (BsDialGrid, bs_dial_grid, BS_TYPE_DEVICE_REGION)
 
 enum {
   PROP_0,
@@ -45,22 +45,22 @@ enum {
 static GParamSpec *properties [N_PROPS];
 
 static void
-bs_dial_grid_region_finalize (GObject *object)
+bs_dial_grid_finalize (GObject *object)
 {
-  BsDialGridRegion *self = (BsDialGridRegion *)object;
+  BsDialGrid *self = (BsDialGrid *)object;
 
   g_clear_object (&self->dials);
 
-  G_OBJECT_CLASS (bs_dial_grid_region_parent_class)->finalize (object);
+  G_OBJECT_CLASS (bs_dial_grid_parent_class)->finalize (object);
 }
 
 static void
-bs_dial_grid_region_get_property (GObject    *object,
-                                  guint       prop_id,
-                                  GValue     *value,
-                                  GParamSpec *pspec)
+bs_dial_grid_get_property (GObject    *object,
+                           guint       prop_id,
+                           GValue     *value,
+                           GParamSpec *pspec)
 {
-  BsDialGridRegion *self = BS_DIAL_GRID_REGION (object);
+  BsDialGrid *self = BS_DIAL_GRID (object);
 
   switch (prop_id)
     {
@@ -78,12 +78,12 @@ bs_dial_grid_region_get_property (GObject    *object,
 }
 
 static void
-bs_dial_grid_region_set_property (GObject      *object,
-                                  guint         prop_id,
-                                  const GValue *value,
-                                  GParamSpec   *pspec)
+bs_dial_grid_set_property (GObject      *object,
+                           guint         prop_id,
+                           const GValue *value,
+                           GParamSpec   *pspec)
 {
-  BsDialGridRegion *self = BS_DIAL_GRID_REGION (object);
+  BsDialGrid *self = BS_DIAL_GRID (object);
 
   switch (prop_id)
     {
@@ -97,13 +97,13 @@ bs_dial_grid_region_set_property (GObject      *object,
 }
 
 static void
-bs_dial_grid_region_class_init (BsDialGridRegionClass *klass)
+bs_dial_grid_class_init (BsDialGridClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = bs_dial_grid_region_finalize;
-  object_class->get_property = bs_dial_grid_region_get_property;
-  object_class->set_property = bs_dial_grid_region_set_property;
+  object_class->finalize = bs_dial_grid_finalize;
+  object_class->get_property = bs_dial_grid_get_property;
+  object_class->set_property = bs_dial_grid_set_property;
 
   properties[PROP_DIALS] = g_param_spec_object ("dials", NULL, NULL,
                                                 G_TYPE_LIST_MODEL,
@@ -117,28 +117,28 @@ bs_dial_grid_region_class_init (BsDialGridRegionClass *klass)
 }
 
 static void
-bs_dial_grid_region_init (BsDialGridRegion *self)
+bs_dial_grid_init (BsDialGrid *self)
 {
   self->dials = g_list_store_new (BS_TYPE_DIAL);
   self->grid_columns = 1;
 }
 
-BsDialGridRegion *
-bs_dial_grid_region_new (const char   *id,
-                         BsStreamDeck *stream_deck,
-                         unsigned int  n_dials,
-                         unsigned int  grid_columns,
-                         unsigned int  column,
-                         unsigned int  row,
-                         unsigned int  column_span,
-                         unsigned int  row_span)
+BsDialGrid *
+bs_dial_grid_new (const char   *id,
+                  BsStreamDeck *stream_deck,
+                  unsigned int  n_dials,
+                  unsigned int  grid_columns,
+                  unsigned int  column,
+                  unsigned int  row,
+                  unsigned int  column_span,
+                  unsigned int  row_span)
 {
-  g_autoptr (BsDialGridRegion) self = NULL;
+  g_autoptr (BsDialGrid) self = NULL;
 
   g_assert (BS_IS_STREAM_DECK (stream_deck));
   g_assert (n_dials > 0);
 
-  self = g_object_new (BS_TYPE_DIAL_GRID_REGION,
+  self = g_object_new (BS_TYPE_DIAL_GRID,
                        "id", id,
                        "stream-deck", stream_deck,
                        "grid-columns", grid_columns,
@@ -158,17 +158,17 @@ bs_dial_grid_region_new (const char   *id,
 }
 
 GListModel *
-bs_dial_grid_region_get_dials (BsDialGridRegion *self)
+bs_dial_grid_get_dials (BsDialGrid *self)
 {
-  g_return_val_if_fail (BS_IS_DIAL_GRID_REGION (self), NULL);
+  g_return_val_if_fail (BS_IS_DIAL_GRID (self), NULL);
 
   return G_LIST_MODEL (self->dials);
 }
 
 unsigned int
-bs_dial_grid_region_get_grid_columns (BsDialGridRegion *self)
+bs_dial_grid_get_grid_columns (BsDialGrid *self)
 {
-  g_return_val_if_fail (BS_IS_DIAL_GRID_REGION (self), 0);
+  g_return_val_if_fail (BS_IS_DIAL_GRID (self), 0);
 
   return self->grid_columns;
 }

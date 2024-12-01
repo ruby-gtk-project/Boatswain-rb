@@ -26,7 +26,7 @@
 #include "bs-button-grid.h"
 #include "bs-debug.h"
 #include "bs-dial.h"
-#include "bs-dial-grid-region.h"
+#include "bs-dial-grid.h"
 #include "bs-dial-widget.h"
 #include "bs-icon.h"
 #include "bs-page.h"
@@ -124,16 +124,16 @@ add_button_grid (BsDeviceEditor *self,
 }
 
 static void
-add_dial_grid (BsDeviceEditor   *self,
-               BsDialGridRegion *dial_grid)
+add_dial_grid (BsDeviceEditor *self,
+               BsDialGrid     *dial_grid)
 {
   BsDeviceRegion *region;
   GtkFlowBox *dials_flowbox;
   GListModel *dials;
   unsigned int grid_columns;
 
-  dials = bs_dial_grid_region_get_dials (dial_grid);
-  grid_columns = bs_dial_grid_region_get_grid_columns (dial_grid);
+  dials = bs_dial_grid_get_dials (dial_grid);
+  grid_columns = bs_dial_grid_get_grid_columns (dial_grid);
 
   dials_flowbox = g_object_new (GTK_TYPE_FLOW_BOX,
                                 "valign", GTK_ALIGN_CENTER,
@@ -199,8 +199,8 @@ build_regions (BsDeviceEditor *self)
 
       if (BS_IS_BUTTON_GRID (region))
         add_button_grid (self, BS_BUTTON_GRID (region));
-      else if (BS_IS_DIAL_GRID_REGION (region))
-        add_dial_grid (self, BS_DIAL_GRID_REGION (region));
+      else if (BS_IS_DIAL_GRID (region))
+        add_dial_grid (self, BS_DIAL_GRID (region));
       else if (BS_IS_TOUCHSCREEN (region))
         add_touchscreen (self, BS_TOUCHSCREEN (region));
       else

@@ -29,7 +29,7 @@
 #include "bs-debug.h"
 #include "bs-device-region.h"
 #include "bs-dial-private.h"
-#include "bs-dial-grid-region.h"
+#include "bs-dial-grid.h"
 #include "bs-events-private.h"
 #include "bs-icon.h"
 #include "bs-page.h"
@@ -1047,13 +1047,13 @@ read_state_plus (BsStreamDeck *self)
 
     case DIAL_EVENT:
       {
-        BsDialGridRegion *dial_grid;
         BsTouchscreen *touchscreen;
         GListModel *touchscreen_slots;
+        BsDialGrid *dial_grid;
         GListModel *dials;
 
-        dial_grid = BS_DIAL_GRID_REGION (bs_stream_deck_get_region (self, "dial-grid"));
-        dials = bs_dial_grid_region_get_dials (dial_grid);
+        dial_grid = BS_DIAL_GRID (bs_stream_deck_get_region (self, "dial-grid"));
+        dials = bs_dial_grid_get_dials (dial_grid);
         g_assert (g_list_model_get_n_items (dials) == 4);
 
         touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
@@ -1691,13 +1691,13 @@ out:
 
   if (self->model_info->features & BS_STREAM_DECK_FEATURE_DIALS)
     {
-      g_autoptr (BsDialGridRegion) dial_grid = NULL;
+      g_autoptr (BsDialGrid) dial_grid = NULL;
 
-      dial_grid = bs_dial_grid_region_new ("dial-grid",
-                                           self,
-                                           self->model_info->dial_layout.n_dials,
-                                           self->model_info->dial_layout.columns,
-                                           0, row++, 1, 1);
+      dial_grid = bs_dial_grid_new ("dial-grid",
+                                    self,
+                                    self->model_info->dial_layout.n_dials,
+                                    self->model_info->dial_layout.columns,
+                                    0, row++, 1, 1);
 
       g_list_store_append (self->regions, dial_grid);
     }
