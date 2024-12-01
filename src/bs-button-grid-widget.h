@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 #define BS_TYPE_BUTTON_GRID_WIDGET (bs_button_grid_widget_get_type())
 G_DECLARE_FINAL_TYPE (BsButtonGridWidget, bs_button_grid_widget, BS, BUTTON_GRID_WIDGET, GtkWidget)
 
-GtkWidget * bs_button_grid_widget_new (BsButtonGridRegion    *button_grid,
+GtkWidget * bs_button_grid_widget_new (BsButtonGrid          *button_grid,
                                        BsSelectionController *selection_controller);
 
 G_END_DECLS

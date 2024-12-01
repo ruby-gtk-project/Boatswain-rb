@@ -24,7 +24,7 @@
 
 #include "bs-actionable-private.h"
 #include "bs-action.h"
-#include "bs-button-grid-region.h"
+#include "bs-button-grid.h"
 #include "bs-button-private.h"
 #include "bs-debug.h"
 #include "bs-device-region.h"
@@ -187,10 +187,10 @@ find_button_at_region (BsStreamDeck *self,
                        size_t        button_index)
 {
   g_autoptr (BsButton) button = NULL;
-  BsButtonGridRegion *region = NULL;
+  BsButtonGrid *button_grid = NULL;
 
-  region = BS_BUTTON_GRID_REGION (bs_stream_deck_get_region (self, region_id));
-  button = g_list_model_get_item (bs_button_grid_region_get_buttons (region), button_index);
+  button_grid = BS_BUTTON_GRID (bs_stream_deck_get_region (self, region_id));
+  button = g_list_model_get_item (bs_button_grid_get_buttons (button_grid), button_index);
   g_assert (BS_IS_BUTTON (button));
 
   return button;
@@ -1664,14 +1664,14 @@ out:
 
   if (self->model_info->features & BS_STREAM_DECK_FEATURE_BUTTONS)
     {
-      g_autoptr (BsButtonGridRegion) button_grid = NULL;
+      g_autoptr (BsButtonGrid) button_grid = NULL;
 
-      button_grid = bs_button_grid_region_new ("main-button-grid",
-                                               self,
-                                               &self->model_info->button_layout.image_info,
-                                               self->model_info->button_layout.n_buttons,
-                                               self->model_info->button_layout.columns,
-                                               0, row++, 1, 1);
+      button_grid = bs_button_grid_new ("main-button-grid",
+                                        self,
+                                        &self->model_info->button_layout.image_info,
+                                        self->model_info->button_layout.n_buttons,
+                                        self->model_info->button_layout.columns,
+                                        0, row++, 1, 1);
 
       g_list_store_append (self->regions, button_grid);
     }

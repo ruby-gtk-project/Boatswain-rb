@@ -34,7 +34,7 @@ typedef struct _BsActionInfo BsActionInfo;
 typedef struct _BsApplication BsApplication;
 typedef struct _BsButton BsButton;
 typedef struct _BsButtonEvent BsButtonEvent;
-typedef struct _BsButtonGridRegion BsButtonGridRegion;
+typedef struct _BsButtonGrid BsButtonGrid;
 typedef struct _BsCursorEvent BsCursorEvent;
 typedef struct _BsDesktopController BsDesktopController;
 typedef struct _BsDeviceEditor BsDeviceEditor;

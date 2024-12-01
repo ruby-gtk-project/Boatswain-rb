@@ -26,7 +26,7 @@
 #include "bs-actionable.h"
 #include "bs-action-private.h"
 #include "bs-button-private.h"
-#include "bs-button-grid-region.h"
+#include "bs-button-grid.h"
 #include "bs-button-widget.h"
 #include "bs-debug.h"
 #include "bs-events-private.h"
@@ -40,7 +40,7 @@ struct _BsButtonGridWidget
 
   GtkWidget *flowbox;
 
-  BsButtonGridRegion *button_grid;
+  BsButtonGrid *button_grid;
   BsSelectionController *selection_controller;
 };
 
@@ -146,11 +146,11 @@ bs_button_grid_widget_constructed (GObject *object)
 
   G_OBJECT_CLASS (bs_button_grid_widget_parent_class)->constructed (object);
 
-  grid_columns = bs_button_grid_region_get_grid_columns (self->button_grid);
+  grid_columns = bs_button_grid_get_grid_columns (self->button_grid);
   gtk_flow_box_set_min_children_per_line (GTK_FLOW_BOX (self->flowbox), grid_columns);
   gtk_flow_box_set_max_children_per_line (GTK_FLOW_BOX (self->flowbox), grid_columns);
 
-  buttons = bs_button_grid_region_get_buttons (self->button_grid);
+  buttons = bs_button_grid_get_buttons (self->button_grid);
 
   for (unsigned int i = 0; i < g_list_model_get_n_items (buttons); i++)
     {
@@ -232,7 +232,7 @@ bs_button_grid_widget_class_init (BsButtonGridWidgetClass *klass)
   object_class->set_property = bs_button_grid_widget_set_property;
 
   properties[PROP_BUTTON_GRID] = g_param_spec_object ("button-grid", NULL, NULL,
-                                                      BS_TYPE_BUTTON_GRID_REGION,
+                                                      BS_TYPE_BUTTON_GRID,
                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_SELECTION_CONTROLLER] =
@@ -261,10 +261,10 @@ bs_button_grid_widget_init (BsButtonGridWidget *self)
 }
 
 GtkWidget *
-bs_button_grid_widget_new (BsButtonGridRegion    *button_grid,
+bs_button_grid_widget_new (BsButtonGrid          *button_grid,
                            BsSelectionController *selection_controller)
 {
-  g_assert (BS_IS_BUTTON_GRID_REGION (button_grid));
+  g_assert (BS_IS_BUTTON_GRID (button_grid));
 
   return g_object_new (BS_TYPE_BUTTON_GRID_WIDGET,
                        "button-grid", button_grid,

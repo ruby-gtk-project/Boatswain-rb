@@ -23,7 +23,7 @@
 #include "bs-device-editor.h"
 
 #include "bs-action-private.h"
-#include "bs-button-grid-region.h"
+#include "bs-button-grid.h"
 #include "bs-debug.h"
 #include "bs-dial.h"
 #include "bs-dial-grid-region.h"
@@ -105,8 +105,8 @@ set_selected_item (BsDeviceEditor *self,
 }
 
 static void
-add_button_grid (BsDeviceEditor     *self,
-                 BsButtonGridRegion *button_grid)
+add_button_grid (BsDeviceEditor *self,
+                 BsButtonGrid   *button_grid)
 {
   BsDeviceRegion *region;
   GtkWidget *widget;
@@ -197,8 +197,8 @@ build_regions (BsDeviceEditor *self)
     {
       g_autoptr (BsDeviceRegion) region = g_list_model_get_item (regions, i);
 
-      if (BS_IS_BUTTON_GRID_REGION (region))
-        add_button_grid (self, BS_BUTTON_GRID_REGION (region));
+      if (BS_IS_BUTTON_GRID (region))
+        add_button_grid (self, BS_BUTTON_GRID (region));
       else if (BS_IS_DIAL_GRID_REGION (region))
         add_dial_grid (self, BS_DIAL_GRID_REGION (region));
       else if (BS_IS_TOUCHSCREEN (region))

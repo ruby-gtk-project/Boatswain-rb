@@ -1,5 +1,5 @@
 /*
- * bs-button-grid-region.c
+ * bs-button-grid.c
  *
  * Copyright 2024 Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
  *
@@ -19,14 +19,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-button-grid-region.h"
+#include "bs-button-grid.h"
 
 #include "bs-button-private.h"
 #include "bs-device-region.h"
 #include "bs-renderer.h"
 #include "bs-stream-deck.h"
 
-struct _BsButtonGridRegion
+struct _BsButtonGrid
 {
   BsDeviceRegion parent_instance;
 
@@ -37,7 +37,7 @@ struct _BsButtonGridRegion
   unsigned int grid_columns;
 };
 
-G_DEFINE_FINAL_TYPE (BsButtonGridRegion, bs_button_grid_region, BS_TYPE_DEVICE_REGION)
+G_DEFINE_FINAL_TYPE (BsButtonGrid, bs_button_grid, BS_TYPE_DEVICE_REGION)
 
 enum {
   PROP_0,
@@ -54,11 +54,11 @@ static GParamSpec *properties [N_PROPS];
  */
 
 static BsRenderer *
-bs_button_grid_region_get_renderer (BsDeviceRegion *region)
+bs_button_grid_get_renderer (BsDeviceRegion *region)
 {
-  BsButtonGridRegion *self = (BsButtonGridRegion *) region;
+  BsButtonGrid *self = (BsButtonGrid *) region;
 
-  g_assert (BS_IS_BUTTON_GRID_REGION (self));
+  g_assert (BS_IS_BUTTON_GRID (self));
 
   return self->renderer;
 }
@@ -68,23 +68,23 @@ bs_button_grid_region_get_renderer (BsDeviceRegion *region)
  */
 
 static void
-bs_button_grid_region_finalize (GObject *object)
+bs_button_grid_finalize (GObject *object)
 {
-  BsButtonGridRegion *self = (BsButtonGridRegion *)object;
+  BsButtonGrid *self = (BsButtonGrid *)object;
 
   g_clear_object (&self->buttons);
   g_clear_object (&self->renderer);
 
-  G_OBJECT_CLASS (bs_button_grid_region_parent_class)->finalize (object);
+  G_OBJECT_CLASS (bs_button_grid_parent_class)->finalize (object);
 }
 
 static void
-bs_button_grid_region_get_property (GObject    *object,
-                                    guint       prop_id,
-                                    GValue     *value,
-                                    GParamSpec *pspec)
+bs_button_grid_get_property (GObject    *object,
+                             guint       prop_id,
+                             GValue     *value,
+                             GParamSpec *pspec)
 {
-  BsButtonGridRegion *self = BS_BUTTON_GRID_REGION (object);
+  BsButtonGrid *self = BS_BUTTON_GRID (object);
 
   switch (prop_id)
     {
@@ -102,12 +102,12 @@ bs_button_grid_region_get_property (GObject    *object,
 }
 
 static void
-bs_button_grid_region_set_property (GObject      *object,
-                                    guint         prop_id,
-                                    const GValue *value,
-                                    GParamSpec   *pspec)
+bs_button_grid_set_property (GObject      *object,
+                             guint         prop_id,
+                             const GValue *value,
+                             GParamSpec   *pspec)
 {
-  BsButtonGridRegion *self = BS_BUTTON_GRID_REGION (object);
+  BsButtonGrid *self = BS_BUTTON_GRID (object);
 
   switch (prop_id)
     {
@@ -121,16 +121,16 @@ bs_button_grid_region_set_property (GObject      *object,
 }
 
 static void
-bs_button_grid_region_class_init (BsButtonGridRegionClass *klass)
+bs_button_grid_class_init (BsButtonGridClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  BsDeviceRegionClass *device_region_class = BS_DEVICE_REGION_CLASS (klass);
+  BsDeviceRegionClass *device_class = BS_DEVICE_REGION_CLASS (klass);
 
-  object_class->finalize = bs_button_grid_region_finalize;
-  object_class->get_property = bs_button_grid_region_get_property;
-  object_class->set_property = bs_button_grid_region_set_property;
+  object_class->finalize = bs_button_grid_finalize;
+  object_class->get_property = bs_button_grid_get_property;
+  object_class->set_property = bs_button_grid_set_property;
 
-  device_region_class->get_renderer = bs_button_grid_region_get_renderer;
+  device_class->get_renderer = bs_button_grid_get_renderer;
 
   properties[PROP_BUTTONS] = g_param_spec_object ("buttons", NULL, NULL,
                                                   G_TYPE_LIST_MODEL,
@@ -144,29 +144,29 @@ bs_button_grid_region_class_init (BsButtonGridRegionClass *klass)
 }
 
 static void
-bs_button_grid_region_init (BsButtonGridRegion *self)
+bs_button_grid_init (BsButtonGrid *self)
 {
   self->buttons = g_list_store_new (BS_TYPE_BUTTON);
   self->grid_columns = 1;
 }
 
-BsButtonGridRegion *
-bs_button_grid_region_new (const char         *id,
-                           BsStreamDeck       *stream_deck,
-                           const BsImageInfo  *image_info,
-                           unsigned int        n_buttons,
-                           unsigned int        grid_columns,
-                           unsigned int        column,
-                           unsigned int        row,
-                           unsigned int        column_span,
-                           unsigned int        row_span)
+BsButtonGrid *
+bs_button_grid_new (const char        *id,
+                    BsStreamDeck      *stream_deck,
+                    const BsImageInfo *image_info,
+                    unsigned int       n_buttons,
+                    unsigned int       grid_columns,
+                    unsigned int       column,
+                    unsigned int       row,
+                    unsigned int       column_span,
+                    unsigned int       row_span)
 {
-  g_autoptr (BsButtonGridRegion) self = NULL;
+  g_autoptr (BsButtonGrid) self = NULL;
 
   g_assert (BS_IS_STREAM_DECK (stream_deck));
   g_assert (image_info != NULL);
 
-  self = g_object_new (BS_TYPE_BUTTON_GRID_REGION,
+  self = g_object_new (BS_TYPE_BUTTON_GRID,
                        "id", id,
                        "stream-deck", stream_deck,
                        "grid-columns", grid_columns,
@@ -197,17 +197,17 @@ bs_button_grid_region_new (const char         *id,
 }
 
 GListModel *
-bs_button_grid_region_get_buttons (BsButtonGridRegion *self)
+bs_button_grid_get_buttons (BsButtonGrid *self)
 {
-  g_return_val_if_fail (BS_IS_BUTTON_GRID_REGION (self), NULL);
+  g_return_val_if_fail (BS_IS_BUTTON_GRID (self), NULL);
 
   return G_LIST_MODEL (self->buttons);
 }
 
 unsigned int
-bs_button_grid_region_get_grid_columns (BsButtonGridRegion *self)
+bs_button_grid_get_grid_columns (BsButtonGrid *self)
 {
-  g_return_val_if_fail (BS_IS_BUTTON_GRID_REGION (self), 0);
+  g_return_val_if_fail (BS_IS_BUTTON_GRID (self), 0);
 
   return self->grid_columns;
 }
