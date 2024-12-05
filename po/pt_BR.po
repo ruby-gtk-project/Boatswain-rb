@@ -7,21 +7,27 @@
 # Alex Jr <alexalencarjr@outlook.com>, 2023.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2022-2024.
 # Juliano de Souza Camargo <julianosc@pm.me>, 2024.
+# Filipe Motta <luizfilipemotta@gmail.com>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-11-06 22:36+0000\n"
-"PO-Revision-Date: 2024-11-07 09:36-0300\n"
-"Last-Translator: Juliano de Souza Camargo <julianosc@pm.me>\n"
-"Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
+"POT-Creation-Date: 2024-11-25 22:02+0000\n"
+"PO-Revision-Date: 2024-12-04 20:57-0300\n"
+"Last-Translator: Filipe Motta <luizfilipemotta@gmail.com>\n"
+"Language-Team: Brazilian Portuguese\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Gtranslator 47.0\n"
+"X-DL-Lang: pt_BR\n"
+"X-DL-Module: boatswain\n"
+"X-DL-Branch: main\n"
+"X-DL-Domain: po\n"
+"X-DL-State: Translating\n"
 
 #: data/com.feaneron.Boatswain.desktop.in.in:3
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
@@ -36,7 +42,7 @@ msgstr "stream deck;streaming;fluxo de mídia;deck;elgato;transmissão;"
 #: data/com.feaneron.Boatswain.gschema.xml:7
 #: data/com.feaneron.Boatswain.gschema.xml:8
 msgid "Restore token for the desktop controller"
-msgstr "Restaura token para o controlador da área de trabalho"
+msgstr "Restaurar token para o controlador da área de trabalho"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:12
 msgid "Control your Elgato Stream Decks"
@@ -61,7 +67,7 @@ msgstr "Definir ícones personalizados para ações"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:19
 msgid "Control your music player"
-msgstr "Controla seu reprodutor de música"
+msgstr "Controlar seu reprodutor de música"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:20
 msgid "Play sound effects during your streams"
@@ -79,22 +85,22 @@ msgstr "Enviar pedidos de rede"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:23
 msgid "Keep track of your gaming score"
-msgstr "Acompanhe a sua pontuação no jogo"
+msgstr "Acompanhar a sua pontuação em jogos"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:24
 msgid "Open files and launch applications"
-msgstr "Abra arquivos e lance aplicações"
+msgstr "Abrir arquivos e lançar aplicações"
 
 #: src/bs-application.c:55
 msgid "Enable debug messages"
-msgstr "Habilita mensagens de depuração"
+msgstr "Habilitar mensagens de depuração"
 
 #: src/bs-application.c:118
 #, c-format
 msgid "Connected to %d device"
 msgid_plural "Connected to %d devices"
-msgstr[0] "Conectado ao dispositivo %d"
-msgstr[1] "Conectado aos dispositivos %d"
+msgstr[0] "Conectado a %d dispositivo"
+msgstr[1] "Conectado a %d dispositivos"
 
 #: src/bs-application.c:170
 msgid ""
@@ -104,15 +110,15 @@ msgstr ""
 "Boatswain precisa ser executado em segundo plano para detectar e executar "
 "ações do Stream Deck."
 
-#: src/bs-button-editor.c:395
+#: src/bs-button-editor.c:327
 msgid "All supported formats"
 msgstr "Todos os formatos suportados"
 
-#: src/bs-button-editor.c:404
+#: src/bs-button-editor.c:336
 msgid "Select icon"
 msgstr "Selecionar ícone"
 
-#: src/bs-button-editor.c:405
+#: src/bs-button-editor.c:337
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Abrir"
@@ -133,16 +139,16 @@ msgstr "Cor de fundo"
 msgid "Select Action"
 msgstr "Selecionar ação"
 
-#: src/bs-button-editor.ui:249
+#: src/bs-button-editor.ui:250
 msgid "Remove Action"
 msgstr "Remover ação"
 
-#: src/bs-button-editor.ui:271
+#: src/bs-button-editor.ui:272
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Ações"
 
-#: src/bs-device-editor.ui:63
+#: src/bs-device-editor.ui:65
 msgid "Select a button"
 msgstr "Selecionar um botão"
 
@@ -166,21 +172,21 @@ msgstr "Mover para baixo"
 msgid "Delete"
 msgstr "Excluir"
 
-#: src/bs-stream-deck.c:340
+#: src/bs-stream-deck.c:339
 msgid "Default"
 msgstr "Padrão"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1166 src/bs-stream-deck.c:1191
+#: src/bs-stream-deck.c:1184 src/bs-stream-deck.c:1209
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1216 src/bs-stream-deck.c:1241
+#: src/bs-stream-deck.c:1234 src/bs-stream-deck.c:1259
 #: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -189,75 +195,75 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1266 src/bs-stream-deck.c:1291
+#: src/bs-stream-deck.c:1284 src/bs-stream-deck.c:1309
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1316
+#: src/bs-stream-deck.c:1334
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1341
+#: src/bs-stream-deck.c:1359
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1366
+#: src/bs-stream-deck.c:1384
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1407
+#: src/bs-stream-deck.c:1425
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1476
+#: src/bs-stream-deck.c:1494
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1498
+#: src/bs-stream-deck.c:1516
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: src/bs-window.ui:113
+#: src/bs-window.ui:114
 msgid "New profile…"
 msgstr "Novo perfil…"
 
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:55
+#: src/bs-window.ui:139 src/plugins/default/default-action-factory.c:55
 msgid "Brightness"
 msgstr "Brilho"
 
-#: src/bs-window.ui:174
+#: src/bs-window.ui:175
 msgid "Firmware"
 msgstr "Firmware"
 
-#: src/bs-window.ui:232
+#: src/bs-window.ui:236
 msgid "No Stream Deck Found"
 msgstr "Nenhum Stream Deck encontrado"
 
-#: src/bs-window.ui:233
+#: src/bs-window.ui:237
 msgid "Plug in a Stream Deck device to use it."
 msgstr "Conecte um dispositivo Stream Deck para usá-lo."
 
-#: src/bs-window.ui:256
-msgid "_Keyboard Shortcuts"
-msgstr "A_talhos de teclado"
-
 #: src/bs-window.ui:260
+msgid "_Keyboard Shortcuts"
+msgstr "Atalhos de _teclado"
+
+#: src/bs-window.ui:264
 msgid "_About Boatswain"
 msgstr "_Sobre Boatswain"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:268
 msgid "_Quit"
 msgstr "Sa_ir"
 
@@ -339,7 +345,7 @@ msgid "Profile"
 msgstr "Perfil"
 
 #: src/plugins/desktop/desktop-action-factory.c:41
-#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:274
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Atalhos de teclado"
 
@@ -384,33 +390,33 @@ msgid "score.txt"
 msgstr "pontuação.txt"
 
 #. Restore score
-#: src/plugins/gaming/score.js:338
+#: src/plugins/gaming/score.js:352
 msgid "Restore Score"
 msgstr "Restaurar pontuação"
 
-#: src/plugins/gaming/score.js:357
+#: src/plugins/gaming/score.js:371
 msgid "Text Color"
 msgstr "Cor do texto"
 
-#: src/plugins/gaming/score.js:370
+#: src/plugins/gaming/score.js:384
 msgid "Save to File"
 msgstr "Salvar em arquivo"
 
-#: src/plugins/gaming/score.js:371
+#: src/plugins/gaming/score.js:385
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr ""
 "Guarde a pontuação em um arquivo de texto. Outras aplicações, como o OBS "
 "Studio, podem ler esse arquivo."
 
-#: src/plugins/gaming/score.js:380
+#: src/plugins/gaming/score.js:394
 #: src/plugins/launcher/launcher-open-file-action.c:214
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
 msgstr "Arquivo"
 
-#: src/plugins/gaming/score.js:399
+#: src/plugins/gaming/score.js:413
 msgid "Text File (.txt)"
 msgstr "Arquivo de Texto (.txt)"
 
