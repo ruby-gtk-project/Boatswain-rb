@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-10-26 14:21+0000\n"
-"PO-Revision-Date: 2024-10-30 21:37+0100\n"
+"POT-Creation-Date: 2024-11-25 22:02+0000\n"
+"PO-Revision-Date: 2024-12-08 13:25+0100\n"
 "Last-Translator: Julián Villodre <jvillodrede@gmail.com>\n"
 "Language-Team: Spanish - Spain <gnome-es-list@gnome.org>\n"
 "Language: es\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"X-Generator: Gtranslator 47.0\n"
+"X-Generator: Gtranslator 47.1\n"
 
 #: data/com.feaneron.Boatswain.desktop.in.in:3
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
@@ -80,18 +80,18 @@ msgstr "Realice un seguimiento de su puntuación de juego"
 msgid "Open files and launch applications"
 msgstr "Abrir archivos y lanzar aplicaciones"
 
-#: src/bs-application.c:54
+#: src/bs-application.c:55
 msgid "Enable debug messages"
 msgstr "Activar mensajes de depuración"
 
-#: src/bs-application.c:117
+#: src/bs-application.c:118
 #, c-format
 msgid "Connected to %d device"
 msgid_plural "Connected to %d devices"
 msgstr[0] "Conectado a %d dispositivo"
 msgstr[1] "Conectado a %d dispositivos"
 
-#: src/bs-application.c:169
+#: src/bs-application.c:170
 msgid ""
 "Boatswain needs to run in background to detect and execute Stream Deck "
 "actions."
@@ -99,15 +99,15 @@ msgstr ""
 "Boatswain se debe ejecutar en segundo plano para detectar y ejecutar las "
 "acciones del Stream Deck."
 
-#: src/bs-button-editor.c:388
+#: src/bs-button-editor.c:327
 msgid "All supported formats"
 msgstr "Todos los formatos soportados"
 
-#: src/bs-button-editor.c:397
+#: src/bs-button-editor.c:336
 msgid "Select icon"
 msgstr "Seleccionar icono"
 
-#: src/bs-button-editor.c:398
+#: src/bs-button-editor.c:337
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Abrir"
@@ -128,20 +128,20 @@ msgstr "Color de fondo"
 msgid "Select Action"
 msgstr "Seleccionar acción"
 
-#: src/bs-button-editor.ui:249
+#: src/bs-button-editor.ui:250
 msgid "Remove Action"
 msgstr "Quitar acción"
 
-#: src/bs-button-editor.ui:271
+#: src/bs-button-editor.ui:272
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Acciones"
 
-#: src/bs-device-editor.ui:63
+#: src/bs-device-editor.ui:65
 msgid "Select a button"
 msgstr "Seleccionar un botón"
 
-#: src/bs-profile.c:184
+#: src/bs-profile.c:185
 msgid "Unnamed profile"
 msgstr "Perfil sin nombre"
 
@@ -161,22 +161,22 @@ msgstr "Bajar"
 msgid "Delete"
 msgstr "Eliminar"
 
-#: src/bs-stream-deck.c:320
+#: src/bs-stream-deck.c:339
 msgid "Default"
 msgstr "Predeterminado"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1073 src/bs-stream-deck.c:1098
+#: src/bs-stream-deck.c:1184 src/bs-stream-deck.c:1209
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1123 src/bs-stream-deck.c:1148
-#: src/plugins/default/default-switch-profile-action.c:283
+#: src/bs-stream-deck.c:1234 src/bs-stream-deck.c:1259
+#: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
 msgstr "Stream Deck"
@@ -184,75 +184,75 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1173 src/bs-stream-deck.c:1198
+#: src/bs-stream-deck.c:1284 src/bs-stream-deck.c:1309
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1223
+#: src/bs-stream-deck.c:1334
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1248
+#: src/bs-stream-deck.c:1359
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1273
+#: src/bs-stream-deck.c:1384
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1314
+#: src/bs-stream-deck.c:1425
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1383
+#: src/bs-stream-deck.c:1494
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1405
+#: src/bs-stream-deck.c:1516
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: src/bs-window.ui:113
+#: src/bs-window.ui:114
 msgid "New profile…"
 msgstr "Perfil nuevo…"
 
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:54
+#: src/bs-window.ui:139 src/plugins/default/default-action-factory.c:55
 msgid "Brightness"
 msgstr "Brillo"
 
-#: src/bs-window.ui:174
+#: src/bs-window.ui:175
 msgid "Firmware"
 msgstr "Firmware"
 
-#: src/bs-window.ui:232
+#: src/bs-window.ui:236
 msgid "No Stream Deck Found"
 msgstr "No se ha encontrado ningún Stream Deck"
 
-#: src/bs-window.ui:233
+#: src/bs-window.ui:237
 msgid "Plug in a Stream Deck device to use it."
 msgstr "Conecte un dispositivo Stream Deck para usarlo"
 
-#: src/bs-window.ui:256
+#: src/bs-window.ui:260
 msgid "_Keyboard Shortcuts"
 msgstr "Atajos del _teclado"
 
-#: src/bs-window.ui:260
+#: src/bs-window.ui:264
 msgid "_About Boatswain"
 msgstr "Acerca _de Boatswain"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:268
 msgid "_Quit"
 msgstr "_Cerrar"
 
@@ -271,40 +271,44 @@ msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Salir"
 
-#: src/plugins/default/default-action-factory.c:42
+#: src/plugins/default/default-action-factory.c:43
 msgid "Folder"
 msgstr "Carpeta"
 
-#: src/plugins/default/default-action-factory.c:48
+#: src/plugins/default/default-action-factory.c:49
 msgid "Switch Profile"
 msgstr "Cambiar de perfil"
 
-#: src/plugins/default/default-action-factory.c:60
+#: src/plugins/default/default-action-factory.c:61
 msgid "Multiple Actions"
 msgstr "Varias acciones"
 
+#: src/plugins/default/default-action-factory.c:67
+msgid "Go Up"
+msgstr "Ir arriba"
+
 #. Translators: "Constant" as in "Constant value of brightness"
-#: src/plugins/default/default-brightness-action.c:141
+#: src/plugins/default/default-brightness-action.c:144
 msgid "Constant"
 msgstr "Constante"
 
-#: src/plugins/default/default-brightness-action.c:142
+#: src/plugins/default/default-brightness-action.c:145
 msgid "Increase"
 msgstr "Aumentar"
 
-#: src/plugins/default/default-brightness-action.c:143
+#: src/plugins/default/default-brightness-action.c:146
 msgid "Decrease"
 msgstr "Disminuir"
 
-#: src/plugins/default/default-brightness-action.c:146
+#: src/plugins/default/default-brightness-action.c:149
 msgid "Mode"
 msgstr "Modo"
 
-#: src/plugins/default/default-brightness-action.c:153
+#: src/plugins/default/default-brightness-action.c:156
 msgid "Value"
 msgstr "Valor"
 
-#: src/plugins/default/default-multi-action-editor.c:310
+#: src/plugins/default/default-multi-action-editor.c:307
 #: src/plugins/default/default-multi-action-row.c:143
 msgid "Delay"
 msgstr "Retardo"
@@ -325,12 +329,12 @@ msgstr "Otras"
 msgid "Settings"
 msgstr "Configuración"
 
-#: src/plugins/default/default-switch-profile-action.c:306
+#: src/plugins/default/default-switch-profile-action.c:301
 msgid "Profile"
 msgstr "Perfil"
 
 #: src/plugins/desktop/desktop-action-factory.c:41
-#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:257
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Atajo del teclado"
 
@@ -376,33 +380,33 @@ msgid "score.txt"
 msgstr "score.txt"
 
 #. Restore score
-#: src/plugins/gaming/score.js:322
+#: src/plugins/gaming/score.js:352
 msgid "Restore Score"
 msgstr "Reestablecer puntuación"
 
-#: src/plugins/gaming/score.js:341
+#: src/plugins/gaming/score.js:371
 msgid "Text Color"
 msgstr "Color de texto"
 
-#: src/plugins/gaming/score.js:354
+#: src/plugins/gaming/score.js:384
 msgid "Save to File"
 msgstr "Guardar en un archivo"
 
-#: src/plugins/gaming/score.js:355
+#: src/plugins/gaming/score.js:385
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr ""
 "Guardar puntuación en un archivo de texto. Otras aplicaciones como OBS "
 "Studio pueden leerlo."
 
-#: src/plugins/gaming/score.js:364
-#: src/plugins/launcher/launcher-open-file-action.c:209
+#: src/plugins/gaming/score.js:394
+#: src/plugins/launcher/launcher-open-file-action.c:214
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
 msgstr "Archivo"
 
-#: src/plugins/gaming/score.js:383
+#: src/plugins/gaming/score.js:413
 msgid "Text File (.txt)"
 msgstr "Archivo de texto (.txt)"
 
@@ -422,15 +426,15 @@ msgstr "Abrir URL"
 msgid "Choose Application"
 msgstr "Elija aplicación"
 
-#: src/plugins/launcher/launcher-open-file-action.c:68
+#: src/plugins/launcher/launcher-open-file-action.c:69
 msgid "No file selected"
 msgstr "No se ha seleccionado ningún archivo"
 
-#: src/plugins/launcher/launcher-open-file-action.c:156
+#: src/plugins/launcher/launcher-open-file-action.c:157
 msgid "Select File"
 msgstr "Seleccionar archivo"
 
-#: src/plugins/launcher/launcher-open-url-action.c:104
+#: src/plugins/launcher/launcher-open-url-action.c:109
 msgid "URL"
 msgstr "URL"
 
@@ -520,44 +524,44 @@ msgstr "Port"
 msgid "Password"
 msgstr "Contraseña"
 
-#: src/plugins/obs-studio/obs-switch-scene-action.c:283
+#: src/plugins/obs-studio/obs-switch-scene-action.c:288
 msgid "Scene"
 msgstr "Escena"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:124
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
 msgid "Toggle mute"
 msgstr "Conmutar silencio"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+#: src/plugins/obs-studio/obs-toggle-source-action.c:126
 msgid "Mute"
 msgstr "Silenciar"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+#: src/plugins/obs-studio/obs-toggle-source-action.c:127
 msgid "Unmute"
 msgstr "Quitar silencio"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:130
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
 msgid "Toggle visibility"
 msgstr "Conmutar la visibilidad"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+#: src/plugins/obs-studio/obs-toggle-source-action.c:132
 msgid "Hide"
 msgstr "Ocultar"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+#: src/plugins/obs-studio/obs-toggle-source-action.c:133
 msgid "Show"
 msgstr "Mostrar"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:479
+#: src/plugins/obs-studio/obs-toggle-source-action.c:484
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
 msgid "Behavior"
 msgstr "Comportamiento"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:490
+#: src/plugins/obs-studio/obs-toggle-source-action.c:495
 msgid "Audio Source"
 msgstr "Fuente de sonido"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:492
+#: src/plugins/obs-studio/obs-toggle-source-action.c:497
 msgid "Source"
 msgstr "Origen"
 
@@ -577,31 +581,31 @@ msgstr "Controlar el reproductor de musica activo"
 msgid "Play Audio"
 msgstr "Reproducir sonido"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:197
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
 msgid "Next"
 msgstr "Siguiente"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:198
+#: src/plugins/soundboard/soundboard-mpris-action.c:203
 msgid "Pause"
 msgstr "Pausa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:199
+#: src/plugins/soundboard/soundboard-mpris-action.c:204
 msgid "Play"
 msgstr "Reproducir"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:200
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
 msgid "Previous"
 msgstr "Anterior"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:201
+#: src/plugins/soundboard/soundboard-mpris-action.c:206
 msgid "Stop"
 msgstr "Detener"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:202
+#: src/plugins/soundboard/soundboard-mpris-action.c:207
 msgid "Play / Pause"
 msgstr "Reproducir / Pausar"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:205
+#: src/plugins/soundboard/soundboard-mpris-action.c:210
 msgid "Playback Action"
 msgstr "Acción de reproducción"
 
