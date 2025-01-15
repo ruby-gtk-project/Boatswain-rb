@@ -22,41 +22,36 @@ classDiagram
             }
             BsStreamDeck "1" *-- "1..*" BsDeviceRegion : contains
 
-                class BsButtonGridRegion {
+                class BsButtonGrid {
                     GListModel~BsButton~ buttons
                 }
-                BsDeviceRegion <|-- BsButtonGridRegion
+                BsDeviceRegion <|-- BsButtonGrid
 
                     class BsButton {
                         BsAction action
                     }
-                    BsButtonGridRegion "1" *-- "1..*" BsButton : contains
+                    BsButtonGrid "1" *-- "1..*" BsButton : contains
 
-                class BsDialGridRegion {
+                class BsDialGrid {
                     GListModel~BsDial~ dials
                 }
-                BsDeviceRegion <-- BsDialGridRegion
+                BsDeviceRegion <-- BsDialGrid
 
                     class BsDial {
                     }
-                    BsDialGridRegion "1" *-- "1..*" BsDial : contains
+                    BsDialGrid "1" *-- "1..*" BsDial : contains
 
-                class BsTouchscreenRegion {
-                    BsTouchscreen touchscreen
+                BsDeviceRegion <|-- BsTouchscreen
+
+                class BsTouchscreen {
+                    GListModel~BsTouchscreenSlot~ slots
+                    GdkPaintable background
                 }
-                BsDeviceRegion <|-- BsTouchscreenRegion
 
-                    class BsTouchscreen {
-                        GListModel~BsTouchscreenSlot~ slots
-                        GdkPaintable background
+                    class BsTouchscreenSlot {
+                        BsAction action
                     }
-                    BsTouchscreenRegion "1" *-- "1" BsTouchscreen : contains
-
-
-                        class BsTouchscreenSlot {
-                            BsAction action
-                        }
-                        BsTouchscreen "1" *-- "1..*" BsTouchscreenSlot : contains
+                    BsTouchscreen "1" *-- "1..*" BsTouchscreenSlot : contains
 
 
             class BsProfile {
