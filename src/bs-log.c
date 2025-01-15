@@ -29,7 +29,7 @@ G_LOCK_DEFINE_STATIC (channel_lock);
 
 GIOChannel *standard_channel = NULL;
 
-static const gchar* ignored_domains[] =
+static const char* ignored_domains[] =
 {
   "GdkPixbuf",
   "GLib-GIO",
@@ -37,7 +37,7 @@ static const gchar* ignored_domains[] =
   NULL
 };
 
-static const gchar *
+static const char *
 log_level_str (GLogLevelFlags log_level)
 {
   switch (((gulong)log_level & G_LOG_LEVEL_MASK))
@@ -56,15 +56,15 @@ log_level_str (GLogLevelFlags log_level)
 }
 
 static void
-log_handler (const gchar    *domain,
+log_handler (const char     *domain,
              GLogLevelFlags  log_level,
-             const gchar    *message,
+             const char     *message,
              gpointer        user_data)
 {
   g_autoptr (GDateTime) now = NULL;
-  g_autofree gchar *buffer = NULL;
-  g_autofree gchar *ftime = NULL;
-  const gchar *level;
+  g_autofree char *buffer = NULL;
+  g_autofree char *ftime = NULL;
+  const char *level;
   gint microsecond;
 
   /* Skip ignored log domains */
