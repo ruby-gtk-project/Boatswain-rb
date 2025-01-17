@@ -142,11 +142,3 @@ default_switch_page_action_new (void)
 {
   return g_object_new (DEFAULT_TYPE_SWITCH_PAGE_ACTION, NULL);
 }
-
-BsPage *
-default_switch_page_action_get_page (DefaultSwitchPageAction *self)
-{
-  g_return_val_if_fail (DEFAULT_IS_SWITCH_PAGE_ACTION (self), NULL);
-
-  return self->page;
-}
