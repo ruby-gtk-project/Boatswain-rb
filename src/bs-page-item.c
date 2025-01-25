@@ -485,15 +485,13 @@ bs_page_item_realize (BsPageItem  *self,
                       BsAction   **out_action,
                       GError     **error)
 {
-  g_autoptr (BsAction) action = NULL;
-  g_autoptr (BsIcon) custom_icon = NULL;
-
   g_return_val_if_fail (BS_IS_PAGE_ITEM (self), FALSE);
   g_return_val_if_fail (out_custom_icon != NULL, FALSE);
   g_return_val_if_fail (out_action != NULL, FALSE);
 
   if (!self->cached_action)
     {
+      g_autoptr (BsAction) action = NULL;
       BsActionFactory *action_factory;
       BsActionInfo *action_info;
 
@@ -521,27 +519,22 @@ bs_page_item_realize (BsPageItem  *self,
             bs_action_deserialize_settings (action, json_node_get_object (self->settings));
           break;
         }
-    }
-  else
-    {
-      action = g_object_ref (self->cached_action);
+
+      self->cached_action = g_steal_pointer (&action);
     }
 
   if (!self->cached_custom_icon)
     {
+      g_autoptr (BsIcon) custom_icon = NULL;
+
       if (self->custom_icon)
         custom_icon = bs_icon_new_from_json (self->custom_icon, NULL);
-    }
-  else
-    {
-      custom_icon = g_object_ref (self->cached_custom_icon);
+
+      self->cached_custom_icon = g_steal_pointer (&custom_icon);
     }
 
-  *out_custom_icon = custom_icon ? g_object_ref (custom_icon) : NULL;
-  *out_action = action ? g_object_ref (action) : NULL;
-
-  self->cached_action = g_steal_pointer (&action);
-  self->cached_custom_icon = g_steal_pointer (&custom_icon);
+  *out_custom_icon = self->cached_custom_icon ? g_object_ref (self->cached_custom_icon) : NULL;
+  *out_action = self->cached_action ? g_object_ref (self->cached_action) : NULL;
 
   return TRUE;
 }
