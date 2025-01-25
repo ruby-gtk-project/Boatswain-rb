@@ -38,20 +38,23 @@ JsonNode * bs_page_to_json (BsPage *self);
 
 gboolean bs_page_is_root (BsPage *self);
 
-BsPageItem * bs_page_get_item (BsPage  *self,
-                               uint8_t  position);
+BsPageItem * bs_page_get_item (BsPage     *self,
+                               const char *region_id,
+                               uint8_t     position);
 
-void bs_page_update_item (BsPage   *self,
-                          size_t    position,
-                          BsAction *action,
-                          BsIcon   *custom_icon);
+void bs_page_update_item (BsPage     *self,
+                          const char *region_id,
+                          size_t      position,
+                          BsAction   *action,
+                          BsIcon     *custom_icon);
 
 void bs_page_update_all_items (BsPage *self);
 
-gboolean bs_page_realize (BsPage    *self,
-                          size_t     position,
-                          BsIcon   **out_custom_icon,
-                          BsAction **out_action,
-                          GError   **error);
+gboolean bs_page_realize (BsPage      *self,
+                          const char  *region_id,
+                          size_t       position,
+                          BsIcon     **out_custom_icon,
+                          BsAction   **out_action,
+                          GError     **error);
 
 G_END_DECLS

@@ -27,6 +27,8 @@
 #include "bs-action-private.h"
 #include "bs-action-selector.h"
 #include "bs-application-private.h"
+#include "bs-button-private.h"
+#include "bs-device-region.h"
 #include "bs-empty-action.h"
 #include "bs-icon.h"
 #include "bs-page.h"
@@ -194,18 +196,22 @@ on_action_selector_action_selected_cb (BsActionSelector *selector,
   g_autoptr (BsIcon) new_custom_icon = NULL;
   g_autoptr (GError) error = NULL;
   PeasPluginInfo *plugin_info;
+  BsDeviceRegion *region;
   BsStreamDeck *stream_deck;
   BsPageItem *item;
   BsIcon *custom_icon;
   BsPage *active_page;
+  const char *region_id;
   size_t position;
 
   stream_deck = bs_button_get_stream_deck (self->button);
   active_page = bs_stream_deck_get_active_page (stream_deck);
   plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
+  region = bs_button_get_region (self->button);
+  region_id = bs_device_region_get_id (region);
 
   position = bs_button_get_position (self->button);
-  item = bs_page_get_item (active_page, position);
+  item = bs_page_get_item (active_page, region_id, position);
   bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
   bs_page_item_set_factory (item, peas_plugin_info_get_module_name (plugin_info));
   bs_page_item_set_action (item, bs_action_info_get_id (action_info));
@@ -214,7 +220,7 @@ on_action_selector_action_selected_cb (BsActionSelector *selector,
   if (custom_icon)
     bs_page_item_set_custom_icon (item, bs_icon_to_json (custom_icon));
 
-  bs_page_realize (active_page, position, &new_custom_icon, &new_action, &error);
+  bs_page_realize (active_page, region_id, position, &new_custom_icon, &new_action, &error);
 
   if (error)
     g_warning ("Error realizing action: %s", error->message);

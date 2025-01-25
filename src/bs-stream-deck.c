@@ -197,6 +197,42 @@ find_button_at_region (BsStreamDeck *self,
 }
 
 static void
+update_page_items (BsStreamDeck *self,
+                   BsPage       *page)
+{
+  for (size_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
+    {
+      BsButton *button = find_button_at_region (self, "main-button-grid", i);
+
+      bs_page_update_item (page,
+                           "main-button-grid",
+                           i,
+                           bs_actionable_get_action (BS_ACTIONABLE (button)),
+                           bs_button_get_custom_icon (button));
+    }
+
+  if (self->model_info->features & BS_STREAM_DECK_FEATURE_TOUCHSCREEN)
+    {
+      BsTouchscreen *touchscreen;
+      GListModel *touchscreen_slots;
+
+      touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
+      touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+
+      for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
+        {
+          g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (touchscreen_slots, i);
+
+          bs_page_update_item (page,
+                               "touchscreen",
+                               i,
+                               bs_actionable_get_action (BS_ACTIONABLE (slot)),
+                               NULL);
+        }
+    }
+}
+
+static void
 update_pages (BsStreamDeck *self)
 {
   BsPage *active_page;
@@ -204,16 +240,7 @@ update_pages (BsStreamDeck *self)
   BS_ENTRY;
 
   active_page = bs_stream_deck_get_active_page (self);
-
-  for (size_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
-    {
-      BsButton *button = find_button_at_region (self, "main-button-grid", i);
-
-      bs_page_update_item (active_page,
-                           i,
-                           bs_actionable_get_action (BS_ACTIONABLE (button)),
-                           bs_button_get_custom_icon (button));
-    }
+  update_page_items (self, active_page);
 
   for (GList *l = g_queue_peek_head_link (self->active_pages); l; l = l->next)
     bs_page_update_all_items (l->data);
@@ -277,6 +304,56 @@ save_profiles (BsStreamDeck *self)
 }
 
 static void
+maybe_create_backup (BsStreamDeck *self,
+                     uint32_t      version)
+{
+  g_autoptr (GError) error = NULL;
+  g_autofree char *backup_file_path = NULL;
+  g_autofree char *backup_file_name = NULL;
+  g_autofree char *backup_folder = NULL;
+  g_autofree char *profile_path = NULL;
+  g_autofree char *data = NULL;
+  size_t length;
+
+  BS_ENTRY;
+
+  g_assert (BS_IS_STREAM_DECK (self));
+  g_assert (version > 0);
+
+  backup_folder = g_build_filename (g_get_user_data_dir (),
+                                    "backups",
+                                    NULL);
+
+  g_mkdir_with_parents (backup_folder, 0755);
+
+  backup_file_name = g_strdup_printf ("%s.bak.v%u", self->serial_number, version - 1);
+  backup_file_path = g_build_filename (backup_folder,
+                                       backup_file_name,
+                                       NULL);
+
+  if (g_file_test (backup_file_path, G_FILE_TEST_EXISTS))
+    {
+      g_debug ("Backup file already exists, skipping");
+      return;
+    }
+
+  profile_path = get_profile_path (self);
+  if (!g_file_get_contents (profile_path, &data, &length, &error))
+    {
+      g_debug ("Cannot read %s: %s", profile_path, error->message);
+      return;
+    }
+
+  if (!g_file_set_contents (backup_file_path, data, length, &error))
+    {
+      g_error ("Cannot write to %s", backup_file_path);
+      exit (EXIT_FAILURE);
+    }
+
+  BS_EXIT;
+}
+
+static void
 load_profiles (BsStreamDeck  *self)
 {
   g_autoptr (JsonParser) parser = NULL;
@@ -291,6 +368,8 @@ load_profiles (BsStreamDeck  *self)
   BS_ENTRY;
 
   profile_path = get_profile_path (self);
+
+  maybe_create_backup (self, 1);
 
   g_debug ("Loading %s", profile_path);
 
@@ -354,6 +433,8 @@ load_active_page (BsStreamDeck *self)
 
   active_page = bs_stream_deck_get_active_page (self);
 
+  g_assert (self->model_info->features & BS_STREAM_DECK_FEATURE_BUTTONS);
+
   for (uint8_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
     {
       g_autoptr (BsAction) action = NULL;
@@ -363,7 +444,7 @@ load_active_page (BsStreamDeck *self)
 
       button = find_button_at_region (self, "main-button-grid", i);
 
-      bs_page_realize (active_page, i, &custom_icon, &action, &error);
+      bs_page_realize (active_page, "main-button-grid", i, &custom_icon, &action, &error);
 
       if (error)
         {
@@ -377,6 +458,37 @@ load_active_page (BsStreamDeck *self)
       bs_button_set_custom_icon (button, custom_icon);
 
       bs_button_uninhibit_page_updates (button);
+    }
+
+  if (self->model_info->features & BS_STREAM_DECK_FEATURE_TOUCHSCREEN)
+    {
+      BsTouchscreen *touchscreen;
+      GListModel *touchscreen_slots;
+
+      touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
+      touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+
+      for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
+        {
+          g_autoptr (BsTouchscreenSlot) slot = NULL;
+          g_autoptr (BsAction) action = NULL;
+          g_autoptr (BsIcon) custom_icon = NULL;
+          g_autoptr (GError) error = NULL;
+
+          bs_page_realize (active_page, "touchscreen", i, &custom_icon, &action, &error);
+
+          if (error)
+            {
+              g_warning ("Failed to construct action and icon from page: %s", error->message);
+              continue;
+            }
+
+          slot = g_list_model_get_item (touchscreen_slots, i);
+          g_assert (BS_IS_TOUCHSCREEN_SLOT (slot));
+
+          bs_actionable_set_action (BS_ACTIONABLE (slot), action);
+          //TODO: bs_button_set_custom_icon (slot, custom_icon);
+        }
     }
 
   BS_EXIT;
@@ -2142,16 +2254,7 @@ bs_stream_deck_pop_page (BsStreamDeck *self)
   BS_ENTRY;
 
   page = g_queue_pop_head (self->active_pages);
-
-  for (size_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
-    {
-      BsButton *button = find_button_at_region (self, "main-button-grid", i);
-
-      bs_page_update_item (page,
-                           i,
-                           bs_actionable_get_action (BS_ACTIONABLE (button)),
-                           bs_button_get_custom_icon (button));
-    }
+  update_page_items (self, page);
 
   bs_page_update_all_items (g_queue_peek_head (self->active_pages));
 

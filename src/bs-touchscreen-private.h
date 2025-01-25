@@ -47,4 +47,7 @@ GListModel * bs_touchscreen_get_slots (BsTouchscreen *self);
 BsTouchscreenSlot * bs_touchscreen_pick_slot (BsTouchscreen          *self,
                                               const graphene_point_t *point);
 
+uint32_t bs_touchscreen_get_slot_position (BsTouchscreen     *self,
+                                           BsTouchscreenSlot *slot);
+
 G_END_DECLS

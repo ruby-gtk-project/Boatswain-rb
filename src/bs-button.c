@@ -22,6 +22,7 @@
 
 #include "bs-actionable-private.h"
 #include "bs-action.h"
+#include "bs-device-region.h"
 #include "bs-icon.h"
 #include "bs-page.h"
 #include "bs-stream-deck-private.h"
@@ -88,7 +89,9 @@ update_page (BsButton *self)
 
   if (page && self->inhibit_page_updates_counter == 0)
     {
-      bs_page_update_item (page, self->position, self->action, self->custom_icon);
+      const char *region_id = bs_device_region_get_id (self->region);
+
+      bs_page_update_item (page, region_id, self->position, self->action, self->custom_icon);
       bs_stream_deck_save (self->stream_deck);
     }
 }

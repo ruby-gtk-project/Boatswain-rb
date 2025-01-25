@@ -268,3 +268,18 @@ bs_touchscreen_pick_slot (BsTouchscreen          *self,
 
   return g_steal_pointer (&slot);
 }
+
+uint32_t
+bs_touchscreen_get_slot_position (BsTouchscreen     *self,
+                                  BsTouchscreenSlot *slot)
+{
+  uint32_t position;
+
+  g_assert (BS_IS_TOUCHSCREEN (self));
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (slot));
+
+  if (!g_list_store_find (self->slots, slot, &position))
+    g_assert_not_reached ();
+
+  return position;
+}

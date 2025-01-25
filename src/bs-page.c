@@ -18,6 +18,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#define G_LOG_DOMAIN "BsPage"
+
 #include "bs-page-private.h"
 
 #include "bs-actionable.h"
@@ -33,7 +35,7 @@ struct _BsPage
 {
   GObject parent_instance;
 
-  GPtrArray *items;
+  GHashTable *page_regions; /* const char* → PageRegion */
 
   gboolean root;
 };
@@ -51,17 +53,80 @@ static GParamSpec *properties [N_PROPS];
 
 
 /*
+ * PageRegion
+ */
+
+typedef struct
+{
+  char *id;
+  JsonNode *region_data;
+  GPtrArray *items;
+} PageRegion;
+
+
+static void
+page_region_free (PageRegion *page_region)
+{
+  g_clear_pointer (&page_region->id, g_free);
+  g_clear_pointer (&page_region->region_data, json_node_unref);
+  g_clear_pointer (&page_region->items, g_ptr_array_unref);
+  g_clear_pointer (&page_region, g_free);
+}
+
+
+static PageRegion *
+page_region_new (const char *id)
+{
+  PageRegion *page_region;
+
+  g_assert (id != NULL);
+
+  page_region = g_new0 (PageRegion, 1);
+  page_region->id = g_strdup (id);
+  page_region->items = g_ptr_array_new_with_free_func (g_object_unref);
+
+  return g_steal_pointer (&page_region);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PageRegion, page_region_free);
+
+
+/*
  * Auxiliary methods
  */
 
 static inline BsPageItem *
 get_item (BsPage       *self,
+          const char   *region_id,
           unsigned int  position)
 {
-  if (!self->items || position >= self->items->len)
+  PageRegion *page_region = g_hash_table_lookup (self->page_regions, region_id);
+
+  if (!page_region || position >= page_region->items->len)
     return NULL;
 
-  return g_ptr_array_index (self->items, position);
+  return g_ptr_array_index (page_region->items, position);
+}
+
+static inline void
+add_item (BsPage       *self,
+          BsPageItem   *item,
+          const char   *region_id,
+          unsigned int  position)
+{
+  PageRegion *page_region;
+
+  g_assert (region_id != NULL);
+
+  page_region = g_hash_table_lookup (self->page_regions, region_id);
+
+  if (!page_region)
+    {
+      page_region = page_region_new (region_id);
+      g_hash_table_insert (self->page_regions, g_strdup (region_id), page_region);
+    }
+
+  g_ptr_array_insert (page_region->items, position, item);
 }
 
 static void
@@ -72,7 +137,7 @@ ensure_first_subpage_item_is_move_up (BsPage *self)
   if (self->root)
     return;
 
-  item = get_item (self, 0);
+  item = get_item (self, "main-button-grid", 0);
 
   if (!item ||
       bs_page_item_get_item_type (item) != BS_PAGE_ITEM_ACTION ||
@@ -98,8 +163,194 @@ ensure_first_subpage_item_is_move_up (BsPage *self)
           bs_page_item_set_action (item, "default-page-up-action");
           bs_page_item_set_settings (item, NULL);
 
-          g_ptr_array_insert (self->items, 0, item);
+          add_item (self, item, "main-button-grid", 0);
         }
+    }
+}
+
+static JsonNode *
+convert_page_v0_to_v1 (JsonNode  *node,
+                       GError   **error)
+{
+  g_autoptr (JsonBuilder) builder = NULL;
+
+  /* Converts this:
+   *
+   * [
+   *   { ... },
+   *   { ... },
+   *   { ... }.
+   *   ...
+   * ]
+   *
+   * Into this:
+   *
+   * {
+   *   "version": 1,
+   *   "regions": [
+   *     {
+   *       "id": "foo",
+   *       "region-data": {
+   *         ...
+   *       },
+   *       "items": [
+   *         { ... },
+   *         ...
+   *       ]
+   *   ]
+   * }
+   */
+
+  g_assert (JSON_NODE_HOLDS_ARRAY (node));
+
+  builder = json_builder_new ();
+
+  json_builder_begin_object (builder);
+
+  json_builder_set_member_name (builder, "version");
+  json_builder_add_int_value (builder, 1);
+
+  json_builder_set_member_name (builder, "regions");
+  json_builder_begin_array (builder);
+    {
+      JsonArray *node_array = json_node_get_array (node);
+
+      json_builder_begin_object (builder);
+
+      json_builder_set_member_name (builder, "id");
+      json_builder_add_string_value (builder, "main-button-grid");
+
+      json_builder_set_member_name (builder, "region-data");
+      json_builder_begin_object (builder);
+      json_builder_end_object (builder);
+
+      json_builder_set_member_name (builder, "items");
+      json_builder_begin_array (builder);
+      for (unsigned int i = 0; i < json_array_get_length (node_array); i++)
+        {
+          JsonNode *item_node = json_array_get_element (node_array, i);
+          json_builder_add_value (builder, json_node_copy (item_node));
+        }
+      json_builder_end_array (builder);
+
+      json_builder_end_object (builder);
+    }
+  json_builder_end_array (builder);
+
+  json_builder_end_object (builder);
+
+  return json_builder_get_root (builder);
+}
+
+typedef JsonNode * (*PageConvertFunc) (JsonNode  *node,
+                                       GError   **error);
+static const PageConvertFunc conversion_vtable[] = {
+  convert_page_v0_to_v1,
+};
+
+static JsonNode *
+convert_page (JsonNode  *node,
+              GError   **error)
+{
+  g_autoptr (JsonNode) result = NULL;
+  int64_t version;
+
+  g_assert (node != NULL);
+
+  result = json_node_ref (node);
+
+  if (JSON_NODE_HOLDS_OBJECT (node))
+    {
+      JsonObject *object = json_node_get_object (node);
+      version = json_object_get_int_member_with_default (object, "version", 1);
+    }
+  else
+    {
+      version = 0;
+    }
+
+  if (version != G_N_ELEMENTS (conversion_vtable))
+    g_debug ("Converting from version %ld to %lu", version, G_N_ELEMENTS (conversion_vtable));
+
+  for (size_t i = version; i < G_N_ELEMENTS (conversion_vtable); i++)
+    {
+      g_autoptr (JsonNode) new_node = NULL;
+
+      new_node = conversion_vtable[i] (result, error);
+
+      if (!node)
+        break;
+
+      g_clear_pointer (&result, json_node_unref);
+      result = g_steal_pointer (&new_node);
+    }
+
+  return g_steal_pointer (&result);
+}
+
+static void
+load_page_from_json (BsPage   *self,
+                     JsonNode *node)
+{
+  JsonObject *object;
+  JsonArray *regions;
+
+  g_assert (JSON_NODE_HOLDS_OBJECT (node));
+
+  /* Parses the following:
+   * {
+   *   "version": 1,
+   *   "regions": [
+   *     {
+   *       "id": "foo",
+   *       "region-data": {
+   *         ...
+   *       },
+   *       "items": [
+   *         { ... },
+   *         ...
+   *       ]
+   *   ]
+   * }
+   */
+
+  object = json_node_get_object (node);
+  g_assert (json_object_get_int_member (object, "version") == 1);
+  g_assert (json_object_has_member (object, "regions"));
+
+  regions = json_object_get_array_member (object, "regions");
+  for (guint i = 0; i < json_array_get_length (regions); i++)
+    {
+      g_autoptr (PageRegion) page_region = NULL;
+      JsonObject *region_object;
+      JsonArray *items;
+      JsonNode *region;
+      const char *id;
+
+      region = json_array_get_element (regions, i);
+      g_assert (JSON_NODE_HOLDS_OBJECT (region));
+
+      region_object = json_node_get_object (region);
+      g_assert (json_object_has_member (region_object, "id"));
+      g_assert (json_object_has_member (region_object, "region-data"));
+      g_assert (json_object_has_member (region_object, "items"));
+
+      id = json_object_get_string_member (region_object, "id");
+
+      page_region = page_region_new (id);
+      page_region->region_data = json_node_ref (json_object_get_member (region_object, "region-data"));
+
+      items = json_object_get_array_member (region_object, "items");
+      for (unsigned int j = 0; j < json_array_get_length (items); j++)
+        {
+          JsonNode *item_node = json_array_get_element (items, j);
+
+          g_ptr_array_insert (page_region->items, j, bs_page_item_new_from_json (self, item_node));
+        }
+
+      g_assert (!g_hash_table_contains (self->page_regions, id));
+
+      g_hash_table_insert (self->page_regions, g_strdup (id), g_steal_pointer (&page_region));
     }
 }
 
@@ -113,7 +364,7 @@ bs_page_finalize (GObject *object)
 {
   BsPage *self = (BsPage *)object;
 
-  g_clear_pointer (&self->items, g_ptr_array_unref);
+  g_clear_pointer (&self->page_regions, g_hash_table_destroy);
 
   G_OBJECT_CLASS (bs_page_parent_class)->finalize (object);
 }
@@ -165,7 +416,10 @@ bs_page_class_init (BsPageClass *klass)
 static void
 bs_page_init (BsPage *self)
 {
-  self->items = g_ptr_array_new_with_free_func (g_object_unref);
+  self->page_regions = g_hash_table_new_full (g_str_hash,
+                                              g_str_equal,
+                                              g_free,
+                                              (GDestroyNotify) page_region_free);
 }
 
 BsPage *
@@ -188,25 +442,20 @@ bs_page_new_empty (void)
 BsPage *
 bs_page_new_from_json (JsonNode *node)
 {
+  g_autoptr (JsonNode) converted = NULL;
+  g_autoptr (GError) error = NULL;
   g_autoptr (BsPage) page = NULL;
-  JsonArray *array;
-  guint i;
 
   page = g_object_new (BS_TYPE_PAGE, NULL);
 
-  if (!JSON_NODE_HOLDS_ARRAY (node))
+  converted = convert_page (node, &error);
+  if (error)
     {
-      g_warning ("JSON node is not an array");
+      g_warning ("Error converting page: %s", error->message);
       goto out;
     }
 
-  array = json_node_get_array (node);
-  for (i = 0; i < json_array_get_length (array); i++)
-    {
-      JsonNode *button_node = json_array_get_element (array, i);
-
-      g_ptr_array_insert (page->items, i, bs_page_item_new_from_json (page, button_node));
-    }
+  load_page_from_json (page, converted);
 
 out:
   ensure_first_subpage_item_is_move_up (page);
@@ -224,21 +473,17 @@ bs_page_new_root (JsonNode *node)
 
   if (node)
     {
-      JsonArray *array;
+      g_autoptr (JsonNode) converted = NULL;
+      g_autoptr (GError) error = NULL;
 
-      if (!JSON_NODE_HOLDS_ARRAY (node))
+      converted = convert_page (node, &error);
+      if (error)
         {
-          g_warning ("JSON node is not an array");
+          g_warning ("Error converting page: %s", error->message);
           return g_steal_pointer (&page);
         }
 
-      array = json_node_get_array (node);
-      for (size_t i = 0; i < json_array_get_length (array); i++)
-        {
-          JsonNode *button_node = json_array_get_element (array, i);
-
-          g_ptr_array_insert (page->items, i, bs_page_item_new_from_json (page, button_node));
-        }
+      load_page_from_json (page, converted);
     }
 
   return g_steal_pointer (&page);
@@ -248,42 +493,69 @@ JsonNode *
 bs_page_to_json (BsPage *self)
 {
   g_autoptr (JsonBuilder) builder = NULL;
-  unsigned int i;
+  GHashTableIter iter;
+  PageRegion *page_region;
+  const char *region_id;
 
   g_return_val_if_fail (BS_IS_PAGE (self), NULL);
 
   builder = json_builder_new ();
 
+  json_builder_begin_object (builder);
+
+  json_builder_set_member_name (builder, "version");
+  json_builder_add_int_value (builder, 1);
+
+  json_builder_set_member_name (builder, "regions");
   json_builder_begin_array (builder);
 
-  for (i = 0; i < self->items->len; i++)
+  g_hash_table_iter_init (&iter, self->page_regions);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &region_id, (gpointer *) &page_region))
     {
-      BsPageItem *item;
+      json_builder_begin_object (builder);
 
-      item = g_ptr_array_index (self->items, i);
-      json_builder_add_value (builder, bs_page_item_to_json (item));
+      json_builder_set_member_name (builder, "id");
+      json_builder_add_string_value (builder, region_id);
+
+      json_builder_set_member_name (builder, "region-data");
+      json_builder_begin_object (builder);
+      // TODO
+      json_builder_end_object (builder);
+
+      json_builder_set_member_name (builder, "items");
+      json_builder_begin_array (builder);
+      for (unsigned int i = 0; i < page_region->items->len; i++)
+        {
+          BsPageItem *item = g_ptr_array_index (page_region->items, i);
+          json_builder_add_value (builder, bs_page_item_to_json (item));
+        }
+      json_builder_end_array (builder);
+
+      json_builder_end_object (builder);
     }
-
   json_builder_end_array (builder);
+
+  json_builder_end_object (builder);
 
   return json_builder_get_root (builder);
 }
 
 
 BsPageItem *
-bs_page_get_item (BsPage  *self,
-                  uint8_t  position)
+bs_page_get_item (BsPage     *self,
+                  const char *region_id,
+                  uint8_t     position)
 {
   BsPageItem *item;
 
   g_return_val_if_fail (BS_IS_PAGE (self), NULL);
 
-  item = get_item (self, position);
+  item = get_item (self, region_id, position);
 
   if (!item)
     {
       item = bs_page_item_new (self);
-      g_ptr_array_insert (self->items, position, item);
+      add_item (self, item, region_id, position);
     }
 
   return item;
@@ -298,10 +570,11 @@ bs_page_is_root (BsPage *self)
 }
 
 void
-bs_page_update_item (BsPage   *self,
-                     size_t    position,
-                     BsAction *action,
-                     BsIcon   *custom_icon)
+bs_page_update_item (BsPage     *self,
+                     const char *region_id,
+                     size_t      position,
+                     BsAction   *action,
+                     BsIcon     *custom_icon)
 
 {
   BsPageItem *item;
@@ -309,12 +582,12 @@ bs_page_update_item (BsPage   *self,
   g_return_if_fail (BS_IS_PAGE (self));
   g_return_if_fail (!custom_icon || BS_IS_ICON (custom_icon));
 
-  item = get_item (self, position);
+  item = get_item (self, region_id, position);
 
   if (!item)
     {
       item = bs_page_item_new (self);
-      g_ptr_array_insert (self->items, position, item);
+      add_item (self, item, region_id, position);
     }
 
   bs_page_item_set_custom_icon (item, custom_icon ? bs_icon_to_json (custom_icon) : NULL);
@@ -344,26 +617,35 @@ bs_page_update_item (BsPage   *self,
 void
 bs_page_update_all_items (BsPage *self)
 {
-  BsPageItem *item;
-  uint8_t i;
+  GHashTableIter iter;
+  PageRegion *page_region;
+  const char *region_id;
 
   g_return_if_fail (BS_IS_PAGE (self));
 
-  for (i = 0; i < self->items->len; i++)
+  g_hash_table_iter_init (&iter, self->page_regions);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &region_id, (gpointer *) &page_region))
     {
-      item = get_item (self, i);
+      g_assert (region_id != NULL);
+      g_assert (page_region != NULL);
 
-      if (item)
-        bs_page_item_update (item);
+      for (size_t i = 0; i < page_region->items->len; i++)
+        {
+          BsPageItem *item = g_ptr_array_index (page_region->items, i);
+
+          if (item)
+            bs_page_item_update (item);
+        }
     }
 }
 
 gboolean
-bs_page_realize (BsPage    *self,
-                 size_t     position,
-                 BsIcon   **out_custom_icon,
-                 BsAction **out_action,
-                 GError   **error)
+bs_page_realize (BsPage      *self,
+                 const char  *region_id,
+                 size_t       position,
+                 BsIcon     **out_custom_icon,
+                 BsAction   **out_action,
+                 GError     **error)
 {
   BsPageItem *item;
 
@@ -371,7 +653,7 @@ bs_page_realize (BsPage    *self,
   g_return_val_if_fail (out_custom_icon != NULL, FALSE);
   g_return_val_if_fail (out_action != NULL, FALSE);
 
-  item = get_item (self, position);
+  item = get_item (self, region_id, position);
 
   if (!item)
     {
