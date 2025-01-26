@@ -9,6 +9,7 @@
     <file>bs-device-editor.ui</file>
     <file>bs-dial-widget.ui</file>
     <file>bs-profile-row.ui</file>
+    <file>bs-touchscreen-background-dialog.ui</file>
     <file>bs-touchscreen-background-row.ui</file>
     <file>bs-touchscreen-widget.ui</file>
     <file>bs-touchscreen-slot-editor.ui</file>

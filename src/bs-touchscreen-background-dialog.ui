@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="Gtk" version="4.0"/>
+  <requires lib="Adw" version="1.0"/>
+
+  <template class="BsTouchscreenBackgroundDialog" parent="AdwDialog">
+    <property name="content-width">700</property>
+    <property name="content-height">600</property>
+
+    <property name="child">
+      <object class="AdwToolbarView">
+
+        <child type="top">
+          <object class="AdwHeaderBar">
+
+          </object>
+        </child>
+
+        <property name="content">
+          <object class="AdwPreferencesPage">
+
+            <child>
+              <object class="AdwPreferencesGroup" id="adwaita_group">
+                <property name="title" translatable="yes">Adwaita</property>
+              </object>
+            </child>
+
+          </object>
+        </property>
+
+      </object>
+    </property>
+
+  </template>
+
+</interface>

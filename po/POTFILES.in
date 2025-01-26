@@ -10,8 +10,12 @@ src/bs-device-editor.ui
 src/bs-profile.c
 src/bs-profile-row.ui
 src/bs-stream-deck.c
-src/bs-window.ui
+src/bs-touchscreen-background-dialog.c
+src/bs-touchscreen-background-dialog.ui
+src/bs-touchscreen-slot-editor.c
+src/bs-touchscreen-slot-editor.ui
 src/bs-window.c
+src/bs-window.ui
 src/gtk/help-overlay.ui
 src/plugins/default/default-action-factory.c
 src/plugins/default/default-brightness-action.c
