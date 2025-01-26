@@ -36,7 +36,7 @@
             <property name="end-widget">
               <object class="GtkButton">
                 <property name="valign">center</property>
-                <property name="icon-name">document-open-symbolic</property>
+                <property name="icon-name">document-edit-symbolic</property>
                 <property name="action-name">backgroundrow.select-background</property>
                 <style>
                   <class name="osd" />
