@@ -6,7 +6,7 @@
     <property name="overflow">hidden</property>
     <property name="action-name">backgroundrow.select-background</property>
     <style>
-      <class name="no-padding" />
+      <class name="touchscreen-background" />
     </style>
 
     <property name="child">
