@@ -71,6 +71,43 @@ bs_touchscreen_get_renderer (BsDeviceRegion *region)
   return self->renderer;
 }
 
+static JsonNode *
+bs_touchscreen_serialize (BsDeviceRegion *region)
+{
+  BsTouchscreen *self = (BsTouchscreen *) region;
+  g_autoptr (JsonBuilder) builder = NULL;
+
+  g_assert (BS_IS_TOUCHSCREEN (self));
+
+  builder = json_builder_new ();
+  json_builder_begin_object (builder);
+
+  json_builder_set_member_name (builder, "content");
+  json_builder_add_value (builder, bs_touchscreen_content_serialize (self->content));
+
+  json_builder_end_object (builder);
+
+  return json_builder_get_root (builder);
+}
+
+static void
+bs_touchscreen_deserialize (BsDeviceRegion *region,
+                            JsonNode       *node)
+{
+  BsTouchscreen *self = (BsTouchscreen *) region;
+  JsonObject *object;
+
+  g_assert (BS_IS_TOUCHSCREEN (self));
+  g_assert (JSON_NODE_HOLDS_OBJECT (node));
+
+  object = json_node_get_object (node);
+
+  if (json_object_has_member (object, "content"))
+    bs_touchscreen_content_deserialize (self->content, json_object_get_member (object, "content"));
+  else
+    bs_touchscreen_content_set_default_background (self->content);
+}
+
 
 /*
  * GObject overrides
@@ -134,6 +171,8 @@ bs_touchscreen_class_init (BsTouchscreenClass *klass)
   object_class->set_property = bs_touchscreen_set_property;
 
   device_region_class->get_renderer = bs_touchscreen_get_renderer;
+  device_region_class->serialize = bs_touchscreen_serialize;
+  device_region_class->deserialize = bs_touchscreen_deserialize;
 
   properties[PROP_CONTENT] = g_param_spec_object ("content", NULL, NULL,
                                                   BS_TYPE_TOUCHSCREEN_CONTENT,

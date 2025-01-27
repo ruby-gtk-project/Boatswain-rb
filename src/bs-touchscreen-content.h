@@ -22,6 +22,7 @@
 #pragma once
 
 #include <gdk/gdk.h>
+#include <json-glib/json-glib.h>
 #include <stdint.h>
 
 G_BEGIN_DECLS
@@ -36,5 +37,12 @@ BsTouchscreenContent * bs_touchscreen_content_new (GListModel *slots,
 GdkPaintable * bs_touchscreen_content_get_background (BsTouchscreenContent *self);
 void bs_touchscreen_content_set_background (BsTouchscreenContent *self,
                                             GdkPaintable         *paintable);
+void bs_touchscreen_content_set_default_background (BsTouchscreenContent *self);
+void bs_touchscreen_content_set_background_from_file (BsTouchscreenContent *self,
+                                                      GFile                *file);
+
+JsonNode * bs_touchscreen_content_serialize (BsTouchscreenContent *self);
+void bs_touchscreen_content_deserialize (BsTouchscreenContent *self,
+                                         JsonNode             *node);
 
 G_END_DECLS

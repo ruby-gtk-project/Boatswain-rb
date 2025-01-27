@@ -121,16 +121,9 @@ on_set_background_action_activated_cb (GSimpleAction *action,
   g_debug ("Setting touchscreen background to %s", uri);
 
   file = g_file_new_for_uri (uri);
-  texture = gdk_texture_new_from_file (file, &error);
-  if (!texture)
-    {
-      g_warning ("Error creating touchscreen texture: %s", error->message);
-      return;
-    }
 
-  paintable = GDK_PAINTABLE (g_steal_pointer (&texture));
   content = bs_touchscreen_get_content (self->touchscreen);
-  bs_touchscreen_content_set_background (content, paintable);
+  bs_touchscreen_content_set_background_from_file (content, file);
 }
 
 

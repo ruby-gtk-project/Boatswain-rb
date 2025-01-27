@@ -27,13 +27,25 @@
 
 #include <gtk/gtk.h>
 
+typedef enum
+{
+  BACKGROUND_TYPE_DEFAULT,
+  BACKGROUND_TYPE_FILE,
+} BackgroundType;
+
 struct _BsTouchscreenContent
 {
   GObject parent_instance;
 
   struct {
+    BackgroundType type;
     GdkPaintable *paintable;
     gulong content_invalidated_id;
+
+    union {
+      GFile *file;
+    } d;
+
   } background;
 
   GListModel *slots;
@@ -307,4 +319,169 @@ bs_touchscreen_content_set_background (BsTouchscreenContent *self,
   gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_BACKGROUND_PAINTABLE]);
+}
+
+void
+bs_touchscreen_content_set_default_background (BsTouchscreenContent *self)
+{
+  g_assert (BS_IS_TOUCHSCREEN_CONTENT (self));
+
+  switch (self->background.type)
+    {
+    case BACKGROUND_TYPE_DEFAULT:
+      g_assert (self->background.d.file == NULL);
+      break;
+
+    case BACKGROUND_TYPE_FILE:
+      g_assert (G_IS_FILE (self->background.d.file));
+      g_clear_object (&self->background.d.file);
+      break;
+    }
+
+  self->background.type = BACKGROUND_TYPE_DEFAULT;
+  bs_touchscreen_content_set_background (self, NULL);
+}
+
+void
+bs_touchscreen_content_set_background_from_file (BsTouchscreenContent *self,
+                                                 GFile                *file)
+{
+  g_autoptr (GdkPaintable) paintable = NULL;
+  g_autoptr (GFileInfo) file_info = NULL;
+  g_autoptr (GError) error = NULL;
+
+  g_assert (BS_IS_TOUCHSCREEN_CONTENT (self));
+  g_assert (G_IS_FILE (file));
+
+  file_info = g_file_query_info (file,
+                                 G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
+                                 G_FILE_QUERY_INFO_NONE,
+                                 NULL,
+                                 &error);
+
+  if (file_info)
+    {
+      const char * const media_stream_content_types[] = {
+        "image/gif",
+        "video/*",
+      };
+
+      g_autoptr (GtkMediaStream) media_stream = NULL;
+      const char *content_type;
+
+      content_type = g_file_info_get_content_type (file_info);
+      for (size_t i = 0; i < G_N_ELEMENTS (media_stream_content_types); i++)
+        {
+          if (!g_content_type_is_mime_type (content_type, media_stream_content_types[i]))
+            continue;
+
+          media_stream = gtk_media_file_new_for_file (file);
+          gtk_media_stream_set_volume (media_stream, 0.0);
+          gtk_media_stream_set_muted (media_stream, TRUE);
+          gtk_media_stream_set_loop (media_stream, TRUE);
+          gtk_media_stream_play (media_stream);
+
+          paintable = GDK_PAINTABLE (g_steal_pointer (&media_stream));
+          break;
+        }
+    }
+  else
+    {
+      g_warning ("Error querying file info: %s", error->message);
+    }
+
+  if (!paintable)
+    {
+      g_autoptr (GdkTexture) texture = NULL;
+
+      texture = gdk_texture_new_from_file (file, &error);
+      if (!texture)
+        return;
+
+      paintable = GDK_PAINTABLE (g_steal_pointer (&texture));
+    }
+
+  self->background.type = BACKGROUND_TYPE_FILE;
+  g_set_object (&self->background.d.file, file);
+
+  bs_touchscreen_content_set_background (self, paintable);
+}
+
+JsonNode *
+bs_touchscreen_content_serialize (BsTouchscreenContent *self)
+{
+  g_autoptr (JsonBuilder) builder = NULL;
+
+  g_assert (BS_IS_TOUCHSCREEN_CONTENT (self));
+
+  builder = json_builder_new ();
+  json_builder_begin_object (builder);
+
+  switch (self->background.type)
+    {
+    case BACKGROUND_TYPE_DEFAULT:
+      g_assert (self->background.d.file == NULL);
+
+      json_builder_set_member_name (builder, "background-type");
+      json_builder_add_string_value (builder, "default");
+      break;
+
+    case BACKGROUND_TYPE_FILE:
+      g_assert (G_IS_FILE (self->background.d.file));
+
+      json_builder_set_member_name (builder, "background-type");
+      json_builder_add_string_value (builder, "file");
+
+      json_builder_set_member_name (builder, "background-uri");
+      json_builder_add_string_value (builder, g_file_get_uri (self->background.d.file));
+      break;
+    }
+
+  json_builder_end_object (builder);
+
+  return json_builder_get_root (builder);
+}
+
+void
+bs_touchscreen_content_deserialize (BsTouchscreenContent *self,
+                                    JsonNode             *node)
+{
+  const char *background_type;
+  JsonObject *object;
+
+  g_assert (JSON_NODE_HOLDS_OBJECT (node));
+
+  {
+    g_autoptr (JsonGenerator) generator = json_generator_new ();
+    g_autofree char *data = NULL;
+
+    json_generator_set_pretty (generator, TRUE);
+    json_generator_set_root (generator, node);
+    data = json_generator_to_data (generator, NULL);
+
+    g_message ("Deserializing: %s", data);
+  }
+
+  object = json_node_get_object (node);
+
+  background_type = json_object_get_string_member_with_default (object, "background-type", "default");
+  if (g_strcmp0 (background_type, "file") == 0)
+    {
+      g_autoptr (GdkPaintable) paintable = NULL;
+      g_autoptr (GdkTexture) texture = NULL;
+      g_autoptr (GError) error = NULL;
+      g_autoptr (GFile) file = NULL;
+      const char *uri;
+
+      g_assert (json_object_has_member (object, "background-uri"));
+      uri = json_object_get_string_member (object, "background-uri");
+
+      file = g_file_new_for_uri (uri);
+
+      bs_touchscreen_content_set_background_from_file (self, file);
+    }
+  else
+    {
+      bs_touchscreen_content_set_default_background (self);
+    }
 }
