@@ -21,6 +21,7 @@
 
 #include "bs-touchscreen-background-row.h"
 
+#include "bs-touchscreen-background-dialog.h"
 #include "bs-touchscreen-content.h"
 #include "bs-touchscreen-private.h"
 
@@ -50,114 +51,15 @@ static GParamSpec *properties [N_PROPS];
  */
 
 static void
-on_file_dialog_file_opened_cb (GObject      *source,
-                               GAsyncResult *result,
-                               gpointer      user_data)
-{
-  g_autoptr (GdkPaintable) paintable = NULL;
-  g_autoptr (GFileInfo) file_info = NULL;
-  g_autoptr (GError) error = NULL;
-  g_autoptr (GFile) file = NULL;
-  BsTouchscreenBackgroundRow *self;
-  BsTouchscreenContent *content;
-
-  file = gtk_file_dialog_open_finish (GTK_FILE_DIALOG (source), result, &error);
-
-  if (error)
-    {
-      if (!g_error_matches (error, GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_CANCELLED) &&
-          !g_error_matches (error, GTK_DIALOG_ERROR, GTK_DIALOG_ERROR_DISMISSED))
-        {
-          g_warning ("Error opening file: %s", error->message);
-        }
-      return;
-    }
-
-  self = BS_TOUCHSCREEN_BACKGROUND_ROW (user_data);
-
-  file_info = g_file_query_info (file,
-                                 G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
-                                 G_FILE_QUERY_INFO_NONE,
-                                 NULL,
-                                 &error);
-
-  if (file_info)
-    {
-      const char * const media_stream_content_types[] = {
-        "image/gif",
-        "video/*",
-      };
-
-      g_autoptr (GtkMediaStream) media_stream = NULL;
-      const char *content_type;
-
-      content_type = g_file_info_get_content_type (file_info);
-      for (size_t i = 0; i < G_N_ELEMENTS (media_stream_content_types); i++)
-        {
-          if (!g_content_type_is_mime_type (content_type, media_stream_content_types[i]))
-            continue;
-
-          media_stream = gtk_media_file_new_for_file (file);
-          gtk_media_stream_set_volume (media_stream, 0.0);
-          gtk_media_stream_set_muted (media_stream, TRUE);
-          gtk_media_stream_set_loop (media_stream, TRUE);
-          gtk_media_stream_play (media_stream);
-
-          paintable = GDK_PAINTABLE (g_steal_pointer (&media_stream));
-          break;
-        }
-    }
-  else
-    {
-      g_warning ("Error querying file info: %s", error->message);
-    }
-
-  if (!paintable)
-    {
-      g_autoptr (GdkTexture) texture = NULL;
-
-      texture = gdk_texture_new_from_file (file, &error);
-      if (!texture)
-        return;
-
-      paintable = GDK_PAINTABLE (g_steal_pointer (&texture));
-    }
-
-  content = bs_touchscreen_get_content (self->touchscreen);
-  bs_touchscreen_content_set_background (content, paintable);
-}
-
-static void
 on_select_background_action_activated_cb (GSimpleAction *action,
                                           GVariant      *parameter,
                                           gpointer       user_data)
 {
   BsTouchscreenBackgroundRow *self = (BsTouchscreenBackgroundRow *) user_data;
-  g_autoptr (GtkFileDialog) dialog = NULL;
-  g_autoptr (GtkFileFilter) filter = NULL;
-  g_autoptr (GListStore) filters = NULL;
+  GtkWidget *dialog;
 
-  g_assert (BS_IS_TOUCHSCREEN_BACKGROUND_ROW (self));
-
-  filter = gtk_file_filter_new ();
-  gtk_file_filter_set_name (filter, _("All supported formats"));
-  gtk_file_filter_add_mime_type (filter, "image/*");
-  gtk_file_filter_add_mime_type (filter, "video/*");
-
-  filters = g_list_store_new (GTK_TYPE_FILE_FILTER);
-  g_list_store_append (filters, filter);
-
-  dialog = gtk_file_dialog_new ();
-  gtk_file_dialog_set_modal (dialog, TRUE);
-  gtk_file_dialog_set_title (dialog, _("Select media file"));
-  gtk_file_dialog_set_accept_label (dialog, _("Open"));
-  gtk_file_dialog_set_filters (dialog, G_LIST_MODEL (filters));
-
-  gtk_file_dialog_open (dialog,
-                        GTK_WINDOW (gtk_widget_get_root (GTK_WIDGET (self))),
-                        NULL,
-                        on_file_dialog_file_opened_cb,
-                        self);
+  dialog = bs_touchscreen_background_dialog_new (self->touchscreen);
+  adw_dialog_present (ADW_DIALOG (dialog), GTK_WIDGET (self));
 }
 
 
