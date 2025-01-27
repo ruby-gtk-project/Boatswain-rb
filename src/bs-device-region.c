@@ -62,6 +62,24 @@ bs_device_region_real_get_renderer (BsDeviceRegion *self)
   return NULL;
 }
 
+static JsonNode *
+bs_device_region_real_serialize (BsDeviceRegion *self)
+{
+  g_autoptr (JsonBuilder) builder = NULL;
+
+  builder = json_builder_new ();
+  json_builder_begin_object (builder);
+  json_builder_end_object (builder);
+
+  return json_builder_get_root (builder);
+}
+
+static void
+bs_device_region_real_deserialize (BsDeviceRegion *self,
+                                   JsonNode       *node)
+{
+}
+
 
 /*
  * GObject overrides
@@ -168,6 +186,8 @@ bs_device_region_class_init (BsDeviceRegionClass *klass)
   object_class->set_property = bs_device_region_set_property;
 
   klass->get_renderer = bs_device_region_real_get_renderer;
+  klass->serialize = bs_device_region_real_serialize;
+  klass->deserialize = bs_device_region_real_deserialize;
 
   properties[PROP_COLUMN] = g_param_spec_uint ("column", NULL, NULL,
                                                0, G_MAXUINT, 0,
@@ -276,4 +296,21 @@ bs_device_region_get_renderer (BsDeviceRegion *self)
   g_return_val_if_fail (BS_IS_DEVICE_REGION (self), NULL);
 
   return BS_DEVICE_REGION_GET_CLASS (self)->get_renderer (self);
+}
+
+JsonNode *
+bs_device_region_serialize (BsDeviceRegion *self)
+{
+  g_return_val_if_fail (BS_IS_DEVICE_REGION (self), NULL);
+
+  return BS_DEVICE_REGION_GET_CLASS (self)->serialize (self);
+}
+
+void
+bs_device_region_deserialize (BsDeviceRegion *self,
+                              JsonNode       *node)
+{
+  g_return_if_fail (BS_IS_DEVICE_REGION (self));
+
+  return BS_DEVICE_REGION_GET_CLASS (self)->deserialize (self, node);
 }

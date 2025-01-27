@@ -24,6 +24,7 @@
 #include "bs-types.h"
 
 #include <glib-object.h>
+#include <json-glib/json-glib.h>
 
 G_BEGIN_DECLS
 
@@ -35,6 +36,10 @@ struct _BsDeviceRegionClass
   GObjectClass parent_class;
 
   BsRenderer * (*get_renderer) (BsDeviceRegion *self);
+
+  JsonNode *  (*serialize) (BsDeviceRegion *self);
+  void  (*deserialize) (BsDeviceRegion *self,
+                        JsonNode       *node);
 };
 
 const char * bs_device_region_get_id (BsDeviceRegion *self);
@@ -48,5 +53,9 @@ unsigned int bs_device_region_get_row_span (BsDeviceRegion *self);
 BsStreamDeck * bs_device_region_get_stream_deck (BsDeviceRegion *self);
 
 BsRenderer * bs_device_region_get_renderer (BsDeviceRegion *self);
+
+JsonNode *  bs_device_region_serialize (BsDeviceRegion *self);
+void  bs_device_region_deserialize (BsDeviceRegion *self,
+                                    JsonNode       *node);
 
 G_END_DECLS
