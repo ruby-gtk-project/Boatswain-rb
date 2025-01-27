@@ -32,7 +32,7 @@
 #include "bs-dial-grid.h"
 #include "bs-events-private.h"
 #include "bs-icon.h"
-#include "bs-page.h"
+#include "bs-page-private.h"
 #include "bs-profile.h"
 #include "bs-renderer.h"
 #include "bs-touchscreen-private.h"
@@ -213,11 +213,15 @@ update_page_items (BsStreamDeck *self,
 
   if (self->model_info->features & BS_STREAM_DECK_FEATURE_TOUCHSCREEN)
     {
+      g_autoptr (JsonNode) region_data = NULL;
       BsTouchscreen *touchscreen;
       GListModel *touchscreen_slots;
 
       touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
       touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+
+      region_data = bs_device_region_serialize (BS_DEVICE_REGION (touchscreen));
+      bs_page_set_region_data (page, "touchscreen", region_data);
 
       for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
         {
@@ -464,9 +468,13 @@ load_active_page (BsStreamDeck *self)
     {
       BsTouchscreen *touchscreen;
       GListModel *touchscreen_slots;
+      JsonNode *region_data;
 
       touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
       touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+
+      region_data = bs_page_get_region_data (active_page, "touchscreen");
+      bs_device_region_deserialize (BS_DEVICE_REGION (touchscreen), region_data);
 
       for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
         {
