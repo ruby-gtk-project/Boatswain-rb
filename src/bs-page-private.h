@@ -27,4 +27,11 @@ G_BEGIN_DECLS
 
 BsPage * bs_page_new_root (JsonNode *node);
 
+JsonNode * bs_page_get_region_data (BsPage     *self,
+                                    const char *region_id);
+
+void bs_page_set_region_data (BsPage     *self,
+                              const char *region_id,
+                              JsonNode   *region_data);
+
 G_END_DECLS

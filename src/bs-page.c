@@ -84,6 +84,8 @@ page_region_new (const char *id)
   page_region = g_new0 (PageRegion, 1);
   page_region->id = g_strdup (id);
   page_region->items = g_ptr_array_new_with_free_func (g_object_unref);
+  page_region->region_data = json_node_new (JSON_NODE_OBJECT);
+  json_node_take_object (page_region->region_data, json_object_new ());
 
   return g_steal_pointer (&page_region);
 }
@@ -108,11 +110,9 @@ get_item (BsPage       *self,
   return g_ptr_array_index (page_region->items, position);
 }
 
-static inline void
-add_item (BsPage       *self,
-          BsPageItem   *item,
-          const char   *region_id,
-          unsigned int  position)
+static inline PageRegion *
+ensure_page_region (BsPage     *self,
+                    const char *region_id)
 {
   PageRegion *page_region;
 
@@ -125,6 +125,22 @@ add_item (BsPage       *self,
       page_region = page_region_new (region_id);
       g_hash_table_insert (self->page_regions, g_strdup (region_id), page_region);
     }
+
+  return page_region;
+}
+
+static inline void
+add_item (BsPage       *self,
+          BsPageItem   *item,
+          const char   *region_id,
+          unsigned int  position)
+{
+  PageRegion *page_region;
+
+  g_assert (region_id != NULL);
+
+  page_region = ensure_page_region (self, region_id);
+  g_assert (page_region != NULL);
 
   g_ptr_array_insert (page_region->items, position, item);
 }
@@ -518,9 +534,7 @@ bs_page_to_json (BsPage *self)
       json_builder_add_string_value (builder, region_id);
 
       json_builder_set_member_name (builder, "region-data");
-      json_builder_begin_object (builder);
-      // TODO
-      json_builder_end_object (builder);
+      json_builder_add_value (builder, json_node_ref (page_region->region_data));
 
       json_builder_set_member_name (builder, "items");
       json_builder_begin_array (builder);
@@ -666,4 +680,42 @@ bs_page_realize (BsPage      *self,
                                out_custom_icon,
                                out_action,
                                error);
+}
+
+JsonNode *
+bs_page_get_region_data (BsPage     *self,
+                         const char *region_id)
+{
+  PageRegion *page_region;
+
+  g_assert (BS_IS_PAGE (self));
+  g_assert (region_id != NULL);
+
+  page_region = ensure_page_region (self, region_id);
+  g_assert (page_region != NULL);
+  g_assert (JSON_NODE_HOLDS_OBJECT (page_region->region_data));
+
+  return page_region->region_data;
+}
+
+void
+bs_page_set_region_data (BsPage     *self,
+                         const char *region_id,
+                         JsonNode   *region_data)
+{
+  g_autoptr (JsonNode) old_data = NULL;
+  PageRegion *page_region;
+
+  g_assert (BS_IS_PAGE (self));
+  g_assert (region_id != NULL);
+  g_assert (JSON_NODE_HOLDS_OBJECT (region_data));
+
+  page_region = ensure_page_region (self, region_id);
+  g_assert (page_region != NULL);
+  g_assert (JSON_NODE_HOLDS_OBJECT (page_region->region_data));
+
+  old_data = json_node_ref (page_region->region_data);
+
+  g_clear_pointer (&page_region->region_data, json_node_unref);
+  page_region->region_data = json_node_ref (region_data);
 }
