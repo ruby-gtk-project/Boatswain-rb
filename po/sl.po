@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-11-06 22:36+0000\n"
-"PO-Revision-Date: 2024-11-07 08:44+0100\n"
+"POT-Creation-Date: 2025-01-27 21:39+0000\n"
+"PO-Revision-Date: 2025-01-27 23:15+0100\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups."
 "com>\n"
@@ -106,15 +106,15 @@ msgstr ""
 "Za zaznavanje in izvajanje dejanj naprave Stream Deck mora program delovati "
 "v ozadju."
 
-#: src/bs-button-editor.c:395
+#: src/bs-button-editor.c:333
 msgid "All supported formats"
 msgstr "Vse podprte vrste datotek"
 
-#: src/bs-button-editor.c:404
+#: src/bs-button-editor.c:342
 msgid "Select icon"
 msgstr "Izbor ikone"
 
-#: src/bs-button-editor.c:405
+#: src/bs-button-editor.c:343
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Odpri"
@@ -131,20 +131,20 @@ msgstr "Ime"
 msgid "Background Color"
 msgstr "Barva ozadja"
 
-#: src/bs-button-editor.ui:232
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
 msgid "Select Action"
 msgstr "Izbor dejanja"
 
-#: src/bs-button-editor.ui:249
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
 msgid "Remove Action"
 msgstr "Odstrani dejanje"
 
-#: src/bs-button-editor.ui:271
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Dejanja"
 
-#: src/bs-device-editor.ui:63
+#: src/bs-device-editor.ui:65
 msgid "Select a button"
 msgstr "Izbor gumba"
 
@@ -168,21 +168,21 @@ msgstr "Premakni navzdol"
 msgid "Delete"
 msgstr "Izbriši"
 
-#: src/bs-stream-deck.c:340
+#: src/bs-stream-deck.c:422
 msgid "Default"
 msgstr "Privzeto"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1166 src/bs-stream-deck.c:1191
+#: src/bs-stream-deck.c:1304 src/bs-stream-deck.c:1329
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1216 src/bs-stream-deck.c:1241
+#: src/bs-stream-deck.c:1354 src/bs-stream-deck.c:1379
 #: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -191,75 +191,109 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1266 src/bs-stream-deck.c:1291
+#: src/bs-stream-deck.c:1404 src/bs-stream-deck.c:1429
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1316
+#: src/bs-stream-deck.c:1454
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1341
+#: src/bs-stream-deck.c:1479
 msgid "Stream Deck Pedal"
 msgstr "Pedal Stream Deck"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1366
+#: src/bs-stream-deck.c:1504
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1407
+#: src/bs-stream-deck.c:1545
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1476
+#: src/bs-stream-deck.c:1614
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1498
+#: src/bs-stream-deck.c:1636
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: src/bs-window.ui:113
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:66
+#: src/bs-touchscreen-background-dialog.ui:24
+msgid "Adwaita"
+msgstr "Adwaita"
+
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Glass"
+msgstr "Steklo"
+
+#: src/bs-touchscreen-background-dialog.c:68
+msgid "Oh Sheet!"
+msgstr "Oh, joj!"
+
+#: src/bs-touchscreen-background-dialog.c:69
+msgid "Pills"
+msgstr "Tablete"
+
+#: src/bs-touchscreen-background-dialog.c:70
+msgid "Swoosh"
+msgstr "Šviz"
+
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Lastnosti zaslona na dotik"
+
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Zaslon na dotik"
+
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Dejanje"
+
+#: src/bs-window.ui:114
 msgid "New profile…"
 msgstr "Nov profil …"
 
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:55
+#: src/bs-window.ui:139 src/plugins/default/default-action-factory.c:55
 msgid "Brightness"
 msgstr "Svetlost"
 
-#: src/bs-window.ui:174
+#: src/bs-window.ui:175
 msgid "Firmware"
 msgstr "Strojna programska oprema"
 
-#: src/bs-window.ui:232
+#: src/bs-window.ui:236
 msgid "No Stream Deck Found"
 msgstr "Ni zaznane nobene naprave Stream Deck"
 
-#: src/bs-window.ui:233
+#: src/bs-window.ui:237
 msgid "Plug in a Stream Deck device to use it."
 msgstr "Priklopite napravo Stream Deck za uporabo."
 
-#: src/bs-window.ui:256
+#: src/bs-window.ui:260
 msgid "_Keyboard Shortcuts"
 msgstr "_Tipkovne bližnjice"
 
-#: src/bs-window.ui:260
+#: src/bs-window.ui:264
 msgid "_About Boatswain"
 msgstr "_O programu"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:268
 msgid "_Quit"
 msgstr "_Končaj"
 
@@ -341,7 +375,7 @@ msgid "Profile"
 msgstr "Profil"
 
 #: src/plugins/desktop/desktop-action-factory.c:41
-#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:274
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Tipkovna bližnjica"
 
@@ -386,33 +420,33 @@ msgid "score.txt"
 msgstr "rezultat.txt"
 
 #. Restore score
-#: src/plugins/gaming/score.js:338
+#: src/plugins/gaming/score.js:352
 msgid "Restore Score"
 msgstr "Obnovi rezultat"
 
-#: src/plugins/gaming/score.js:357
+#: src/plugins/gaming/score.js:371
 msgid "Text Color"
 msgstr "Barva besedila"
 
-#: src/plugins/gaming/score.js:370
+#: src/plugins/gaming/score.js:384
 msgid "Save to File"
 msgstr "Shrani v datoteko"
 
-#: src/plugins/gaming/score.js:371
+#: src/plugins/gaming/score.js:385
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr ""
 "Shranite rezultat v besedilno datoteko. Drugi programi, kot je OBS Studio, "
 "lahko berejo iz nje."
 
-#: src/plugins/gaming/score.js:380
+#: src/plugins/gaming/score.js:394
 #: src/plugins/launcher/launcher-open-file-action.c:214
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
 msgstr "Datoteka"
 
-#: src/plugins/gaming/score.js:399
+#: src/plugins/gaming/score.js:413
 msgid "Text File (.txt)"
 msgstr "Besedilna datoteka (.txt)"
 
