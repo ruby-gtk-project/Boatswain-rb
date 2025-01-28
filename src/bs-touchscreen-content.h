@@ -34,9 +34,9 @@ BsTouchscreenContent * bs_touchscreen_content_new (GListModel *slots,
                                                    uint32_t    width,
                                                    uint32_t    height);
 
-GdkPaintable * bs_touchscreen_content_get_background (BsTouchscreenContent *self);
-void bs_touchscreen_content_set_background (BsTouchscreenContent *self,
-                                            GdkPaintable         *paintable);
+GdkPaintable *
+bs_touchscreen_content_get_background_paintable (BsTouchscreenContent *self);
+
 void bs_touchscreen_content_set_default_background (BsTouchscreenContent *self);
 void bs_touchscreen_content_set_background_from_file (BsTouchscreenContent *self,
                                                       GFile                *file);
