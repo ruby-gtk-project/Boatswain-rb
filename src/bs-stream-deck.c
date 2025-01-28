@@ -2209,6 +2209,9 @@ bs_stream_deck_load_profile (BsStreamDeck *self,
   if (self->active_profile == profile)
     BS_RETURN ();
 
+  if (g_queue_get_length (self->active_pages) > 0)
+    update_page_items (self, g_queue_peek_head (self->active_pages));
+
   g_queue_clear_full (self->active_pages, g_object_unref);
 
   self->active_profile = profile;
