@@ -58,6 +58,29 @@ static GParamSpec *properties [N_PROPS];
 
 
 /*
+ * Callbacks
+ */
+
+static void
+on_contents_invalidated_cb (GdkPaintable  *paintable,
+                            BsTouchscreen *self)
+{
+  g_autoptr (GError) error = NULL;
+  BsStreamDeck *stream_deck;
+
+  stream_deck = bs_device_region_get_stream_deck (BS_DEVICE_REGION (self));
+
+  if (!bs_stream_deck_is_initialized (stream_deck))
+    return;
+
+  bs_stream_deck_upload_touchscreen (stream_deck, self, &error);
+
+  if (error)
+    g_warning ("Error updating Stream Deck touchscreen: %s", error->message);
+}
+
+
+/*
  * BsDeviceRegion overrides
  */
 
@@ -195,24 +218,6 @@ bs_touchscreen_init (BsTouchscreen *self)
   self->slots = g_list_store_new (BS_TYPE_TOUCHSCREEN_SLOT);
   self->width = 1;
   self->height = 1;
-}
-
-static void
-on_contents_invalidated_cb (GdkPaintable  *paintable,
-                            BsTouchscreen *self)
-{
-  g_autoptr (GError) error = NULL;
-  BsStreamDeck *stream_deck;
-
-  stream_deck = bs_device_region_get_stream_deck (BS_DEVICE_REGION (self));
-
-  if (!bs_stream_deck_is_initialized (stream_deck))
-    return;
-
-  bs_stream_deck_upload_touchscreen (stream_deck, self, &error);
-
-  if (error)
-    g_warning ("Error updating Stream Deck touchscreen: %s", error->message);
 }
 
 BsTouchscreen *
