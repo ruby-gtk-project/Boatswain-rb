@@ -517,17 +517,6 @@ bs_touchscreen_content_deserialize (BsTouchscreenContent *self,
 
   g_assert (JSON_NODE_HOLDS_OBJECT (node));
 
-  {
-    g_autoptr (JsonGenerator) generator = json_generator_new ();
-    g_autofree char *data = NULL;
-
-    json_generator_set_pretty (generator, TRUE);
-    json_generator_set_root (generator, node);
-    data = json_generator_to_data (generator, NULL);
-
-    g_message ("Deserializing: %s", data);
-  }
-
   object = json_node_get_object (node);
 
   background_type = json_object_get_string_member_with_default (object, "background-type", "default");
