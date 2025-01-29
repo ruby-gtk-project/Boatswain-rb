@@ -40,13 +40,11 @@ BsDeviceRegion * bs_stream_deck_get_region (BsStreamDeck *self,
 
 gboolean bs_stream_deck_is_initialized (BsStreamDeck *self);
 
-gboolean bs_stream_deck_upload_button (BsStreamDeck  *self,
-                                       BsButton      *button,
-                                       GError       **error);
+void bs_stream_deck_upload_button (BsStreamDeck *self,
+                                   BsButton     *button);
 
-gboolean bs_stream_deck_upload_touchscreen (BsStreamDeck   *self,
-                                            BsTouchscreen  *touchscreen,
-                                            GError        **error);
+void bs_stream_deck_upload_touchscreen (BsStreamDeck  *self,
+                                        BsTouchscreen *touchscreen);
 
 void bs_stream_deck_load (BsStreamDeck *self);
 

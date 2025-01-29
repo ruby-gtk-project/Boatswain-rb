@@ -28,6 +28,7 @@
 #include "bs-button-private.h"
 #include "bs-debug.h"
 #include "bs-device-region.h"
+#include "bs-device-update.h"
 #include "bs-dial-private.h"
 #include "bs-dial-grid.h"
 #include "bs-events-private.h"
@@ -127,6 +128,8 @@ struct _BsStreamDeck
   GQueue *active_pages;
   guint save_timeout_id;
 
+  BsDeviceUpdate *update;
+
   const StreamDeckModelInfo *model_info;
   GUsbDevice *device;
   hid_device *handle;
@@ -168,6 +171,15 @@ static GParamSpec *properties[N_PROPS];
 /*
  * Auxiliary methods
  */
+
+static inline void
+ensure_device_update (BsStreamDeck *self)
+{
+  if (!self->update)
+    self->update = bs_device_update_new ();
+
+  g_assert (BS_IS_DEVICE_UPDATE (self->update));
+}
 
 static char *
 get_profile_path (BsStreamDeck *self)
@@ -1659,6 +1671,75 @@ static const StreamDeckModelInfo fake_models_vtable[] = {
  * GSource
  */
 
+static void
+apply_touchscreen_update (BsStreamDeck        *self,
+                          BsTouchscreenUpdate *touchscreen_update)
+{
+  g_autoptr (GdkTexture) texture = NULL;
+  BsTouchscreenContent *content;
+  g_autoptr (GError) error = NULL;
+  BsTouchscreen *touchscreen;
+  BsRenderer *renderer;
+
+  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (self->model_info->set_button_texture != NULL);
+
+  touchscreen = touchscreen_update->touchscreen;
+  content = bs_touchscreen_get_content (touchscreen);
+  renderer = bs_device_region_get_renderer (BS_DEVICE_REGION (touchscreen));
+  texture = bs_renderer_compose_touchscreen_content (renderer, content, &error);
+
+  if (error)
+    {
+      g_warning ("Error compositing touchscreen texture: %s", error->message);
+      return;
+    }
+
+  self->model_info->set_touchscreen_texture (self, touchscreen, texture, &error);
+
+  if (error)
+    {
+      g_warning ("Error uploading touchscreen texture: %s", error->message);
+      return;
+    }
+}
+
+static void
+apply_button_update (BsStreamDeck   *self,
+                     BsButtonUpdate *button_update)
+{
+  g_autoptr (GdkTexture) texture = NULL;
+  g_autoptr (GError) error = NULL;
+  BsDeviceRegion *region;
+  BsRenderer *renderer;
+  BsButton *button;
+  BsIcon *icon;
+
+  BS_TRACE_MSG ("Applying button update %p", button_update);
+
+  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (self->model_info->set_button_texture != NULL);
+
+  button = button_update->button;
+  icon = bs_button_get_icon (button);
+  region = bs_button_get_region (button);
+  renderer = bs_device_region_get_renderer (region);
+  texture = bs_renderer_compose_icon (renderer, icon, &error);
+
+  if (error)
+    {
+      g_warning ("Error compositing button texture: %s", error->message);
+      return;
+    }
+
+  self->model_info->set_button_texture (self, button, texture, &error);
+  if (error)
+    {
+      g_warning ("Error uploading button texture: %s", error->message);
+      return;
+    }
+}
+
 static gboolean
 stream_deck_source_dispatch (GSource     *source,
                              GSourceFunc  callback,
@@ -1668,6 +1749,23 @@ stream_deck_source_dispatch (GSource     *source,
   BsStreamDeck *self = stream_deck_source->stream_deck;
   gint64 current_time;
   gint64 expiration;
+
+  if (self->update)
+    {
+      g_autoptr (BsDeviceUpdate) update = g_steal_pointer (&self->update);
+      BsTouchscreenUpdate **touchscreen_updates;
+      BsButtonUpdate **button_updates;
+
+      bs_device_update_seal (update);
+
+      button_updates = bs_device_update_get_button_updates (update);
+      for (size_t i = 0; button_updates && button_updates[i]; i++)
+        apply_button_update (self, button_updates[i]);
+
+      touchscreen_updates = bs_device_update_get_touchscreen_updates (update);
+      for (size_t i = 0; touchscreen_updates && touchscreen_updates[i]; i++)
+        apply_touchscreen_update (self, touchscreen_updates[i]);
+    }
 
   self->model_info->read_state (self);
 
@@ -1864,6 +1962,7 @@ bs_stream_deck_finalize (GObject *object)
   g_clear_object (&self->regions);
   g_clear_object (&self->device);
   g_clear_object (&self->profiles);
+  g_clear_object (&self->update);
 
   G_OBJECT_CLASS (bs_stream_deck_parent_class)->finalize (object);
 
@@ -2135,50 +2234,36 @@ bs_stream_deck_is_initialized (BsStreamDeck *self)
   return self->initialized;
 }
 
-gboolean
-bs_stream_deck_upload_button (BsStreamDeck  *self,
-                              BsButton      *button,
-                              GError       **error)
+void
+bs_stream_deck_upload_button (BsStreamDeck *self,
+                              BsButton     *button)
 {
-  g_autoptr (GdkTexture) texture = NULL;
-  BsDeviceRegion *region;
-  BsRenderer *renderer;
-  BsIcon *icon;
+  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (self->model_info->set_button_texture != NULL);
 
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), FALSE);
-  g_return_val_if_fail (self->model_info->set_button_texture != NULL, FALSE);
+  ensure_device_update (self);
 
-  icon = bs_button_get_icon (button);
-  region = bs_button_get_region (button);
-  renderer = bs_device_region_get_renderer (region);
-  texture = bs_renderer_compose_icon (renderer, icon, error);
-
-  if (!texture)
-    return FALSE;
-
-  return self->model_info->set_button_texture (self, button, texture, error);
+  bs_device_update_add_button (self->update, button);
 }
 
-gboolean
+void
 bs_stream_deck_upload_touchscreen (BsStreamDeck   *self,
-                                   BsTouchscreen  *touchscreen,
-                                   GError        **error)
+                                   BsTouchscreen  *touchscreen)
 {
-  g_autoptr (GdkTexture) texture = NULL;
-  BsTouchscreenContent *content;
-  BsRenderer *renderer;
+  graphene_rect_t region;
 
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), FALSE);
-  g_return_val_if_fail (self->model_info->set_button_texture != NULL, FALSE);
+  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (self->model_info->set_button_texture != NULL);
 
-  content = bs_touchscreen_get_content (touchscreen);
-  renderer = bs_device_region_get_renderer (BS_DEVICE_REGION (touchscreen));
-  texture = bs_renderer_compose_touchscreen_content (renderer, content, error);
+  ensure_device_update (self);
 
-  if (!texture)
-    return FALSE;
+  // TODO: fixme
+  graphene_rect_init (&region,
+                      0.f, 0.f,
+                      bs_touchscreen_get_width (touchscreen),
+                      bs_touchscreen_get_height (touchscreen));
 
-  return self->model_info->set_touchscreen_texture (self, touchscreen, texture, error);
+  bs_device_update_add_touchscreen_region (self->update, touchscreen, &region);
 }
 
 GListModel *

@@ -112,15 +112,10 @@ update_relative_icon (BsButton *self)
 static void
 upload_icon (BsButton *self)
 {
-  g_autoptr (GError) error = NULL;
-
   if (!bs_stream_deck_is_initialized (self->stream_deck))
     return;
 
-  bs_stream_deck_upload_button (self->stream_deck, self, &error);
-
-  if (error)
-    g_warning ("Error updating Stream Deck button icon: %s", error->message);
+  bs_stream_deck_upload_button (self->stream_deck, self);
 }
 
 static void
