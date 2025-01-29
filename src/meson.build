@@ -46,6 +46,7 @@ boatswain_deps = [
   dependency('libadwaita-1', version: '>= 1.6.alpha'),
   dependency('libpeas-2'),
   dependency('libportal-gtk4'),
+  dependency('graphene-gobject-1.0'),
   dependency('gusb', version: '>= 0.3.0'),
   dependency('gtk4', version: '>= 4.12'),
   dependency('hidapi-libusb'),

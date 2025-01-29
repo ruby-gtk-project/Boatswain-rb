@@ -62,8 +62,9 @@ static GParamSpec *properties [N_PROPS];
  */
 
 static void
-on_contents_invalidated_cb (GdkPaintable  *paintable,
-                            BsTouchscreen *self)
+on_region_invalidated_cb (BsTouchscreenContent  *content,
+                          const graphene_rect_t *region,
+                          BsTouchscreen         *self)
 {
   BsStreamDeck *stream_deck;
 
@@ -72,7 +73,7 @@ on_contents_invalidated_cb (GdkPaintable  *paintable,
   if (!bs_stream_deck_is_initialized (stream_deck))
     return;
 
-  bs_stream_deck_upload_touchscreen (stream_deck, self);
+  bs_stream_deck_upload_touchscreen (stream_deck, self, region);
 }
 
 
@@ -251,7 +252,7 @@ bs_touchscreen_new (const char        *id,
     }
 
   self->content = bs_touchscreen_content_new (G_LIST_MODEL (self->slots), self->width, self->height);
-  g_signal_connect (self->content, "invalidate-contents", G_CALLBACK (on_contents_invalidated_cb), self);
+  g_signal_connect (self->content, "invalidate-region", G_CALLBACK (on_region_invalidated_cb), self);
 
   return g_steal_pointer (&self);
 }

@@ -43,8 +43,9 @@ gboolean bs_stream_deck_is_initialized (BsStreamDeck *self);
 void bs_stream_deck_upload_button (BsStreamDeck *self,
                                    BsButton     *button);
 
-void bs_stream_deck_upload_touchscreen (BsStreamDeck  *self,
-                                        BsTouchscreen *touchscreen);
+void bs_stream_deck_upload_touchscreen (BsStreamDeck          *self,
+                                        BsTouchscreen         *touchscreen,
+                                        const graphene_rect_t *region);
 
 void bs_stream_deck_load (BsStreamDeck *self);
 

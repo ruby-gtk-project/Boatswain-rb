@@ -2247,23 +2247,16 @@ bs_stream_deck_upload_button (BsStreamDeck *self,
 }
 
 void
-bs_stream_deck_upload_touchscreen (BsStreamDeck   *self,
-                                   BsTouchscreen  *touchscreen)
+bs_stream_deck_upload_touchscreen (BsStreamDeck          *self,
+                                   BsTouchscreen         *touchscreen,
+                                   const graphene_rect_t *region)
 {
-  graphene_rect_t region;
-
   g_return_if_fail (BS_IS_STREAM_DECK (self));
   g_return_if_fail (self->model_info->set_button_texture != NULL);
 
   ensure_device_update (self);
 
-  // TODO: fixme
-  graphene_rect_init (&region,
-                      0.f, 0.f,
-                      bs_touchscreen_get_width (touchscreen),
-                      bs_touchscreen_get_height (touchscreen));
-
-  bs_device_update_add_touchscreen_region (self->update, touchscreen, &region);
+  bs_device_update_add_touchscreen_region (self->update, touchscreen, region);
 }
 
 GListModel *

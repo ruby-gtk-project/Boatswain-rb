@@ -25,6 +25,7 @@
 #include "bs-action.h"
 #include "bs-touchscreen-slot-private.h"
 
+#include <graphene-gobject.h>
 #include <gtk/gtk.h>
 
 typedef enum
@@ -53,8 +54,8 @@ struct _BsTouchscreenContent
   uint32_t height;
 };
 
-static void on_paintable_invalidate_contents_cb (GdkPaintable         *paintable,
-                                                 BsTouchscreenContent *self);
+static void on_background_invalidate_contents_cb (GdkPaintable         *paintable,
+                                                  BsTouchscreenContent *self);
 
 static void gdk_paintable_interface_init (GdkPaintableInterface *iface);
 
@@ -70,6 +71,13 @@ enum
   N_PROPS,
 };
 
+enum
+{
+  INVALIDATE_REGION,
+  N_SIGNALS,
+};
+
+static guint signals[N_SIGNALS];
 static GParamSpec *properties [N_PROPS];
 
 
@@ -81,6 +89,8 @@ static void
 set_background_paintable (BsTouchscreenContent *self,
                           GdkPaintable         *paintable)
 {
+  graphene_rect_t rect;
+
   g_return_if_fail (BS_IS_TOUCHSCREEN_CONTENT (self));
   g_return_if_fail (!paintable || GDK_IS_PAINTABLE (paintable));
 
@@ -96,9 +106,12 @@ set_background_paintable (BsTouchscreenContent *self,
       self->background.content_invalidated_id =
         g_signal_connect (paintable,
                           "invalidate-contents",
-                          G_CALLBACK (on_paintable_invalidate_contents_cb),
+                          G_CALLBACK (on_background_invalidate_contents_cb),
                           self);
     }
+
+  rect = GRAPHENE_RECT_INIT (0.f, 0.f, self->width, self->height);
+  g_signal_emit (self, signals[INVALIDATE_REGION], 0, &rect);
 
   gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
 
@@ -112,9 +125,48 @@ set_background_paintable (BsTouchscreenContent *self,
  */
 
 static void
-on_paintable_invalidate_contents_cb (GdkPaintable         *paintable,
-                                     BsTouchscreenContent *self)
+on_slot_invalidate_contents_cb (GdkPaintable         *paintable,
+                                BsTouchscreenContent *self)
 {
+  graphene_rect_t rect;
+  unsigned int position;
+  double slot_width;
+  size_t n_slots;
+
+  g_assert (BS_IS_TOUCHSCREEN_CONTENT (self));
+  g_assert (BS_IS_TOUCHSCREEN_SLOT (paintable));
+
+  position = GTK_INVALID_LIST_POSITION;
+  n_slots = g_list_model_get_n_items (self->slots);
+  for (size_t i = 0; i < n_slots; i++)
+    {
+      g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (self->slots, i);
+
+      if (slot == BS_TOUCHSCREEN_SLOT (paintable))
+        {
+          position = i;
+          break;
+        }
+    }
+
+  g_assert (position != GTK_INVALID_LIST_POSITION);
+
+  slot_width = self->width / n_slots;
+
+  graphene_rect_init (&rect, position * slot_width, 0.f, slot_width, self->height);
+  g_signal_emit (self, signals[INVALIDATE_REGION], 0, &rect);
+
+  gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
+}
+
+static void
+on_background_invalidate_contents_cb (GdkPaintable         *paintable,
+                                      BsTouchscreenContent *self)
+{
+  graphene_rect_t rect = GRAPHENE_RECT_INIT (0.f, 0.f, self->width, self->height);
+
+  g_signal_emit (self, signals[INVALIDATE_REGION], 0, &rect);
+
   gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
 }
 
@@ -282,6 +334,14 @@ bs_touchscreen_content_class_init (BsTouchscreenContentClass *klass)
                                                G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  signals[INVALIDATE_REGION] = g_signal_new ("invalidate-region",
+                                             BS_TYPE_TOUCHSCREEN_CONTENT,
+                                             G_SIGNAL_RUN_LAST,
+                                             0, NULL, NULL, NULL,
+                                             G_TYPE_NONE,
+                                             1,
+                                             GRAPHENE_TYPE_RECT);
 }
 
 static void
@@ -313,7 +373,7 @@ bs_touchscreen_content_new (GListModel *slots,
   for (size_t i = 0; i < n_slots; i++)
     {
       g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (self->slots, i);
-      g_signal_connect_object (slot, "invalidate-contents", G_CALLBACK (on_paintable_invalidate_contents_cb), self, 0);
+      g_signal_connect_object (slot, "invalidate-contents", G_CALLBACK (on_slot_invalidate_contents_cb), self, 0);
     }
 
   return g_steal_pointer (&self);
