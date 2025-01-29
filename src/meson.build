@@ -16,6 +16,7 @@ boatswain_sources = [
   'bs-device-editor.c',
   'bs-device-manager.c',
   'bs-device-region.c',
+  'bs-device-update.c',
   'bs-dial.c',
   'bs-dial-grid.c',
   'bs-dial-widget.c',
