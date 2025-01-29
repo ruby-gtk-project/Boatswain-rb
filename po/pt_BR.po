@@ -5,24 +5,24 @@
 # Enrico Nicoletto <hiko@duck.com>, 2022.
 # Leônidas Araújo <leorusvellt@hotmail.com>, 2023.
 # Alex Jr <alexalencarjr@outlook.com>, 2023.
-# Rafael Fontenelle <rafaelff@gnome.org>, 2022-2024.
 # Juliano de Souza Camargo <julianosc@pm.me>, 2024.
 # Filipe Motta <luizfilipemotta@gmail.com>, 2024.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2022-2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-11-25 22:02+0000\n"
-"PO-Revision-Date: 2024-12-04 20:57-0300\n"
-"Last-Translator: Filipe Motta <luizfilipemotta@gmail.com>\n"
-"Language-Team: Brazilian Portuguese\n"
+"POT-Creation-Date: 2025-01-27 21:39+0000\n"
+"PO-Revision-Date: 2025-01-29 16:36-0300\n"
+"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
+"Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Gtranslator 47.0\n"
+"X-Generator: Gtranslator 47.1\n"
 "X-DL-Lang: pt_BR\n"
 "X-DL-Module: boatswain\n"
 "X-DL-Branch: main\n"
@@ -110,15 +110,15 @@ msgstr ""
 "Boatswain precisa ser executado em segundo plano para detectar e executar "
 "ações do Stream Deck."
 
-#: src/bs-button-editor.c:327
+#: src/bs-button-editor.c:333
 msgid "All supported formats"
 msgstr "Todos os formatos suportados"
 
-#: src/bs-button-editor.c:336
+#: src/bs-button-editor.c:342
 msgid "Select icon"
 msgstr "Selecionar ícone"
 
-#: src/bs-button-editor.c:337
+#: src/bs-button-editor.c:343
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Abrir"
@@ -135,15 +135,15 @@ msgstr "Nome"
 msgid "Background Color"
 msgstr "Cor de fundo"
 
-#: src/bs-button-editor.ui:232
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
 msgid "Select Action"
 msgstr "Selecionar ação"
 
-#: src/bs-button-editor.ui:250
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
 msgid "Remove Action"
 msgstr "Remover ação"
 
-#: src/bs-button-editor.ui:272
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Ações"
@@ -172,21 +172,21 @@ msgstr "Mover para baixo"
 msgid "Delete"
 msgstr "Excluir"
 
-#: src/bs-stream-deck.c:339
+#: src/bs-stream-deck.c:422
 msgid "Default"
 msgstr "Padrão"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1184 src/bs-stream-deck.c:1209
+#: src/bs-stream-deck.c:1304 src/bs-stream-deck.c:1329
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1234 src/bs-stream-deck.c:1259
+#: src/bs-stream-deck.c:1354 src/bs-stream-deck.c:1379
 #: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -195,45 +195,79 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1284 src/bs-stream-deck.c:1309
+#: src/bs-stream-deck.c:1404 src/bs-stream-deck.c:1429
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1334
+#: src/bs-stream-deck.c:1454
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1359
+#: src/bs-stream-deck.c:1479
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1384
+#: src/bs-stream-deck.c:1504
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1425
+#: src/bs-stream-deck.c:1545
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1494
+#: src/bs-stream-deck.c:1614
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1516
+#: src/bs-stream-deck.c:1636
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
+
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:66
+#: src/bs-touchscreen-background-dialog.ui:24
+msgid "Adwaita"
+msgstr "Adwaita"
+
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Glass"
+msgstr "Glass"
+
+#: src/bs-touchscreen-background-dialog.c:68
+msgid "Oh Sheet!"
+msgstr "Oh Sheet!"
+
+#: src/bs-touchscreen-background-dialog.c:69
+msgid "Pills"
+msgstr "Pills"
+
+#: src/bs-touchscreen-background-dialog.c:70
+msgid "Swoosh"
+msgstr "Swoosh"
+
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Propriedades do touchscreen"
+
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Touchscreen"
+
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Ação"
 
 #: src/bs-window.ui:114
 msgid "New profile…"
