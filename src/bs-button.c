@@ -18,6 +18,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#define G_LOG_DOMAIN "Button"
+
 #include "bs-button-private.h"
 
 #include "bs-actionable-private.h"
