@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the boatswain package.
 #
 # Sabri Ünal <yakushabb@gmail.com>, 2023, 2024.
-# Emin Tufan Çetin <etcetin@gmail.com>, 2023, 2024.
+# Emin Tufan Çetin <etcetin@gmail.com>, 2023, 2024, 2025.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-11-06 22:36+0000\n"
-"PO-Revision-Date: 2024-11-09 20:43+0300\n"
-"Last-Translator: Sabri Ünal <yakushabb@gmail.com>\n"
+"POT-Creation-Date: 2025-01-27 21:39+0000\n"
+"PO-Revision-Date: 2025-01-30 08:00+0300\n"
+"Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
 "Language-Team: Turkish <takim@gnome.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -97,18 +97,18 @@ msgid ""
 "Boatswain needs to run in background to detect and execute Stream Deck "
 "actions."
 msgstr ""
-"Boatswain’in Stream Deck işlemlerini algılaması ve yürütmesi için arka "
+"Boatswain’in Stream Deck eylemlerini algılaması ve yürütmesi için arka "
 "planda çalışması gerekir."
 
-#: src/bs-button-editor.c:395
+#: src/bs-button-editor.c:333
 msgid "All supported formats"
 msgstr "Desteklenen tüm biçimler"
 
-#: src/bs-button-editor.c:404
+#: src/bs-button-editor.c:342
 msgid "Select icon"
 msgstr "Simge seç"
 
-#: src/bs-button-editor.c:405
+#: src/bs-button-editor.c:343
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Aç"
@@ -125,20 +125,20 @@ msgstr "Ad"
 msgid "Background Color"
 msgstr "Arka Plan Rengi"
 
-#: src/bs-button-editor.ui:232
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
 msgid "Select Action"
-msgstr "İşlem Seç"
+msgstr "Eylem Seç"
 
-#: src/bs-button-editor.ui:249
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
 msgid "Remove Action"
-msgstr "İşlemi Kaldır"
+msgstr "Eylemi Kaldır"
 
-#: src/bs-button-editor.ui:271
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
-msgstr "İşlemler"
+msgstr "Eylemler"
 
-#: src/bs-device-editor.ui:63
+#: src/bs-device-editor.ui:65
 msgid "Select a button"
 msgstr "Düğme seç"
 
@@ -162,21 +162,21 @@ msgstr "Aşağı taşı"
 msgid "Delete"
 msgstr "Sil"
 
-#: src/bs-stream-deck.c:340
+#: src/bs-stream-deck.c:422
 msgid "Default"
 msgstr "Öntanımlı"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1166 src/bs-stream-deck.c:1191
+#: src/bs-stream-deck.c:1304 src/bs-stream-deck.c:1329
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1216 src/bs-stream-deck.c:1241
+#: src/bs-stream-deck.c:1354 src/bs-stream-deck.c:1379
 #: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -185,75 +185,109 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1266 src/bs-stream-deck.c:1291
+#: src/bs-stream-deck.c:1404 src/bs-stream-deck.c:1429
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1316
+#: src/bs-stream-deck.c:1454
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1341
+#: src/bs-stream-deck.c:1479
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1366
+#: src/bs-stream-deck.c:1504
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1407
+#: src/bs-stream-deck.c:1545
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1476
+#: src/bs-stream-deck.c:1614
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Özgün"
 
-#: src/bs-stream-deck.c:1498
+#: src/bs-stream-deck.c:1636
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: src/bs-window.ui:113
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:66
+#: src/bs-touchscreen-background-dialog.ui:24
+msgid "Adwaita"
+msgstr "Adwaita"
+
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Glass"
+msgstr "Cam"
+
+#: src/bs-touchscreen-background-dialog.c:68
+msgid "Oh Sheet!"
+msgstr "Amanın!"
+
+#: src/bs-touchscreen-background-dialog.c:69
+msgid "Pills"
+msgstr "Haplar"
+
+#: src/bs-touchscreen-background-dialog.c:70
+msgid "Swoosh"
+msgstr "Vın"
+
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Dokunmatik Ekran Özellikleri"
+
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Dokunmatik Ekran"
+
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Eylem"
+
+#: src/bs-window.ui:114
 msgid "New profile…"
 msgstr "Yeni profil…"
 
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:55
+#: src/bs-window.ui:139 src/plugins/default/default-action-factory.c:55
 msgid "Brightness"
 msgstr "Parlaklık"
 
-#: src/bs-window.ui:174
+#: src/bs-window.ui:175
 msgid "Firmware"
 msgstr "Donanım Yazılımı"
 
-#: src/bs-window.ui:232
+#: src/bs-window.ui:236
 msgid "No Stream Deck Found"
 msgstr "Stream Deck Bulunamadı"
 
-#: src/bs-window.ui:233
+#: src/bs-window.ui:237
 msgid "Plug in a Stream Deck device to use it."
 msgstr "Kullanılacak Stream Deck aygıtını takın."
 
-#: src/bs-window.ui:256
+#: src/bs-window.ui:260
 msgid "_Keyboard Shortcuts"
 msgstr "_Klavye Kısayolları"
 
-#: src/bs-window.ui:260
+#: src/bs-window.ui:264
 msgid "_About Boatswain"
 msgstr "Bootswain _Hakkında"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:268
 msgid "_Quit"
 msgstr "_Çık"
 
@@ -335,7 +369,7 @@ msgid "Profile"
 msgstr "Profil"
 
 #: src/plugins/desktop/desktop-action-factory.c:41
-#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:274
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Klavye Kısayolu"
 
@@ -380,33 +414,33 @@ msgid "score.txt"
 msgstr "puan.txt"
 
 #. Restore score
-#: src/plugins/gaming/score.js:338
+#: src/plugins/gaming/score.js:352
 msgid "Restore Score"
 msgstr "Puanı Geri Yükle"
 
-#: src/plugins/gaming/score.js:357
+#: src/plugins/gaming/score.js:371
 msgid "Text Color"
 msgstr "Metin Rengi"
 
-#: src/plugins/gaming/score.js:370
+#: src/plugins/gaming/score.js:384
 msgid "Save to File"
 msgstr "Dosyaya Kaydet"
 
-#: src/plugins/gaming/score.js:371
+#: src/plugins/gaming/score.js:385
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr ""
 "Puanı metin dosyasına kaydet. OBS Studio gibi diğer uygulamalar bundan "
 "okuyabilir."
 
-#: src/plugins/gaming/score.js:380
+#: src/plugins/gaming/score.js:394
 #: src/plugins/launcher/launcher-open-file-action.c:214
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
 msgstr "Dosya"
 
-#: src/plugins/gaming/score.js:399
+#: src/plugins/gaming/score.js:413
 msgid "Text File (.txt)"
 msgstr "Metin Dosyası (.txt)"
 
