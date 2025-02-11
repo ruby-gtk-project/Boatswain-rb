@@ -54,12 +54,26 @@ enum {
   N_PROPS,
 };
 
+enum
+{
+  TOUCHSCREEN_SLOT_CHANGED,
+  N_SIGNALS,
+};
+
+static guint signals[N_SIGNALS];
 static GParamSpec *properties [N_PROPS];
 
 
 /*
  * Callbacks
  */
+
+static void
+on_touchscreen_slot_action_changed_cb (BsTouchscreenSlot *slot,
+                                       BsTouchscreen     *self)
+{
+  g_signal_emit (self, signals[TOUCHSCREEN_SLOT_CHANGED], 0, slot);
+}
 
 static void
 on_region_invalidated_cb (BsTouchscreenContent  *content,
@@ -207,6 +221,14 @@ bs_touchscreen_class_init (BsTouchscreenClass *klass)
                                                G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  signals[TOUCHSCREEN_SLOT_CHANGED] = g_signal_new ("touchscreen-slot-changed",
+                                                    BS_TYPE_TOUCHSCREEN,
+                                                    G_SIGNAL_RUN_LAST,
+                                                    0, NULL, NULL, NULL,
+                                                    G_TYPE_NONE,
+                                                    1,
+                                                    BS_TYPE_TOUCHSCREEN_SLOT);
 }
 
 static void
@@ -247,6 +269,11 @@ bs_touchscreen_new (const char        *id,
       g_autoptr (BsTouchscreenSlot) slot = NULL;
 
       slot = bs_touchscreen_slot_new (self, self->width / n_slots, self->height);
+
+      g_signal_connect_object (slot,
+                               "action-changed",
+                               G_CALLBACK (on_touchscreen_slot_action_changed_cb),
+                               self, 0);
 
       g_list_store_append (self->slots, slot);
     }
