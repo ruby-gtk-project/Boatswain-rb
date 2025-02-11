@@ -45,7 +45,6 @@ struct _BsButton
   gulong custom_icon_changed_id;
   gulong action_contents_changed_id;
   gulong action_size_changed_id;
-  gulong action_icon_changed_id;
   gulong action_changed_id;
   int inhibit_page_updates_counter;
   gboolean pressed;
@@ -151,14 +150,6 @@ on_icon_changed_cb (BsIcon   *icon,
   g_signal_emit (self, signals[ICON_CHANGED], 0, icon);
 }
 
-static void
-on_icon_properties_changed_cb (BsIcon     *icon,
-                               GParamSpec *pspec,
-                               BsButton   *self)
-{
-  bs_stream_deck_save (self->stream_deck);
-}
-
 
 /*
  * BsActionable interface
@@ -193,7 +184,6 @@ bs_button_actionable_set_action (BsActionable *actionable,
     {
       g_clear_signal_handler (&self->action_contents_changed_id, bs_action_get_icon (self->action));
       g_clear_signal_handler (&self->action_size_changed_id, bs_action_get_icon (self->action));
-      g_clear_signal_handler (&self->action_icon_changed_id, bs_action_get_icon (self->action));
       g_clear_signal_handler (&self->action_changed_id, self->action);
     }
 
@@ -207,8 +197,6 @@ bs_button_actionable_set_action (BsActionable *actionable,
     g_signal_connect (action_icon, "invalidate-contents", G_CALLBACK (on_icon_changed_cb), self);
   self->action_size_changed_id =
     g_signal_connect (action_icon, "invalidate-size", G_CALLBACK (on_icon_changed_cb), self);
-  self->action_icon_changed_id =
-    g_signal_connect (action_icon, "notify", G_CALLBACK (on_icon_properties_changed_cb), self);
 
   update_relative_icon (self);
   update_page (self);
@@ -245,7 +233,6 @@ bs_button_finalize (GObject *object)
     {
       g_clear_signal_handler (&self->action_contents_changed_id, bs_action_get_icon (self->action));
       g_clear_signal_handler (&self->action_size_changed_id, bs_action_get_icon (self->action));
-      g_clear_signal_handler (&self->action_icon_changed_id, bs_action_get_icon (self->action));
       g_clear_signal_handler (&self->action_changed_id, self->action);
       g_clear_object (&self->action);
     }
@@ -446,8 +433,6 @@ bs_button_set_custom_icon (BsButton *self,
         g_signal_connect (icon, "invalidate-contents", G_CALLBACK (on_icon_changed_cb), self);
       self->custom_size_changed_id =
         g_signal_connect (icon, "invalidate-size", G_CALLBACK (on_icon_changed_cb), self);
-      self->custom_icon_changed_id =
-        g_signal_connect (icon, "notify", G_CALLBACK (on_icon_properties_changed_cb), self);
     }
 
   update_relative_icon (self);
