@@ -84,20 +84,6 @@ static GParamSpec *properties[N_PROPS];
  */
 
 static void
-update_page (BsButton *self)
-{
-  BsPage *page = bs_stream_deck_get_active_page (self->stream_deck);
-
-  if (page && self->inhibit_page_updates_counter == 0)
-    {
-      const char *region_id = bs_device_region_get_id (self->region);
-
-      bs_page_update_item (page, region_id, self->position, self->action, self->custom_icon);
-      bs_stream_deck_save (self->stream_deck);
-    }
-}
-
-static void
 update_relative_icon (BsButton *self)
 {
 
@@ -199,7 +185,6 @@ bs_button_actionable_set_action (BsActionable *actionable,
     g_signal_connect (action_icon, "invalidate-size", G_CALLBACK (on_icon_changed_cb), self);
 
   update_relative_icon (self);
-  update_page (self);
   upload_icon (self);
 
   g_object_notify (G_OBJECT (self), "action");
@@ -434,7 +419,6 @@ bs_button_set_custom_icon (BsButton *self,
     }
 
   update_relative_icon (self);
-  update_page (self);
   upload_icon (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CUSTOM_ICON]);
