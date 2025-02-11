@@ -62,6 +62,10 @@ struct _BsButtonEditor
   gulong icon_changed_id;
 };
 
+static void on_background_color_dialog_button_rgba_changed_cb (GtkColorDialogButton *button,
+                                                               GParamSpec           *pspec,
+                                                               BsButtonEditor       *self);
+
 static void on_custom_icon_text_row_text_changed_cb (GtkEditable    *entry,
                                                      GParamSpec     *pspec,
                                                      BsButtonEditor *self);
@@ -100,6 +104,9 @@ setup_button (BsButtonEditor *self)
   g_signal_handlers_block_by_func (self->custom_icon_text_row,
                                    on_custom_icon_text_row_text_changed_cb,
                                    self);
+  g_signal_handlers_block_by_func (self->background_color_dialog_button,
+                                   on_background_color_dialog_button_rgba_changed_cb,
+                                   self);
 
   if (custom_icon)
     {
@@ -118,6 +125,9 @@ setup_button (BsButtonEditor *self)
       gtk_editable_set_text (self->custom_icon_text_row, "");
     }
 
+  g_signal_handlers_unblock_by_func (self->background_color_dialog_button,
+                                     on_background_color_dialog_button_rgba_changed_cb,
+                                     self);
   g_signal_handlers_unblock_by_func (self->custom_icon_text_row,
                                      on_custom_icon_text_row_text_changed_cb,
                                      self);
