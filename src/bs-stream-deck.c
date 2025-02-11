@@ -142,6 +142,7 @@ struct _BsStreamDeck
   gboolean initialized;
   gboolean loaded;
   gboolean fake;
+  gboolean loading_profile;
 };
 
 static void g_initable_iface_init (GInitableIface *iface);
@@ -1804,6 +1805,67 @@ stream_deck_source_new (BsStreamDeck *self)
  * GInitable interface
  */
 
+static void
+on_button_grid_button_changed_cb (BsButtonGrid *button_grid,
+                                  BsButton     *button,
+                                  BsStreamDeck *self)
+{
+  BsAction *action;
+  BsIcon *custom_icon;
+  BsPage *active_page;
+  const char *region_id;
+  size_t position;
+
+  BS_ENTRY;
+
+  if (self->loading_profile)
+    BS_RETURN ();
+
+  g_assert (g_queue_get_length (self->active_pages) > 0);
+
+  active_page = g_queue_peek_head (self->active_pages);
+  region_id = bs_device_region_get_id (BS_DEVICE_REGION (button_grid));
+  custom_icon = bs_button_get_custom_icon (button);
+  position = bs_button_get_position (button);
+  action = bs_actionable_get_action (BS_ACTIONABLE (button));
+
+  bs_page_update_item (active_page, region_id, position, action, custom_icon);
+
+  bs_stream_deck_save (self);
+
+  BS_EXIT;
+}
+
+static void
+on_touchscreen_slot_changed_cb (BsTouchscreen     *touchscreen,
+                                BsTouchscreenSlot *slot,
+                                BsStreamDeck      *self)
+{
+  BsAction *action;
+  BsPage *active_page;
+  const char *region_id;
+  size_t position;
+
+  BS_ENTRY;
+
+  if (self->loading_profile)
+    BS_RETURN ();
+
+  g_assert (g_queue_get_length (self->active_pages) > 0);
+
+  active_page = g_queue_peek_head (self->active_pages);
+  region_id = bs_device_region_get_id (BS_DEVICE_REGION (touchscreen));
+  position = bs_touchscreen_get_slot_position (touchscreen, slot);
+  action = bs_actionable_get_action (BS_ACTIONABLE (slot));
+
+  // TODO: custom icon in touchscreen slots?
+  bs_page_update_item (active_page, region_id, position, action, NULL);
+
+  bs_stream_deck_save (self);
+
+  BS_EXIT;
+}
+
 static gboolean
 bs_stream_deck_initable_init (GInitable     *initable,
                               GCancellable  *cancellable,
@@ -1891,6 +1953,11 @@ out:
                                         self->model_info->button_layout.columns,
                                         0, row++, 1, 1);
 
+      g_signal_connect (button_grid,
+                        "button-changed",
+                        G_CALLBACK (on_button_grid_button_changed_cb),
+                        self);
+
       g_list_store_append (self->regions, button_grid);
     }
 
@@ -1903,6 +1970,11 @@ out:
                                         &self->model_info->touchscreen_layout.image_info,
                                         self->model_info->touchscreen_layout.n_slots,
                                         0, row++, 1, 1);
+
+      g_signal_connect (touchscreen,
+                        "touchscreen-slot-changed",
+                        G_CALLBACK (on_touchscreen_slot_changed_cb),
+                        self);
 
       g_list_store_append (self->regions, touchscreen);
     }
@@ -2294,8 +2366,12 @@ bs_stream_deck_load_profile (BsStreamDeck *self,
 
   self->active_profile = profile;
 
+  self->loading_profile = TRUE;
+
   bs_stream_deck_set_brightness (self, bs_profile_get_brightness (profile));
   bs_stream_deck_push_page (self, bs_profile_get_root_page (profile));
+
+  self->loading_profile = FALSE;
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ACTIVE_PROFILE]);
 
