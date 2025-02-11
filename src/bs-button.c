@@ -138,7 +138,7 @@ static void
 on_action_changed_cb (BsAction *action,
                       BsButton *self)
 {
-  bs_stream_deck_save (self->stream_deck);
+  bs_actionable_action_changed (BS_ACTIONABLE (self));
 }
 
 static void
@@ -208,6 +208,8 @@ bs_button_actionable_set_action (BsActionable *actionable,
 
 
   g_signal_emit (self, signals[ICON_CHANGED], 0, bs_button_get_icon (self));
+
+  bs_actionable_action_changed (BS_ACTIONABLE (self));
 }
 
 static void
@@ -438,6 +440,9 @@ bs_button_set_custom_icon (BsButton *self,
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CUSTOM_ICON]);
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ICON]);
   g_signal_emit (self, signals[ICON_CHANGED], 0, icon);
+
+  // FIXME: This is not technically correct, but alas
+  bs_actionable_action_changed (BS_ACTIONABLE (self));
 }
 
 void
