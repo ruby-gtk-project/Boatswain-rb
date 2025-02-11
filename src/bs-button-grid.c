@@ -46,7 +46,26 @@ enum {
   N_PROPS,
 };
 
+enum
+{
+  BUTTON_CHANGED,
+  N_SIGNALS,
+};
+
+static guint signals[N_SIGNALS];
 static GParamSpec *properties [N_PROPS];
+
+
+/*
+ * Callbacks
+ */
+
+static void
+on_button_action_changed_cb (BsButton     *button,
+                             BsButtonGrid *self)
+{
+  g_signal_emit (self, signals[BUTTON_CHANGED], 0, button);
+}
 
 
 /*
@@ -141,6 +160,14 @@ bs_button_grid_class_init (BsButtonGridClass *klass)
                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  signals[BUTTON_CHANGED] = g_signal_new ("button-changed",
+                                          BS_TYPE_BUTTON_GRID,
+                                          G_SIGNAL_RUN_LAST,
+                                          0, NULL, NULL, NULL,
+                                          G_TYPE_NONE,
+                                          1,
+                                          BS_TYPE_BUTTON);
 }
 
 static void
@@ -189,6 +216,11 @@ bs_button_grid_new (const char        *id,
                               i,
                               image_info->width,
                               image_info->height);
+
+      g_signal_connect_object (button,
+                               "action-changed",
+                               G_CALLBACK (on_button_action_changed_cb),
+                               self, 0);
 
       g_list_store_append (self->buttons, button);
     }
