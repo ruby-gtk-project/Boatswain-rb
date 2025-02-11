@@ -36,6 +36,7 @@ struct _BsTouchscreenSlot
   BsAction *action; /* (transfer full)(nullable) */
   BsTouchscreen *touchscreen; /* (transfer none) */
 
+  gulong action_changed_id;
   gulong content_invalidated_id;
 };
 
@@ -61,6 +62,13 @@ static GParamSpec *properties [N_PROPS];
 /*
  * Callbacks
  */
+
+static void
+on_action_changed_cb (BsAction *action,
+                      BsButton *self)
+{
+  bs_actionable_action_changed (BS_ACTIONABLE (self));
+}
 
 static void
 on_action_icon_invalidate_contents_cb (GdkPaintable         *paintable,
@@ -155,12 +163,19 @@ bs_touchscreen_slot_actionable_set_action (BsActionable *actionable,
     return;
 
   if (self->action)
-    g_clear_signal_handler (&self->content_invalidated_id, bs_action_get_icon (self->action));
+    {
+      g_clear_signal_handler (&self->action_changed_id, self->action);
+      g_clear_signal_handler (&self->content_invalidated_id, bs_action_get_icon (self->action));
+    }
 
   g_set_object (&self->action, action);
 
   if (self->action)
     {
+      self->action_changed_id = g_signal_connect (self->action,
+                                                  "changed",
+                                                  G_CALLBACK (on_action_changed_cb),
+                                                  self);
       self->content_invalidated_id = g_signal_connect (bs_action_get_icon (self->action),
                                                        "invalidate-contents",
                                                        G_CALLBACK (on_action_icon_invalidate_contents_cb),
@@ -169,6 +184,8 @@ bs_touchscreen_slot_actionable_set_action (BsActionable *actionable,
 
   gdk_paintable_invalidate_contents (GDK_PAINTABLE (self));
   g_object_notify (G_OBJECT (self), "action");
+
+  bs_actionable_action_changed (BS_ACTIONABLE (self));
 }
 
 static void
@@ -189,7 +206,10 @@ bs_touchscreen_slot_finalize (GObject *object)
   BsTouchscreenSlot *self = (BsTouchscreenSlot *)object;
 
   if (self->action)
-    g_clear_signal_handler (&self->content_invalidated_id, bs_action_get_icon (self->action));
+    {
+      g_clear_signal_handler (&self->action_changed_id, self->action);
+      g_clear_signal_handler (&self->content_invalidated_id, bs_action_get_icon (self->action));
+    }
 
   g_clear_object (&self->action);
 
