@@ -40,4 +40,6 @@ void bs_actionable_set_action (BsActionable *self,
 void bs_actionable_handle_event (BsActionable *self,
                                  BsEvent      *event);
 
+void bs_actionable_action_changed (BsActionable *self);
+
 G_END_DECLS

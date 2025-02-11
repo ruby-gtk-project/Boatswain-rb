@@ -29,6 +29,14 @@
 
 G_DEFINE_INTERFACE (BsActionable, bs_actionable, G_TYPE_OBJECT)
 
+enum
+{
+  ACTION_CHANGED,
+  N_SIGNALS,
+};
+
+static guint signals[N_SIGNALS];
+
 static void
 bs_actionable_default_init (BsActionableInterface *iface)
 {
@@ -36,6 +44,13 @@ bs_actionable_default_init (BsActionableInterface *iface)
                                        g_param_spec_object ("action", NULL, NULL,
                                                             BS_TYPE_ACTION,
                                                             G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+
+  signals[ACTION_CHANGED] = g_signal_new ("action-changed",
+                                          BS_TYPE_ACTIONABLE,
+                                          G_SIGNAL_RUN_FIRST,
+                                          0, NULL, NULL, NULL,
+                                          G_TYPE_NONE,
+                                          0);
 }
 
 /**
@@ -83,4 +98,13 @@ bs_actionable_handle_event (BsActionable *self,
   action = bs_actionable_get_action (self);
   if (action)
     bs_action_handle_event (action, event);
+}
+
+void
+bs_actionable_action_changed (BsActionable *self)
+{
+  g_assert (BS_IS_ACTIONABLE (self));
+  g_assert (BS_IS_ACTION (bs_actionable_get_action (self)));
+
+  g_signal_emit (self, signals[ACTION_CHANGED], 0);
 }
