@@ -145,6 +145,8 @@ struct _BsStreamDeck
   gboolean loading_profile;
 };
 
+static gboolean save_after_timeout_cb (gpointer data);
+
 static void g_initable_iface_init (GInitableIface *iface);
 
 G_DEFINE_FINAL_TYPE_WITH_CODE (BsStreamDeck, bs_stream_deck, G_TYPE_OBJECT,
@@ -519,6 +521,19 @@ swap_button_index_original (BsStreamDeck *self,
   int column = button_index % self->model_info->button_layout.columns;
   int actual_index = ((int) button_index - column) + ((int) self->model_info->button_layout.columns - 1 - column);
   return (uint8_t) actual_index;
+}
+
+static void
+schedule_save (BsStreamDeck *self)
+{
+  g_return_if_fail (BS_IS_STREAM_DECK (self));
+
+  BS_ENTRY;
+
+  if (self->save_timeout_id == 0)
+    self->save_timeout_id = g_timeout_add_seconds (5, save_after_timeout_cb, self);
+
+  BS_EXIT;
 }
 
 
@@ -1828,7 +1843,7 @@ on_button_grid_button_changed_cb (BsButtonGrid *button_grid,
 
   bs_page_update_item (active_page, region_id, position, action, custom_icon);
 
-  bs_stream_deck_save (self);
+  schedule_save (self);
 
   BS_EXIT;
 }
@@ -1858,7 +1873,7 @@ on_touchscreen_slot_changed_cb (BsTouchscreen     *touchscreen,
   // TODO: custom icon in touchscreen slots?
   bs_page_update_item (active_page, region_id, position, action, NULL);
 
-  bs_stream_deck_save (self);
+  schedule_save (self);
 
   BS_EXIT;
 }
@@ -2437,17 +2452,4 @@ bs_stream_deck_load (BsStreamDeck *self)
   load_profiles (self);
 
   self->loaded = TRUE;
-}
-
-void
-bs_stream_deck_save (BsStreamDeck *self)
-{
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
-
-  BS_ENTRY;
-
-  if (self->save_timeout_id == 0)
-    self->save_timeout_id = g_timeout_add_seconds (5, save_after_timeout_cb, self);
-
-  BS_EXIT;
 }

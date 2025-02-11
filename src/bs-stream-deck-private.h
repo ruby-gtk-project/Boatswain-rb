@@ -49,6 +49,4 @@ void bs_stream_deck_upload_touchscreen (BsStreamDeck          *self,
 
 void bs_stream_deck_load (BsStreamDeck *self);
 
-void bs_stream_deck_save (BsStreamDeck *self);
-
 G_END_DECLS
