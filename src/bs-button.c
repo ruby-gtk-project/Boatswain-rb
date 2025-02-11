@@ -339,7 +339,6 @@ bs_button_new (BsStreamDeck   *stream_deck,
                unsigned int    icon_width,
                unsigned int    icon_height)
 {
-  g_autoptr (BsIcon) empty_icon = NULL;
   BsButton *self;
 
   self = g_object_new (BS_TYPE_BUTTON, NULL);
@@ -348,9 +347,6 @@ bs_button_new (BsStreamDeck   *stream_deck,
   self->position = position;
   self->icon_width = icon_width;
   self->icon_height = icon_height;
-
-  empty_icon = bs_icon_new_empty ();
-  bs_button_set_custom_icon (self, empty_icon);
 
   return self;
 }
