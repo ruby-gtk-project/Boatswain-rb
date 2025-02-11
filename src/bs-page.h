@@ -48,8 +48,6 @@ void bs_page_update_item (BsPage     *self,
                           BsAction   *action,
                           BsIcon     *custom_icon);
 
-void bs_page_update_all_items (BsPage *self);
-
 gboolean bs_page_realize (BsPage      *self,
                           const char  *region_id,
                           size_t       position,

@@ -628,31 +628,6 @@ bs_page_update_item (BsPage     *self,
     }
 }
 
-void
-bs_page_update_all_items (BsPage *self)
-{
-  GHashTableIter iter;
-  PageRegion *page_region;
-  const char *region_id;
-
-  g_return_if_fail (BS_IS_PAGE (self));
-
-  g_hash_table_iter_init (&iter, self->page_regions);
-  while (g_hash_table_iter_next (&iter, (gpointer *) &region_id, (gpointer *) &page_region))
-    {
-      g_assert (region_id != NULL);
-      g_assert (page_region != NULL);
-
-      for (size_t i = 0; i < page_region->items->len; i++)
-        {
-          BsPageItem *item = g_ptr_array_index (page_region->items, i);
-
-          if (item)
-            bs_page_item_update (item);
-        }
-    }
-}
-
 gboolean
 bs_page_realize (BsPage      *self,
                  const char  *region_id,

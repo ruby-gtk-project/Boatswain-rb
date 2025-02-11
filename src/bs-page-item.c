@@ -40,9 +40,6 @@ struct _BsPageItem
   char *factory;
   JsonNode *settings;
   JsonNode *custom_icon;
-
-  BsAction *cached_action;
-  BsIcon *cached_custom_icon;
 };
 
 G_DEFINE_FINAL_TYPE (BsPageItem, bs_page_item, G_TYPE_OBJECT)
@@ -100,13 +97,6 @@ get_action_factory (const char *factory_id)
   return find_data.factory;
 }
 
-static void
-invalidate_cache (BsPageItem *self)
-{
-  g_clear_object (&self->cached_action);
-  g_clear_object (&self->cached_custom_icon);
-}
-
 
 /*
  * GObject overrides
@@ -116,8 +106,6 @@ static void
 bs_page_item_finalize (GObject *object)
 {
   BsPageItem *self = (BsPageItem *)object;
-
-  invalidate_cache (self);
 
   g_clear_pointer (&self->action, g_free);
   g_clear_pointer (&self->factory, g_free);
@@ -378,8 +366,6 @@ bs_page_item_set_custom_icon (BsPageItem *self,
       json_generator_set_root (generator, json_node_copy (custom_icon));
     }
 
-  g_clear_object (&self->cached_custom_icon);
-
   g_clear_pointer (&self->custom_icon, json_node_unref);
   self->custom_icon = custom_icon ? json_node_ref (custom_icon) : NULL;
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CUSTOM_ICON]);
@@ -401,8 +387,6 @@ bs_page_item_set_action (BsPageItem *self,
 
   if (g_strcmp0 (self->action, action) == 0)
     return;
-
-  invalidate_cache (self);
 
   g_clear_pointer (&self->action, g_free);
   self->action = g_strdup (action);
@@ -426,8 +410,6 @@ bs_page_item_set_item_type (BsPageItem     *self,
   if (self->item_type == item_type)
     return;
 
-  invalidate_cache (self);
-
   self->item_type = item_type;
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_TYPE]);
 }
@@ -448,8 +430,6 @@ bs_page_item_set_factory (BsPageItem *self,
 
   if (g_strcmp0 (self->factory, factory) == 0)
     return;
-
-  invalidate_cache (self);
 
   g_clear_pointer (&self->factory, g_free);
   self->factory = g_strdup (factory);
@@ -489,7 +469,7 @@ bs_page_item_realize (BsPageItem  *self,
   g_return_val_if_fail (out_custom_icon != NULL, FALSE);
   g_return_val_if_fail (out_action != NULL, FALSE);
 
-  if (!self->cached_action)
+  if (out_action)
     {
       g_autoptr (BsAction) action = NULL;
       BsActionFactory *action_factory;
@@ -520,33 +500,18 @@ bs_page_item_realize (BsPageItem  *self,
           break;
         }
 
-      self->cached_action = g_steal_pointer (&action);
+      *out_action = g_steal_pointer (&action);
     }
 
-  if (!self->cached_custom_icon)
+  if (out_custom_icon)
     {
       g_autoptr (BsIcon) custom_icon = NULL;
 
       if (self->custom_icon)
         custom_icon = bs_icon_new_from_json (self->custom_icon, NULL);
 
-      self->cached_custom_icon = g_steal_pointer (&custom_icon);
+      *out_custom_icon = g_steal_pointer (&custom_icon);
     }
 
-  *out_custom_icon = self->cached_custom_icon ? g_object_ref (self->cached_custom_icon) : NULL;
-  *out_action = self->cached_action ? g_object_ref (self->cached_action) : NULL;
-
   return TRUE;
-}
-
-void
-bs_page_item_update (BsPageItem *self)
-{
-  g_return_if_fail (BS_IS_PAGE_ITEM (self));
-
-  if (self->cached_action)
-    bs_page_item_set_settings (self, bs_action_serialize_settings (self->cached_action));
-
-  if (self->cached_custom_icon)
-    bs_page_item_set_custom_icon (self, bs_icon_to_json (self->cached_custom_icon));
 }

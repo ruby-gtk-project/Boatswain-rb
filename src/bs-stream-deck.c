@@ -259,9 +259,6 @@ update_pages (BsStreamDeck *self)
   active_page = bs_stream_deck_get_active_page (self);
   update_page_items (self, active_page);
 
-  for (GList *l = g_queue_peek_head_link (self->active_pages); l; l = l->next)
-    bs_page_update_all_items (l->data);
-
   BS_EXIT;
 }
 
@@ -2397,7 +2394,7 @@ bs_stream_deck_push_page (BsStreamDeck  *self,
   BS_ENTRY;
 
   if (g_queue_get_length (self->active_pages) > 0)
-    bs_page_update_all_items (g_queue_peek_head (self->active_pages));
+    update_page_items (self, g_queue_peek_head (self->active_pages));
 
   g_queue_push_head (self->active_pages, g_object_ref (page));
 
@@ -2420,8 +2417,6 @@ bs_stream_deck_pop_page (BsStreamDeck *self)
 
   page = g_queue_pop_head (self->active_pages);
   update_page_items (self, page);
-
-  bs_page_update_all_items (g_queue_peek_head (self->active_pages));
 
   load_active_page (self);
 

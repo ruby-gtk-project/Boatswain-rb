@@ -109,33 +109,8 @@ on_action_selector_action_selected_cb (BsActionSelector        *selector,
                                        BsTouchscreenSlotEditor *self)
 {
   g_autoptr (BsAction) action = NULL;
-  g_autoptr (BsIcon) custom_icon = NULL;
-  g_autoptr (GError) error = NULL;
-  PeasPluginInfo *plugin_info;
-  BsTouchscreen *touchscreen;
-  BsStreamDeck *stream_deck;
-  BsPageItem *item;
-  BsPage *active_page;
-  const char *region_id;
-  uint32_t position;
 
-  touchscreen = bs_touchscreen_slot_get_touchscreen (self->slot);
-  region_id = bs_device_region_get_id (BS_DEVICE_REGION (touchscreen));
-  stream_deck = bs_device_region_get_stream_deck (BS_DEVICE_REGION (touchscreen));
-  active_page = bs_stream_deck_get_active_page (stream_deck);
-  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
-  position = bs_touchscreen_get_slot_position (touchscreen, self->slot);
-
-  item = bs_page_get_item (active_page, region_id, position);
-  bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
-  bs_page_item_set_factory (item, peas_plugin_info_get_module_name (plugin_info));
-  bs_page_item_set_action (item, bs_action_info_get_id (action_info));
-
-  bs_page_realize (active_page, region_id, position, &custom_icon, &action, &error);
-
-  if (error)
-    g_warning ("Error realizing action: %s", error->message);
-
+  action = bs_action_factory_create_action (factory, action_info);
   bs_actionable_set_action (BS_ACTIONABLE (self->slot), action);
 
   adw_navigation_view_pop (self->navigation_view);
