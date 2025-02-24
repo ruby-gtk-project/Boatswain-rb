@@ -1,15 +1,15 @@
 # Swedish translation for boatswain.
-# Copyright © 2022-2024 boatswain's COPYRIGHT HOLDER
+# Copyright © 2022-2025 boatswain's COPYRIGHT HOLDER
 # This file is distributed under the same license as the boatswain package.
-# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2022, 2023, 2024.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2022, 2023, 2024, 2025.
 # Luna Jernberg <droidbittin@gmail.com>, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-11-08 18:18+0000\n"
-"PO-Revision-Date: 2024-11-09 13:17+0100\n"
+"POT-Creation-Date: 2025-01-27 21:39+0000\n"
+"PO-Revision-Date: 2025-01-27 23:58+0100\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -98,15 +98,15 @@ msgstr ""
 "Boatswain behöver köras i bakgrunden för att upptäcka och köra Stream Deck-"
 "åtgärder."
 
-#: src/bs-button-editor.c:327
+#: src/bs-button-editor.c:333
 msgid "All supported formats"
 msgstr "Alla format som stöds"
 
-#: src/bs-button-editor.c:336
+#: src/bs-button-editor.c:342
 msgid "Select icon"
 msgstr "Välj ikon"
 
-#: src/bs-button-editor.c:337
+#: src/bs-button-editor.c:343
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Öppna"
@@ -123,20 +123,20 @@ msgstr "Namn"
 msgid "Background Color"
 msgstr "Bakgrundsfärg"
 
-#: src/bs-button-editor.ui:232
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
 msgid "Select Action"
 msgstr "Välj åtgärd"
 
-#: src/bs-button-editor.ui:250
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
 msgid "Remove Action"
 msgstr "Ta bort åtgärd"
 
-#: src/bs-button-editor.ui:272
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Åtgärder"
 
-#: src/bs-device-editor.ui:63
+#: src/bs-device-editor.ui:65
 msgid "Select a button"
 msgstr "Välj en knapp"
 
@@ -160,21 +160,21 @@ msgstr "Flytta nedåt"
 msgid "Delete"
 msgstr "Ta bort"
 
-#: src/bs-stream-deck.c:340
+#: src/bs-stream-deck.c:422
 msgid "Default"
 msgstr "Standard"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1191 src/bs-stream-deck.c:1216
+#: src/bs-stream-deck.c:1304 src/bs-stream-deck.c:1329
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1241 src/bs-stream-deck.c:1266
+#: src/bs-stream-deck.c:1354 src/bs-stream-deck.c:1379
 #: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -183,75 +183,109 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1291 src/bs-stream-deck.c:1316
+#: src/bs-stream-deck.c:1404 src/bs-stream-deck.c:1429
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1341
+#: src/bs-stream-deck.c:1454
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1366
+#: src/bs-stream-deck.c:1479
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1391
+#: src/bs-stream-deck.c:1504
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1432
+#: src/bs-stream-deck.c:1545
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1501
+#: src/bs-stream-deck.c:1614
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1523
+#: src/bs-stream-deck.c:1636
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: src/bs-window.ui:113
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:66
+#: src/bs-touchscreen-background-dialog.ui:24
+msgid "Adwaita"
+msgstr "Adwaita"
+
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Glass"
+msgstr "Glas"
+
+#: src/bs-touchscreen-background-dialog.c:68
+msgid "Oh Sheet!"
+msgstr "Neon också!"
+
+#: src/bs-touchscreen-background-dialog.c:69
+msgid "Pills"
+msgstr "Piller"
+
+#: src/bs-touchscreen-background-dialog.c:70
+msgid "Swoosh"
+msgstr "Våg"
+
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Pekskärmsegenskaper"
+
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Pekskärm"
+
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Åtgärd"
+
+#: src/bs-window.ui:114
 msgid "New profile…"
 msgstr "Ny profil…"
 
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:55
+#: src/bs-window.ui:139 src/plugins/default/default-action-factory.c:55
 msgid "Brightness"
 msgstr "Ljusstyrka"
 
-#: src/bs-window.ui:174
+#: src/bs-window.ui:175
 msgid "Firmware"
 msgstr "Fast programvara"
 
-#: src/bs-window.ui:232
+#: src/bs-window.ui:236
 msgid "No Stream Deck Found"
 msgstr "Ingen Stream Deck-enhet hittades"
 
-#: src/bs-window.ui:233
+#: src/bs-window.ui:237
 msgid "Plug in a Stream Deck device to use it."
 msgstr "Anslut en Stream Deck-enhet för att använda den."
 
-#: src/bs-window.ui:256
+#: src/bs-window.ui:260
 msgid "_Keyboard Shortcuts"
 msgstr "_Tangentbordsgenvägar"
 
-#: src/bs-window.ui:260
+#: src/bs-window.ui:264
 msgid "_About Boatswain"
 msgstr "_Om Boatswain"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:268
 msgid "_Quit"
 msgstr "_Avsluta"
 
