@@ -1,14 +1,15 @@
 # Bulgarian translation of boatswain po-file.
-# Copyright (C) 2024 boatswain's COPYRIGHT HOLDER
+# Copyright (C) 2024 twlvnn kraftwerk <kraft_werk@tutanota.com
+# Copyright (C) 2025 Alexander Shopov <ash@kambanaria.org>
 # This file is distributed under the same license as the boatswain package.
 # twlvnn kraftwerk <kraft_werk@tutanota.com>, 2024.
-#
+# Alexander Shopov <ash@kambanaria.org>, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-11-25 22:02+0000\n"
-"PO-Revision-Date: 2024-11-30 11:47+0100\n"
+"POT-Creation-Date: 2025-02-24 13:35+0000\n"
+"PO-Revision-Date: 2025-02-27 06:28+0100\n"
 "Last-Translator: twlvnn kraftwerk <kraft_werk@tutanota.com>\n"
 "Language-Team: Bulgarian <dict-notifications@fsa-bg.org>\n"
 "Language: bg\n"
@@ -99,15 +100,15 @@ msgstr ""
 "„Boatswain“ трябва да работи във фонов режим, за да открива и изпълнява "
 "действия за Stream Deck."
 
-#: src/bs-button-editor.c:327
+#: src/bs-button-editor.c:343
 msgid "All supported formats"
 msgstr "Всички поддържани формати"
 
-#: src/bs-button-editor.c:336
+#: src/bs-button-editor.c:352
 msgid "Select icon"
 msgstr "Избор на иконка"
 
-#: src/bs-button-editor.c:337
+#: src/bs-button-editor.c:353
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Отваряне"
@@ -124,15 +125,15 @@ msgstr "Име"
 msgid "Background Color"
 msgstr "Цвят на фона"
 
-#: src/bs-button-editor.ui:232
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
 msgid "Select Action"
 msgstr "Избор на действие"
 
-#: src/bs-button-editor.ui:250
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
 msgid "Remove Action"
 msgstr "Премахване на действие"
 
-#: src/bs-button-editor.ui:272
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Действия"
@@ -161,21 +162,21 @@ msgstr "Преместване надолу"
 msgid "Delete"
 msgstr "Изтриване"
 
-#: src/bs-stream-deck.c:339
+#: src/bs-stream-deck.c:432
 msgid "Default"
 msgstr "Стандартно"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1184 src/bs-stream-deck.c:1209
+#: src/bs-stream-deck.c:1314 src/bs-stream-deck.c:1339
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1234 src/bs-stream-deck.c:1259
+#: src/bs-stream-deck.c:1364 src/bs-stream-deck.c:1389
 #: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -184,45 +185,79 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1284 src/bs-stream-deck.c:1309
+#: src/bs-stream-deck.c:1414 src/bs-stream-deck.c:1439
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1334
+#: src/bs-stream-deck.c:1464
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1359
+#: src/bs-stream-deck.c:1489
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1384
+#: src/bs-stream-deck.c:1514
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1425
+#: src/bs-stream-deck.c:1555
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1494
+#: src/bs-stream-deck.c:1624
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1516
+#: src/bs-stream-deck.c:1646
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
+
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:66
+#: src/bs-touchscreen-background-dialog.ui:24
+msgid "Adwaita"
+msgstr "Adwaita"
+
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Glass"
+msgstr "Стъкло"
+
+#: src/bs-touchscreen-background-dialog.c:68
+msgid "Oh Sheet!"
+msgstr "По долни чаршафи!"
+
+#: src/bs-touchscreen-background-dialog.c:69
+msgid "Pills"
+msgstr "Хапчета"
+
+#: src/bs-touchscreen-background-dialog.c:70
+msgid "Swoosh"
+msgstr "Суиш"
+
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Свойства на сензорния екран"
+
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Сензорен екран"
+
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Действие"
 
 #: src/bs-window.ui:114
 msgid "New profile…"
