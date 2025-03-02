@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-09-01 16:08+0000\n"
-"PO-Revision-Date: 2024-09-14 10:45+0200\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2025-01-27 21:39+0000\n"
+"PO-Revision-Date: 2025-03-02 17:48+0100\n"
+"Last-Translator: Brage <bragefuglseth@gnome.org>\n"
 "Language-Team: \n"
 "Language: nb\n"
 "MIME-Version: 1.0\n"
@@ -82,64 +82,68 @@ msgstr "Hold styr på poengsummen din"
 msgid "Open files and launch applications"
 msgstr "Åpne filer og apper"
 
-#: src/bs-application.c:54
+#: src/bs-application.c:55
 msgid "Enable debug messages"
 msgstr "Slå på full logging"
 
-#: src/bs-application.c:117
+#: src/bs-application.c:118
 #, c-format
 msgid "Connected to %d device"
 msgid_plural "Connected to %d devices"
 msgstr[0] "Koblet til %d kontroll"
 msgstr[1] "Koblet til %d kontroller"
 
-#: src/bs-application.c:169
+#: src/bs-application.c:170
 msgid ""
 "Boatswain needs to run in background to detect and execute Stream Deck "
 "actions."
 msgstr ""
-"Boatswain må kjøre i bakgrunnen for å kunne registrere og utføre Stream "
-"Deck-handlinger."
+"Boatswain må kjøre i bakgrunnen for å kunne registrere og utføre Stream Deck-"
+"handlinger."
 
-#: src/bs-button-editor.c:388
+#: src/bs-button-editor.c:333
 msgid "All supported formats"
 msgstr "Alle støttede filtyper"
 
-#: src/bs-button-editor.c:397
+#: src/bs-button-editor.c:342
 msgid "Select icon"
 msgstr "Velg ikon"
 
-#: src/bs-button-editor.c:398
+#: src/bs-button-editor.c:343
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Åpne"
 
-#: src/bs-button-editor.ui:14
+#: src/bs-button-editor.ui:13
 msgid "Button Properties"
 msgstr "Knapp"
 
-#: src/bs-button-editor.ui:190
+#: src/bs-button-editor.ui:189
 msgid "Name"
 msgstr "Navn"
 
-#: src/bs-button-editor.ui:197
+#: src/bs-button-editor.ui:196
 msgid "Background Color"
 msgstr "Bakgrunnsfarge"
 
-#: src/bs-button-editor.ui:233
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
 msgid "Select Action"
 msgstr "Velg handling"
 
-#: src/bs-button-editor.ui:250
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
 msgid "Remove Action"
 msgstr "Fjern handling"
 
-#: src/bs-button-editor.ui:272
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Handlinger"
 
-#: src/bs-profile.c:184
+#: src/bs-device-editor.ui:65
+msgid "Select a button"
+msgstr "Velg en knapp"
+
+#: src/bs-profile.c:185
 msgid "Unnamed profile"
 msgstr "Oppsett uten navn"
 
@@ -159,22 +163,22 @@ msgstr "Flytt ned"
 msgid "Delete"
 msgstr "Slett"
 
-#: src/bs-stream-deck.c:316
+#: src/bs-stream-deck.c:422
 msgid "Default"
 msgstr "Standard"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:995 src/bs-stream-deck.c:1020
+#: src/bs-stream-deck.c:1304 src/bs-stream-deck.c:1329
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1045 src/bs-stream-deck.c:1070
-#: src/plugins/default/default-switch-profile-action.c:283
+#: src/bs-stream-deck.c:1354 src/bs-stream-deck.c:1379
+#: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
 msgstr "Stream Deck"
@@ -182,72 +186,109 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1095 src/bs-stream-deck.c:1120
+#: src/bs-stream-deck.c:1404 src/bs-stream-deck.c:1429
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1145
+#: src/bs-stream-deck.c:1454
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1170
+#: src/bs-stream-deck.c:1479
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1195
+#: src/bs-stream-deck.c:1504
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
-#: src/bs-stream-deck.c:1279
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:1545
+msgid "Stream Deck Neo"
+msgstr "Stream Deck Neo"
+
+#: src/bs-stream-deck.c:1614
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1301
+#: src/bs-stream-deck.c:1636
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: src/bs-stream-deck-editor.ui:61
-msgid "Select a button"
-msgstr "Velg en knapp"
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:66
+#: src/bs-touchscreen-background-dialog.ui:24
+msgid "Adwaita"
+msgstr "Adwaita"
 
-#: src/bs-window.ui:113
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Glass"
+msgstr "Glass"
+
+#: src/bs-touchscreen-background-dialog.c:68
+msgid "Oh Sheet!"
+msgstr "Stoff"
+
+#: src/bs-touchscreen-background-dialog.c:69
+msgid "Pills"
+msgstr "Piller"
+
+#: src/bs-touchscreen-background-dialog.c:70
+msgid "Swoosh"
+msgstr "Vindkast"
+
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Trykkskjerm-egenskaper"
+
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Trykkskjerm"
+
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Handling"
+
+#: src/bs-window.ui:114
 msgid "New profile…"
 msgstr "Nytt oppsett…"
 
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:54
+#: src/bs-window.ui:139 src/plugins/default/default-action-factory.c:55
 msgid "Brightness"
 msgstr "Lysstyrke"
 
-#: src/bs-window.ui:174
+#: src/bs-window.ui:175
 msgid "Firmware"
 msgstr "Fastvare"
 
-#: src/bs-window.ui:232
+#: src/bs-window.ui:236
 msgid "No Stream Deck Found"
 msgstr "Fant ingen kontroll"
 
-#: src/bs-window.ui:233
+#: src/bs-window.ui:237
 msgid "Plug in a Stream Deck device to use it."
 msgstr "Koble til en Stream Deck-kontroll for å bruke den."
 
-#: src/bs-window.ui:256
+#: src/bs-window.ui:260
 msgid "_Keyboard Shortcuts"
 msgstr "_Tastatursnarveier"
 
-#: src/bs-window.ui:260
+#: src/bs-window.ui:264
 msgid "_About Boatswain"
 msgstr "_Om Boatswain"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:268
 msgid "_Quit"
 msgstr "_Avslutt"
 
@@ -266,40 +307,44 @@ msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Avslutt"
 
-#: src/plugins/default/default-action-factory.c:42
+#: src/plugins/default/default-action-factory.c:43
 msgid "Folder"
 msgstr "Mappe"
 
-#: src/plugins/default/default-action-factory.c:48
+#: src/plugins/default/default-action-factory.c:49
 msgid "Switch Profile"
 msgstr "Bytt oppsett"
 
-#: src/plugins/default/default-action-factory.c:60
+#: src/plugins/default/default-action-factory.c:61
 msgid "Multiple Actions"
 msgstr "Flere handlinger"
 
+#: src/plugins/default/default-action-factory.c:67
+msgid "Go Up"
+msgstr "Gå opp"
+
 #. Translators: "Constant" as in "Constant value of brightness"
-#: src/plugins/default/default-brightness-action.c:141
+#: src/plugins/default/default-brightness-action.c:144
 msgid "Constant"
 msgstr "Fast"
 
-#: src/plugins/default/default-brightness-action.c:142
+#: src/plugins/default/default-brightness-action.c:145
 msgid "Increase"
 msgstr "Økning"
 
-#: src/plugins/default/default-brightness-action.c:143
+#: src/plugins/default/default-brightness-action.c:146
 msgid "Decrease"
 msgstr "Senkning"
 
-#: src/plugins/default/default-brightness-action.c:146
+#: src/plugins/default/default-brightness-action.c:149
 msgid "Mode"
 msgstr "Modus"
 
-#: src/plugins/default/default-brightness-action.c:153
+#: src/plugins/default/default-brightness-action.c:156
 msgid "Value"
 msgstr "Verdi"
 
-#: src/plugins/default/default-multi-action-editor.c:310
+#: src/plugins/default/default-multi-action-editor.c:307
 #: src/plugins/default/default-multi-action-row.c:143
 msgid "Delay"
 msgstr "Vent"
@@ -320,12 +365,12 @@ msgstr "Mer"
 msgid "Settings"
 msgstr "Innstillinger"
 
-#: src/plugins/default/default-switch-profile-action.c:306
+#: src/plugins/default/default-switch-profile-action.c:301
 msgid "Profile"
 msgstr "Oppsett"
 
 #: src/plugins/desktop/desktop-action-factory.c:41
-#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:257
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Tastatursnarvei"
 
@@ -370,33 +415,33 @@ msgid "score.txt"
 msgstr "poengsum.txt"
 
 #. Restore score
-#: src/plugins/gaming/score.js:322
+#: src/plugins/gaming/score.js:352
 msgid "Restore Score"
 msgstr "Gjenopprett poengsum"
 
-#: src/plugins/gaming/score.js:341
+#: src/plugins/gaming/score.js:371
 msgid "Text Color"
 msgstr "Tekstfarge"
 
-#: src/plugins/gaming/score.js:354
+#: src/plugins/gaming/score.js:384
 msgid "Save to File"
 msgstr "Lagre"
 
-#: src/plugins/gaming/score.js:355
+#: src/plugins/gaming/score.js:385
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr ""
-"Lagre poengsummen som en tekstfil. Andre apper, som OBS Studio, kan lese "
-"fra den."
+"Lagre poengsummen som en tekstfil. Andre apper, som OBS Studio, kan lese fra "
+"den."
 
-#: src/plugins/gaming/score.js:364
-#: src/plugins/launcher/launcher-open-file-action.c:209
+#: src/plugins/gaming/score.js:394
+#: src/plugins/launcher/launcher-open-file-action.c:214
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
 msgstr "Fil"
 
-#: src/plugins/gaming/score.js:383
+#: src/plugins/gaming/score.js:413
 msgid "Text File (.txt)"
 msgstr "Tekstfil (.txt)"
 
@@ -416,15 +461,15 @@ msgstr "Åpne adresse"
 msgid "Choose Application"
 msgstr "Velg app"
 
-#: src/plugins/launcher/launcher-open-file-action.c:68
+#: src/plugins/launcher/launcher-open-file-action.c:69
 msgid "No file selected"
 msgstr "Ingen fil valgt"
 
-#: src/plugins/launcher/launcher-open-file-action.c:156
+#: src/plugins/launcher/launcher-open-file-action.c:157
 msgid "Select File"
 msgstr "Velg fil"
 
-#: src/plugins/launcher/launcher-open-url-action.c:104
+#: src/plugins/launcher/launcher-open-url-action.c:109
 msgid "URL"
 msgstr "Adresse"
 
@@ -514,44 +559,44 @@ msgstr "Port"
 msgid "Password"
 msgstr "Passord"
 
-#: src/plugins/obs-studio/obs-switch-scene-action.c:283
+#: src/plugins/obs-studio/obs-switch-scene-action.c:288
 msgid "Scene"
 msgstr "Scene"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:124
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
 msgid "Toggle mute"
 msgstr "Demping"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+#: src/plugins/obs-studio/obs-toggle-source-action.c:126
 msgid "Mute"
 msgstr "Demp"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+#: src/plugins/obs-studio/obs-toggle-source-action.c:127
 msgid "Unmute"
 msgstr "Opphev demping"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:130
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
 msgid "Toggle visibility"
 msgstr "Synlighet"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+#: src/plugins/obs-studio/obs-toggle-source-action.c:132
 msgid "Hide"
 msgstr "Skjul"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+#: src/plugins/obs-studio/obs-toggle-source-action.c:133
 msgid "Show"
 msgstr "Vis"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:479
+#: src/plugins/obs-studio/obs-toggle-source-action.c:484
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
 msgid "Behavior"
 msgstr "Oppførsel"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:490
+#: src/plugins/obs-studio/obs-toggle-source-action.c:495
 msgid "Audio Source"
 msgstr "Lydkilde"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:492
+#: src/plugins/obs-studio/obs-toggle-source-action.c:497
 msgid "Source"
 msgstr "Kilde"
 
@@ -571,31 +616,31 @@ msgstr "Styr den aktive musikkspilleren"
 msgid "Play Audio"
 msgstr "Spill lyd"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:197
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
 msgid "Next"
 msgstr "Neste"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:198
+#: src/plugins/soundboard/soundboard-mpris-action.c:203
 msgid "Pause"
 msgstr "Pause"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:199
+#: src/plugins/soundboard/soundboard-mpris-action.c:204
 msgid "Play"
 msgstr "Spill"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:200
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
 msgid "Previous"
 msgstr "Forrige"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:201
+#: src/plugins/soundboard/soundboard-mpris-action.c:206
 msgid "Stop"
 msgstr "Stopp"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:202
+#: src/plugins/soundboard/soundboard-mpris-action.c:207
 msgid "Play / Pause"
 msgstr "Spill / pause"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:205
+#: src/plugins/soundboard/soundboard-mpris-action.c:210
 msgid "Playback Action"
 msgstr "Spillehandling"
 
