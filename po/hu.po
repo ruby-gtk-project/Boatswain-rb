@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-01-27 21:39+0000\n"
-"PO-Revision-Date: 2025-02-28 17:15+0100\n"
+"POT-Creation-Date: 2025-02-28 16:17+0000\n"
+"PO-Revision-Date: 2025-03-07 00:48+0100\n"
 "Last-Translator: Balázs Úr <ur.balazs at fsf dot hu>\n"
 "Language-Team: Hungarian <openscope at fsf dot hu>\n"
 "Language: hu\n"
@@ -101,15 +101,15 @@ msgstr ""
 "A Fedélzetmesternek futnia kell a háttérben a Stream Deck műveletek "
 "felismeréséhez és végrehajtásához."
 
-#: src/bs-button-editor.c:333
+#: src/bs-button-editor.c:343
 msgid "All supported formats"
 msgstr "Minden támogatott formátum"
 
-#: src/bs-button-editor.c:342
+#: src/bs-button-editor.c:352
 msgid "Select icon"
 msgstr "Ikon kiválasztása"
 
-#: src/bs-button-editor.c:343
+#: src/bs-button-editor.c:353
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Megnyitás"
@@ -163,21 +163,21 @@ msgstr "Mozgatás le"
 msgid "Delete"
 msgstr "Törlés"
 
-#: src/bs-stream-deck.c:422
+#: src/bs-stream-deck.c:432
 msgid "Default"
 msgstr "Alapértelmezett"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1304 src/bs-stream-deck.c:1329
+#: src/bs-stream-deck.c:1314 src/bs-stream-deck.c:1339
 msgid "Stream Deck Mini"
 msgstr "Stream Deck Mini"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1354 src/bs-stream-deck.c:1379
+#: src/bs-stream-deck.c:1364 src/bs-stream-deck.c:1389
 #: src/plugins/default/default-switch-profile-action.c:278
 #: src/plugins/default/default.plugin.desktop.in:3
 msgid "Stream Deck"
@@ -186,44 +186,43 @@ msgstr "Stream Deck"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1404 src/bs-stream-deck.c:1429
+#: src/bs-stream-deck.c:1414 src/bs-stream-deck.c:1439
 msgid "Stream Deck XL"
 msgstr "Stream Deck XL"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1454
+#: src/bs-stream-deck.c:1464
 msgid "Stream Deck MK.2"
 msgstr "Stream Deck MK.2"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1479
+#: src/bs-stream-deck.c:1489
 msgid "Stream Deck Pedal"
 msgstr "Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1504
+#: src/bs-stream-deck.c:1514
 msgid "Stream Deck +"
 msgstr "Stream Deck +"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: src/bs-stream-deck.c:1545
-#| msgid "Stream Deck +"
+#: src/bs-stream-deck.c:1555
 msgid "Stream Deck Neo"
 msgstr "Stream Deck Neo"
 
-#: src/bs-stream-deck.c:1614
+#: src/bs-stream-deck.c:1624
 msgid "Feaneron Hangar Original"
 msgstr "Feaneron Hangar Original"
 
-#: src/bs-stream-deck.c:1636
+#: src/bs-stream-deck.c:1646
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
@@ -239,7 +238,7 @@ msgstr "Üveg"
 
 #: src/bs-touchscreen-background-dialog.c:68
 msgid "Oh Sheet!"
-msgstr ""
+msgstr "Szent lepel!"
 
 #: src/bs-touchscreen-background-dialog.c:69
 msgid "Pills"
@@ -247,10 +246,9 @@ msgstr "Pirulák"
 
 #: src/bs-touchscreen-background-dialog.c:70
 msgid "Swoosh"
-msgstr ""
+msgstr "Svung"
 
 #: src/bs-touchscreen-slot-editor.ui:14
-#| msgid "Button Properties"
 msgid "Touchscreen Properties"
 msgstr "Érintőképernyő tulajdonságai"
 
@@ -259,7 +257,6 @@ msgid "Touchscreen"
 msgstr "Érintőképernyő"
 
 #: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
-#| msgid "Actions"
 msgid "Action"
 msgstr "Művelet"
 
@@ -682,3 +679,4 @@ msgstr "Hangerő"
 #: src/plugins/soundboard/soundboard.plugin.desktop.in:3
 msgid "Soundboard"
 msgstr "Hangfal"
+
