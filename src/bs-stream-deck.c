@@ -1896,11 +1896,7 @@ bs_stream_deck_initable_init (GInitable     *initable,
       BS_GOTO (out);
     }
 
-  if (!self->device)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "No device");
-      BS_RETURN (FALSE);
-    }
+  g_assert (self->device != NULL);
 
   if (g_usb_device_get_vid (self->device) != ELGATO_SYSTEMS_VENDOR_ID)
     {
