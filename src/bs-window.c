@@ -34,11 +34,14 @@ struct _BsWindow
   GtkAdjustment *brightness_adjustment;
   GtkMenuButton *devices_menu_button;
   GtkPopover *devices_popover;
-  GtkWidget *empty_page;
+  GtkStack *devices_stack;
+  AdwStatusPage *empty_page;
+  GtkWidget *empty_page_view;
   GtkLabel *firmware_version_label;
   GtkStack *main_stack;
   GtkListBox *profiles_listbox;
   GtkEditable *new_profile_name_entry;
+  AdwNavigationSplitView *split_view;
   GtkListBox *stream_decks_listbox;
 
   GBinding *brightness_binding;
@@ -98,8 +101,10 @@ select_stream_deck (BsWindow     *self,
   if (self->current_stream_deck == stream_deck)
     return;
 
+  gtk_stack_set_visible_child_name (self->main_stack, "devices");
+
   page_name = g_strdup_printf ("%p", stream_deck);
-  gtk_stack_set_visible_child_name (self->main_stack, page_name);
+  gtk_stack_set_visible_child_name (self->devices_stack, page_name);
 
   g_clear_pointer (&self->brightness_binding, g_binding_unbind);
 
@@ -218,7 +223,7 @@ on_device_manager_device_added_cb (BsDeviceManager *device_manager,
 
   editor = bs_device_editor_new (stream_deck);
   page_name = g_strdup_printf ("%p", stream_deck);
-  gtk_stack_add_named (self->main_stack, editor, page_name);
+  gtk_stack_add_named (self->devices_stack, editor, page_name);
 
   if (g_list_model_get_n_items (G_LIST_MODEL (device_manager)) == 1)
     select_stream_deck (self, stream_deck);
@@ -233,12 +238,12 @@ on_device_manager_device_removed_cb (BsDeviceManager *device_manager,
   GtkWidget *child;
 
   page_name = g_strdup_printf ("%p", stream_deck);
-  child = gtk_stack_get_child_by_name (self->main_stack, page_name);
+  child = gtk_stack_get_child_by_name (self->devices_stack, page_name);
 
-  gtk_stack_remove (self->main_stack, child);
+  gtk_stack_remove (self->devices_stack, child);
 
   if (g_list_model_get_n_items (G_LIST_MODEL (device_manager)) == 0)
-    gtk_stack_set_visible_child (self->main_stack, self->empty_page);
+    gtk_stack_set_visible_child_name (self->main_stack, "empty");
 }
 
 static void
@@ -339,7 +344,7 @@ bs_window_constructed (GObject *object)
       stream_deck = g_list_model_get_item (G_LIST_MODEL (device_manager), i);
       editor = bs_device_editor_new (stream_deck);
       page_name = g_strdup_printf ("%p", stream_deck);
-      gtk_stack_add_named (self->main_stack, editor, page_name);
+      gtk_stack_add_named (self->devices_stack, editor, page_name);
 
       if (first)
         {
@@ -426,6 +431,7 @@ bs_window_class_init (BsWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, BsWindow, brightness_adjustment);
   gtk_widget_class_bind_template_child (widget_class, BsWindow, devices_menu_button);
   gtk_widget_class_bind_template_child (widget_class, BsWindow, devices_popover);
+  gtk_widget_class_bind_template_child (widget_class, BsWindow, devices_stack);
   gtk_widget_class_bind_template_child (widget_class, BsWindow, empty_page);
   gtk_widget_class_bind_template_child (widget_class, BsWindow, firmware_version_label);
   gtk_widget_class_bind_template_child (widget_class, BsWindow, main_stack);
@@ -452,5 +458,8 @@ bs_window_init (BsWindow *self)
   g_action_map_add_action_entries (G_ACTION_MAP (self), actions, G_N_ELEMENTS (actions), self);
 
   if (g_strcmp0 (PROFILE, "development") == 0)
-  gtk_widget_add_css_class (GTK_WIDGET (self), "devel");
+    {
+      adw_status_page_set_icon_name (self->empty_page, "com.feaneron.Boatswain.Devel");
+      gtk_widget_add_css_class (GTK_WIDGET (self), "devel");
+    }
 }
