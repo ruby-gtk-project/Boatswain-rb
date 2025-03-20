@@ -19,6 +19,26 @@
         <property name="content">
           <object class="AdwPreferencesPage">
 
+            <!-- No Background -->
+            <child>
+              <object class="AdwPreferencesGroup">
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="activatable">True</property>
+                    <property name="title" translatable="yes">No Background</property>
+                    <property name="tooltip-text" translatable="yes">No Background</property>
+                    <property name="icon-name">action-unavailable-symbolic</property>
+                    <property name="action-name">backgrounddialog.set-default-background</property>
+                    <style>
+                      <class name="touchscreen-default-background" />
+                    </style>
+                  </object>
+                </child>
+
+              </object>
+            </child>
+
+            <!-- Adwaita -->
             <child>
               <object class="AdwPreferencesGroup" id="adwaita_group">
                 <property name="title" translatable="yes">Adwaita</property>

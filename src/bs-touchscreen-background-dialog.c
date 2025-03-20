@@ -126,6 +126,22 @@ on_set_background_action_activated_cb (GSimpleAction *action,
   bs_touchscreen_content_set_background_from_file (content, file);
 }
 
+static void
+on_set_default_background_action_activated_cb (GSimpleAction *action,
+                                               GVariant      *parameter,
+                                               gpointer       user_data)
+{
+  BsTouchscreenBackgroundDialog *self = (BsTouchscreenBackgroundDialog *) user_data;
+  BsTouchscreenContent *content;
+
+  g_assert (BS_IS_TOUCHSCREEN_BACKGROUND_DIALOG (self));
+
+  g_debug ("Setting default touchscreen background");
+
+  content = bs_touchscreen_get_content (self->touchscreen);
+  bs_touchscreen_content_set_default_background (content);
+}
+
 
 /*
  * GObject overrides
@@ -209,6 +225,7 @@ bs_touchscreen_background_dialog_init (BsTouchscreenBackgroundDialog *self)
 {
   const GActionEntry actions[] = {
     { "set-background", on_set_background_action_activated_cb, "s", },
+    { "set-default-background", on_set_default_background_action_activated_cb },
   };
 
   self->action_group = g_simple_action_group_new ();

@@ -101,3 +101,7 @@ row.touchscreen-background {
   padding: 0;
   min-height: 50px;
 }
+
+row.touchscreen-default-background {
+  font-weight: bold;
+}
