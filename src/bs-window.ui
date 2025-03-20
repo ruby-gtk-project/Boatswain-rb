@@ -215,24 +215,23 @@
                 <property name="transition-type">crossfade</property>
 
                 <child>
-                  <object class="GtkBox">
-                    <property name="orientation">vertical</property>
+                  <object class="AdwToolbarView">
 
                     <!-- Header bar -->
-                    <child>
+                    <child type="top">
                       <object class="AdwHeaderBar">
                         <property name="show-title">False</property>
                       </object>
                     </child>
 
-                    <child>
+                    <property name="content">
                       <object class="AdwStatusPage" id="empty_page">
                         <property name="vexpand">True</property>
                         <property name="icon-name">dialpad-symbolic</property>
                         <property name="title" translatable="yes">No Stream Deck Found</property>
                         <property name="description" translatable="yes">Plug in a Stream Deck device to use it.</property>
                       </object>
-                    </child>
+                    </property>
 
                   </object>
                 </child>
