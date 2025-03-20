@@ -58,7 +58,7 @@ static guint signals[N_SIGNALS] = { 0, };
 static void
 enumerate_fake_stream_decks (BsDeviceManager *self)
 {
-  int n_devices = MAX (atoi (g_getenv ("BOATSWAIN_N_DEVICES") ?: "1"), 1);
+  int n_devices = MAX (atoi (g_getenv ("BOATSWAIN_N_DEVICES") ?: "1"), 0);
 
   for (int i = 0; i < n_devices; i++)
     {
