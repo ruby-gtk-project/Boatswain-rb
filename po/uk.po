@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-03-20 14:02+0000\n"
-"PO-Revision-Date: 2025-03-20 18:19+0200\n"
+"POT-Creation-Date: 2025-03-20 16:48+0000\n"
+"PO-Revision-Date: 2025-03-20 21:47+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -232,7 +232,7 @@ msgstr "Feaneron Hangar XL"
 
 #. Adwaita
 #: src/bs-touchscreen-background-dialog.c:66
-#: src/bs-touchscreen-background-dialog.ui:24
+#: src/bs-touchscreen-background-dialog.ui:44
 msgid "Adwaita"
 msgstr "Адвайта"
 
@@ -252,6 +252,12 @@ msgstr "Пігулки"
 msgid "Swoosh"
 msgstr "Свуш"
 
+#: src/bs-touchscreen-background-dialog.ui:28
+#: src/bs-touchscreen-background-dialog.ui:29
+#| msgid "Background Color"
+msgid "No Background"
+msgstr "Без тла"
+
 #: src/bs-touchscreen-slot-editor.ui:14
 msgid "Touchscreen Properties"
 msgstr "Властивості сенсорного екрана"
@@ -269,7 +275,6 @@ msgid "No Stream Deck Found"
 msgstr "Не знайдено потокової деки"
 
 #: src/bs-window.ui:39
-#| msgid "Plug in a Stream Deck device to use it."
 msgid "Plug in a Stream Deck device to use it"
 msgstr "З'єднайте пристрій потокової деки, щоб скористатися ним"
 
