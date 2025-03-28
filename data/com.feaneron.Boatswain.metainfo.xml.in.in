@@ -67,6 +67,27 @@
   </supports>
 
   <releases>
+    <release date="2025-03-27" version="5.0">
+      <description>
+        <p>
+          Boatswain 5.0 is here! This release comes with support for new devices,
+          various improvements and optimizations, and new actions!
+        </p>
+        <p>
+          What's new:
+        </p>
+        <ul>
+          <li>Trigger keyboard shortcuts on your system with the Keyboard Shortcuts action</li>
+          <li>Support for Elgato Stream Deck Plus and Neo</li>
+          <li>Update interface to more modern visuals</li>
+        </ul>
+        <p>
+          In order to introduce support for the new devices, significant parts of the
+          application had to be reworked. Please let us know if you spot any issues!
+        </p>
+      </description>
+    </release>
+
     <release date="2023-11-26" version="0.4.0">
       <description>
         <p>
