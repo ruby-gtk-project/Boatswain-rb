@@ -56,8 +56,6 @@ boatswain_deps = [
 
 subdir('plugins')
 
-gnome = import('gnome')
-
 debug_conf = configuration_data()
 debug_conf.set10('ENABLE_TRACING', get_option('tracing'))
 debug_conf.set('BUGREPORT_URL', 'https://gitlab.gnome.org/World/boatswain/-/issues/new')
