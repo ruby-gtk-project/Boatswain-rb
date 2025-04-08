@@ -21,9 +21,6 @@
 
 #include "default-page-up-action.h"
 
-#include "bs-events.h"
-#include "bs-icon.h"
-#include "bs-stream-deck.h"
 #include "bs-button.h"
 
 #include <glib/gi18n.h>
@@ -44,14 +41,14 @@ static void
 default_page_up_action_handle_event (BsAction *action,
                                      BsEvent  *event)
 {
-  BsStreamDeck *device;
+  BsDevice *device;
 
   if (bs_event_get_event_type (event) != BS_BUTTON_PRESS &&
       bs_event_get_event_type (event) != BS_CURSOR_DOUBLE_CLICK)
     return;
 
   device = bs_event_get_device (event);
-  bs_stream_deck_pop_page (device);
+  bs_device_pop_page (device);
 }
 
 

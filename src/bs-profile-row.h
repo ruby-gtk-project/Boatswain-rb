@@ -28,8 +28,8 @@ G_BEGIN_DECLS
 #define BS_TYPE_PROFILE_ROW (bs_profile_row_get_type())
 G_DECLARE_FINAL_TYPE (BsProfileRow, bs_profile_row, BS, PROFILE_ROW, AdwPreferencesRow)
 
-GtkWidget * bs_profile_row_new (BsStreamDeck *stream_deck,
-                                BsProfile    *profile);
+GtkWidget * bs_profile_row_new (BsDevice  *device,
+                                BsProfile *profile);
 
 BsProfile * bs_profile_row_get_profile (BsProfileRow *self);
 

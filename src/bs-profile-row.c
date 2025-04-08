@@ -32,7 +32,7 @@ struct _BsProfileRow
   GSimpleActionGroup *action_group;
 
   BsProfile *profile;
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
 };
 
 G_DEFINE_FINAL_TYPE (BsProfileRow, bs_profile_row, ADW_TYPE_PREFERENCES_ROW)
@@ -66,7 +66,7 @@ update_actions (BsProfileRow *self)
   GAction *action;
   unsigned int position;
 
-  profiles = bs_stream_deck_get_profiles (self->stream_deck);
+  profiles = bs_device_get_profiles (self->device);
   action = g_action_map_lookup_action (G_ACTION_MAP (self->action_group), "delete");
 
   g_simple_action_set_enabled (G_SIMPLE_ACTION (action), g_list_model_get_n_items (profiles) > 1);
@@ -99,7 +99,7 @@ update_selected_icon_visibility (BsProfileRow *self)
 {
   gboolean visible;
 
-  visible = bs_stream_deck_get_active_profile (self->stream_deck) == self->profile;
+  visible = bs_device_get_active_profile (self->device) == self->profile;
   gtk_widget_set_visible (self->selected_icon, visible);
 }
 
@@ -143,12 +143,12 @@ on_delete_action_activated_cb (GSimpleAction *simple,
   unsigned int position;
 
   self = BS_PROFILE_ROW (user_data);
-  profiles = bs_stream_deck_get_profiles (self->stream_deck);
+  profiles = bs_device_get_profiles (self->device);
 
   if (!g_list_store_find (G_LIST_STORE (profiles), self->profile, &position))
     return;
 
-  if (bs_stream_deck_get_active_profile (self->stream_deck) == self->profile)
+  if (bs_device_get_active_profile (self->device) == self->profile)
     {
       new_active_profile = g_list_model_get_item (profiles, position + 1);
 
@@ -156,7 +156,7 @@ on_delete_action_activated_cb (GSimpleAction *simple,
         new_active_profile = g_list_model_get_item (profiles, position - 1);
 
       if (new_active_profile)
-        bs_stream_deck_load_profile (self->stream_deck, new_active_profile);
+        bs_device_load_profile (self->device, new_active_profile);
     }
 
   g_signal_handlers_block_by_func (profiles, on_profiles_items_changed_cb, self);
@@ -213,7 +213,7 @@ on_rename_entry_text_changed_cb (GtkEntry     *entry,
 }
 
 static void
-on_stream_deck_active_profile_changed_cb (BsStreamDeck *stream_deck,
+on_device_active_profile_changed_cb (BsDevice *device,
                                           GParamSpec   *pspec,
                                           BsProfileRow *self)
 {
@@ -237,12 +237,12 @@ bs_profile_row_constructed (GObject *object)
   g_object_bind_property (self->profile, "name", self, "title", G_BINDING_SYNC_CREATE);
   g_object_bind_property (self->profile, "name", self->rename_entry, "text", G_BINDING_SYNC_CREATE);
 
-  profiles = bs_stream_deck_get_profiles (self->stream_deck);
+  profiles = bs_device_get_profiles (self->device);
   g_signal_connect_object (profiles, "items-changed", G_CALLBACK (on_profiles_items_changed_cb), self, 0);
 
-  g_signal_connect_object (self->stream_deck,
+  g_signal_connect_object (self->device,
                            "notify::active-profile",
-                           G_CALLBACK (on_stream_deck_active_profile_changed_cb),
+                           G_CALLBACK (on_device_active_profile_changed_cb),
                            self,
                            0);
 
@@ -265,7 +265,7 @@ bs_profile_row_get_property (GObject    *object,
       break;
 
     case PROP_STREAM_DECK:
-      g_value_set_object (value, self->stream_deck);
+      g_value_set_object (value, self->device);
       break;
 
     default:
@@ -289,8 +289,8 @@ bs_profile_row_set_property (GObject      *object,
       break;
 
     case PROP_STREAM_DECK:
-      g_assert (self->stream_deck == NULL);
-      self->stream_deck = g_value_get_object (value);
+      g_assert (self->device == NULL);
+      self->device = g_value_get_object (value);
       break;
 
     default:
@@ -313,7 +313,7 @@ bs_profile_row_class_init (BsProfileRowClass *klass)
                                                   G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_STREAM_DECK] = g_param_spec_object ("stream-deck", NULL, NULL,
-                                                      BS_TYPE_STREAM_DECK,
+                                                      BS_TYPE_DEVICE,
                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
@@ -355,11 +355,11 @@ bs_profile_row_init (BsProfileRow *self)
 }
 
 GtkWidget *
-bs_profile_row_new (BsStreamDeck *stream_deck,
-                    BsProfile    *profile)
+bs_profile_row_new (BsDevice  *device,
+                    BsProfile *profile)
 {
   return g_object_new (BS_TYPE_PROFILE_ROW,
-                       "stream-deck", stream_deck,
+                       "stream-deck", device,
                        "profile", profile,
                        NULL);
 }

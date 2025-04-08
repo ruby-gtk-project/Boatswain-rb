@@ -4,14 +4,14 @@
 classDiagram
     
     class BsDeviceManager {
-        GListModel~BsStreamDeck~ devices
+        GListModel~BsDevice~ devices
     }
 
-        class BsStreamDeck {
+        class BsDevice {
             GListModel~BsDeviceRegion~ regions
             GListModel~BsProfile~ profiles
         }
-        BsDeviceManager "1" *-- "1..*" BsStreamDeck : contains
+        BsDeviceManager "1" *-- "1..*" BsDevice : contains
 
             class BsDeviceRegion {
                 const char* id
@@ -20,7 +20,7 @@ classDiagram
                 unsigned int row
                 unsigned int row_span
             }
-            BsStreamDeck "1" *-- "1..*" BsDeviceRegion : contains
+            BsDevice "1" *-- "1..*" BsDeviceRegion : contains
 
                 class BsButtonGrid {
                     GListModel~BsButton~ buttons
@@ -60,7 +60,7 @@ classDiagram
                 double brightness
                 BsPage* root_page
             }
-            BsStreamDeck "1" o-- "1..*" BsProfile : contains
+            BsDevice "1" o-- "1..*" BsProfile : contains
 
             class BsPage {
                 BsPageItem[] items

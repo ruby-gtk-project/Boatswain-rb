@@ -29,7 +29,7 @@
 G_BEGIN_DECLS
 
 BsTouchscreen * bs_touchscreen_new (const char        *id,
-                                    BsStreamDeck      *stream_deck,
+                                    BsDevice          *device,
                                     const BsImageInfo *image_info,
                                     uint32_t           n_slots,
                                     unsigned int       column,

@@ -30,7 +30,7 @@ struct _DefaultSwitchProfileAction
   char *serial_number;
   char *profile_id;
 
-  AdwComboRow *stream_decks_row;
+  AdwComboRow *devices_row;
   AdwComboRow *profiles_row;
 
   GBinding *binding;
@@ -45,9 +45,9 @@ G_DEFINE_FINAL_TYPE (DefaultSwitchProfileAction, default_switch_profile_action, 
  * Auxiliary methods
  */
 
-static BsStreamDeck *
-find_stream_deck (const char   *serial_number,
-                  unsigned int *out_position)
+static BsDevice *
+find_device (const char   *serial_number,
+             unsigned int *out_position)
 {
   GListModel *devices;
   BsContext *context;
@@ -57,15 +57,15 @@ find_stream_deck (const char   *serial_number,
 
   for (unsigned int i = 0; i < g_list_model_get_n_items (devices); i++)
     {
-      g_autoptr (BsStreamDeck) stream_deck = NULL;
+      g_autoptr (BsDevice) device = NULL;
 
-      stream_deck = g_list_model_get_item (devices, i);
+      device = g_list_model_get_item (devices, i);
 
-      if (g_strcmp0 (bs_stream_deck_get_serial_number (stream_deck), serial_number) == 0)
+      if (g_strcmp0 (bs_device_get_serial_number (device), serial_number) == 0)
         {
           if (out_position)
             *out_position = i;
-          return stream_deck;
+          return device;
         }
     }
 
@@ -76,14 +76,14 @@ find_stream_deck (const char   *serial_number,
 }
 
 static BsProfile *
-get_profile_from_stream_deck (BsStreamDeck *stream_deck,
-                              const char   *profile_id,
-                              unsigned int *out_position)
+get_profile_from_device (BsDevice     *device,
+                         const char   *profile_id,
+                         unsigned int *out_position)
 {
   GListModel *profiles;
   unsigned int i;
 
-  profiles = bs_stream_deck_get_profiles (stream_deck);
+  profiles = bs_device_get_profiles (device);
 
   for (i = 0; i < g_list_model_get_n_items (profiles); i++)
     {
@@ -100,28 +100,28 @@ get_profile_from_stream_deck (BsStreamDeck *stream_deck,
   if (out_position)
     *out_position = GTK_INVALID_LIST_POSITION;
 
-  return bs_stream_deck_get_active_profile (stream_deck);
+  return bs_device_get_active_profile (device);
 }
 
 static gboolean
-find_stream_deck_and_profile (DefaultSwitchProfileAction  *self,
-                              BsStreamDeck               **out_stream_deck,
-                              BsProfile                  **out_profile)
+find_device_and_profile (DefaultSwitchProfileAction  *self,
+                         BsDevice                   **out_device,
+                         BsProfile                  **out_profile)
 {
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   BsProfile *profile;
 
-  stream_deck = find_stream_deck (self->serial_number, NULL);
+  device = find_device (self->serial_number, NULL);
 
-  if (!stream_deck)
+  if (!device)
     return FALSE;
 
-  profile = get_profile_from_stream_deck (stream_deck, self->profile_id, NULL);
+  profile = get_profile_from_device (device, self->profile_id, NULL);
 
   if (!profile)
     return FALSE;
 
-  *out_stream_deck = stream_deck;
+  *out_device = device;
   *out_profile = profile;
   return TRUE;
 }
@@ -151,13 +151,13 @@ set_active_profile (DefaultSwitchProfileAction *self,
 static void
 update_active_profile (DefaultSwitchProfileAction *self)
 {
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   BsProfile *profile;
   BsIcon *icon;
 
   icon = bs_action_get_icon (BS_ACTION (self));
 
-  if (find_stream_deck_and_profile (self, &stream_deck, &profile))
+  if (find_device_and_profile (self, &device, &profile))
     {
       bs_icon_set_opacity (icon, -1.0);
       set_active_profile (self, profile);
@@ -174,20 +174,20 @@ update_active_profile (DefaultSwitchProfileAction *self)
  */
 
 static void
-on_stream_decks_combo_row_selected_item_changed_cb (AdwComboRow                *combo_row,
-                                                    GParamSpec                 *pspec,
-                                                    DefaultSwitchProfileAction *self)
+on_devices_combo_row_selected_item_changed_cb (AdwComboRow                *combo_row,
+                                               GParamSpec                 *pspec,
+                                               DefaultSwitchProfileAction *self)
 {
 
-  BsStreamDeck *stream_deck = adw_combo_row_get_selected_item (combo_row);
+  BsDevice *device = adw_combo_row_get_selected_item (combo_row);
 
   g_clear_pointer (&self->serial_number, g_free);
-  self->serial_number = stream_deck ? g_strdup (bs_stream_deck_get_serial_number (stream_deck)) : NULL;
+  self->serial_number = device ? g_strdup (bs_device_get_serial_number (device)) : NULL;
 
   g_assert (self->profiles_row != NULL);
 
-  if (stream_deck)
-    adw_combo_row_set_model (self->profiles_row, bs_stream_deck_get_profiles (stream_deck));
+  if (device)
+    adw_combo_row_set_model (self->profiles_row, bs_device_get_profiles (device));
   else
     adw_combo_row_set_model (self->profiles_row, NULL);
 
@@ -227,7 +227,7 @@ default_switch_profile_action_handle_event (BsAction *action,
                                             BsEvent  *event)
 {
   DefaultSwitchProfileAction *self;
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   BsProfile *profile;
 
   if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
@@ -235,23 +235,23 @@ default_switch_profile_action_handle_event (BsAction *action,
 
   self = DEFAULT_SWITCH_PROFILE_ACTION (action);
 
-  if (find_stream_deck_and_profile (self, &stream_deck, &profile))
-    bs_stream_deck_load_profile (stream_deck, profile);
+  if (find_device_and_profile (self, &device, &profile))
+    bs_device_load_profile (device, profile);
 }
 
 static GtkWidget *
 default_switch_profile_action_get_preferences (BsAction *action)
 {
   DefaultSwitchProfileAction *self = DEFAULT_SWITCH_PROFILE_ACTION (action);
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   GListModel *profiles;
   BsContext *context;
   GtkWidget *group;
   GtkWidget *row;
   unsigned int position;
 
-  if (self->stream_decks_row)
-    g_object_remove_weak_pointer (G_OBJECT (self->stream_decks_row), (gpointer *) &self->stream_decks_row);
+  if (self->devices_row)
+    g_object_remove_weak_pointer (G_OBJECT (self->devices_row), (gpointer *) &self->devices_row);
   if (self->profiles_row)
     g_object_remove_weak_pointer (G_OBJECT (self->profiles_row), (gpointer *) &self->profiles_row);
 
@@ -266,22 +266,22 @@ default_switch_profile_action_get_preferences (BsAction *action)
                                 gtk_property_expression_new (BS_TYPE_PROFILE, NULL, "name"));
   adw_combo_row_set_model (ADW_COMBO_ROW (row), bs_context_get_devices (context));
 
-  if ((stream_deck = find_stream_deck (self->serial_number, &position)) != NULL)
+  if ((device = find_device (self->serial_number, &position)) != NULL)
     adw_combo_row_set_selected (ADW_COMBO_ROW (row), position);
   else
     adw_combo_row_set_selected (ADW_COMBO_ROW (row), GTK_INVALID_LIST_POSITION);
 
-  self->stream_decks_row = ADW_COMBO_ROW (row);
-  g_object_add_weak_pointer (G_OBJECT (self->stream_decks_row), (gpointer *) &self->stream_decks_row);
+  self->devices_row = ADW_COMBO_ROW (row);
+  g_object_add_weak_pointer (G_OBJECT (self->devices_row), (gpointer *) &self->devices_row);
   adw_preferences_group_add (ADW_PREFERENCES_GROUP (group), row);
 
   g_signal_connect (row,
                     "notify::selected-item",
-                    G_CALLBACK (on_stream_decks_combo_row_selected_item_changed_cb),
+                    G_CALLBACK (on_devices_combo_row_selected_item_changed_cb),
                     self);
 
   /* Profiles */
-  profiles = stream_deck ? bs_stream_deck_get_profiles (stream_deck) : NULL;
+  profiles = device ? bs_device_get_profiles (device) : NULL;
 
   row = adw_combo_row_new ();
   adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), _("Profile"));
@@ -289,7 +289,7 @@ default_switch_profile_action_get_preferences (BsAction *action)
                                 gtk_property_expression_new (BS_TYPE_PROFILE, NULL, "name"));
   adw_combo_row_set_model (ADW_COMBO_ROW (row), profiles);
 
-  if (profiles && get_profile_from_stream_deck (stream_deck, self->profile_id, &position))
+  if (profiles && get_profile_from_device (device, self->profile_id, &position))
     adw_combo_row_set_selected (ADW_COMBO_ROW (row), position);
   else
     adw_combo_row_set_selected (ADW_COMBO_ROW (row), GTK_INVALID_LIST_POSITION);

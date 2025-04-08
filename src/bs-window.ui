@@ -73,12 +73,12 @@
                                     <child>
                                       <object class="AdwWindowTitle">
                                         <binding name="title">
-                                          <lookup type="BsStreamDeck" name="name">
+                                          <lookup type="BsDevice" name="name">
                                             <lookup name="device">BsWindow</lookup>
                                           </lookup>
                                         </binding>
                                         <binding name="subtitle">
-                                          <lookup type="BsStreamDeck" name="serial-number">
+                                          <lookup type="BsDevice" name="serial-number">
                                             <lookup name="device">BsWindow</lookup>
                                           </lookup>
                                         </binding>
@@ -101,9 +101,9 @@
                                         <property name="orientation">vertical</property>
 
                                         <child>
-                                          <object class="GtkListBox" id="stream_decks_listbox">
+                                          <object class="GtkListBox" id="devices_listbox">
                                             <property name="selection-mode">none</property>
-                                            <signal name="row-activated" handler="on_stream_decks_listbox_row_activated_cb" object="BsWindow" swapped="no" />
+                                            <signal name="row-activated" handler="on_devices_listbox_row_activated_cb" object="BsWindow" swapped="no" />
                                             <style>
                                               <class name="navigation-sidebar" />
                                             </style>

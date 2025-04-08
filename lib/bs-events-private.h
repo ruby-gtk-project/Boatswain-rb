@@ -31,25 +31,25 @@ void bs_event_init_types_once (void);
  * BsButtonEvent
  */
 
-BsEvent * bs_button_event_new (BsEventType   event_type,
-                               BsStreamDeck *device,
-                               BsButton     *button);
+BsEvent * bs_button_event_new (BsEventType  event_type,
+                               BsDevice    *device,
+                               BsButton    *button);
 
 /*
  * BsDialEvent
  */
 
-BsEvent * bs_dial_event_new (BsEventType   event_type,
-                             BsStreamDeck *device,
-                             BsDial       *dial,
-                             int           rotation);
+BsEvent * bs_dial_event_new (BsEventType  event_type,
+                             BsDevice    *device,
+                             BsDial      *dial,
+                             int          rotation);
 
 /*
  * BsTouchscreenEvent
  */
 
 BsEvent * bs_touchscreen_event_new (BsEventType             event_type,
-                                    BsStreamDeck           *device,
+                                    BsDevice               *device,
                                     BsTouchscreenSlot      *slot,
                                     const graphene_point_t *start,
                                     const graphene_point_t *end);

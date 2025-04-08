@@ -21,10 +21,10 @@
 
 #define G_LOG_DOMAIN "Touchscreen"
 
+#include "bs-device-private.h"
 #include "bs-device-region.h"
 #include "bs-debug.h"
 #include "bs-renderer.h"
-#include "bs-stream-deck-private.h"
 #include "bs-touchscreen.h"
 #include "bs-touchscreen-content.h"
 #include "bs-touchscreen-slot-private.h"
@@ -80,14 +80,14 @@ on_region_invalidated_cb (BsTouchscreenContent  *content,
                           const graphene_rect_t *region,
                           BsTouchscreen         *self)
 {
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
 
-  stream_deck = bs_device_region_get_stream_deck (BS_DEVICE_REGION (self));
+  device = bs_device_region_get_device (BS_DEVICE_REGION (self));
 
-  if (!bs_stream_deck_is_initialized (stream_deck))
+  if (!bs_device_is_initialized (device))
     return;
 
-  bs_stream_deck_upload_touchscreen (stream_deck, self, region);
+  bs_device_upload_touchscreen (device, self, region);
 }
 
 
@@ -241,7 +241,7 @@ bs_touchscreen_init (BsTouchscreen *self)
 
 BsTouchscreen *
 bs_touchscreen_new (const char        *id,
-                    BsStreamDeck      *stream_deck,
+                    BsDevice          *device,
                     const BsImageInfo *image_info,
                     uint32_t           n_slots,
                     unsigned int       column,
@@ -253,7 +253,7 @@ bs_touchscreen_new (const char        *id,
 
   self = g_object_new (BS_TYPE_TOUCHSCREEN,
                        "id", id,
-                       "stream-deck", stream_deck,
+                       "stream-deck", device,
                        "column", column,
                        "row", row,
                        "column-span", column_span,

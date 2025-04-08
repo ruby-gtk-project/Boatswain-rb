@@ -54,7 +54,7 @@ unsigned int bs_device_region_get_column_span (BsDeviceRegion *self);
 unsigned int bs_device_region_get_row (BsDeviceRegion *self);
 unsigned int bs_device_region_get_row_span (BsDeviceRegion *self);
 
-BsStreamDeck * bs_device_region_get_stream_deck (BsDeviceRegion *self);
+BsDevice * bs_device_region_get_device (BsDeviceRegion *self);
 
 BsRenderer * bs_device_region_get_renderer (BsDeviceRegion *self);
 

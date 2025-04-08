@@ -22,7 +22,7 @@
 #include "bs-dial-grid.h"
 
 #include "bs-dial-private.h"
-#include "bs-stream-deck.h"
+#include "bs-device.h"
 
 struct _BsDialGrid
 {
@@ -125,7 +125,7 @@ bs_dial_grid_init (BsDialGrid *self)
 
 BsDialGrid *
 bs_dial_grid_new (const char   *id,
-                  BsStreamDeck *stream_deck,
+                  BsDevice *device,
                   unsigned int  n_dials,
                   unsigned int  grid_columns,
                   unsigned int  column,
@@ -135,12 +135,12 @@ bs_dial_grid_new (const char   *id,
 {
   g_autoptr (BsDialGrid) self = NULL;
 
-  g_assert (BS_IS_STREAM_DECK (stream_deck));
+  g_assert (BS_IS_DEVICE (device));
   g_assert (n_dials > 0);
 
   self = g_object_new (BS_TYPE_DIAL_GRID,
                        "id", id,
-                       "stream-deck", stream_deck,
+                       "stream-deck", device,
                        "grid-columns", grid_columns,
                        "column", column,
                        "row", row,
@@ -150,7 +150,7 @@ bs_dial_grid_new (const char   *id,
 
   for (unsigned int i = 0; i < n_dials; i++)
     {
-      g_autoptr (BsDial) dial = bs_dial_new (stream_deck, i);
+      g_autoptr (BsDial) dial = bs_dial_new (device, i);
       g_list_store_append (self->dials, dial);
     }
 

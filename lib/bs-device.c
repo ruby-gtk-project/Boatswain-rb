@@ -18,9 +18,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#define G_LOG_DOMAIN "Stream Deck"
+#define G_LOG_DOMAIN "Device"
 
-#include "bs-stream-deck-private.h"
+#include "bs-device-private.h"
 
 #include "bs-actionable-private.h"
 #include "bs-action.h"
@@ -61,10 +61,10 @@ G_STATIC_ASSERT (sizeof (unsigned char) == sizeof (uint8_t));
 
 typedef enum
 {
-  BS_STREAM_DECK_FEATURE_BUTTONS = 1 << 0,
-  BS_STREAM_DECK_FEATURE_TOUCHSCREEN = 1 << 1,
-  BS_STREAM_DECK_FEATURE_DIALS = 1 << 2,
-} BsStreamDeckFeatureFlags;
+  BS_DEVICE_FEATURE_BUTTONS = 1 << 0,
+  BS_DEVICE_FEATURE_TOUCHSCREEN = 1 << 1,
+  BS_DEVICE_FEATURE_DIALS = 1 << 2,
+} BsDeviceFeatureFlags;
 
 typedef struct
 {
@@ -90,35 +90,35 @@ typedef struct
   uint8_t product_id;
   const char *name;
   const char *icon_name;
-  BsStreamDeckFeatureFlags features;
+  BsDeviceFeatureFlags features;
   BsButtonLayout button_layout;
   BsDialLayout dial_layout;
   BsTouchscreenLayout touchscreen_layout;
 
-  void (*reset) (BsStreamDeck *self);
-  void (*set_brightness) (BsStreamDeck *self,
-                          double        brightness);
+  void (*reset) (BsDevice *self);
+  void (*set_brightness) (BsDevice *self,
+                          double    brightness);
 
-  char * (*get_serial_number) (BsStreamDeck *self);
-  char * (*get_firmware_version) (BsStreamDeck *self);
-  gboolean (*set_button_texture) (BsStreamDeck  *self,
-                                  BsButton      *button,
-                                  GdkTexture    *texture,
-                                  GError       **error);
-  gboolean (*set_touchscreen_texture) (BsStreamDeck   *self,
+  char * (*get_serial_number) (BsDevice *self);
+  char * (*get_firmware_version) (BsDevice *self);
+  gboolean (*set_button_texture) (BsDevice    *self,
+                                  BsButton    *button,
+                                  GdkTexture  *texture,
+                                  GError     **error);
+  gboolean (*set_touchscreen_texture) (BsDevice       *self,
                                        BsTouchscreen  *touchscreen,
                                        GdkTexture     *texture,
                                        GError        **error);
-  gboolean (*read_state) (BsStreamDeck *self);
-} StreamDeckModelInfo;
+  gboolean (*read_state) (BsDevice *self);
+} DeviceModelInfo;
 
 typedef struct
 {
   GSource source;
-  BsStreamDeck *stream_deck;
-} StreamDeckSource;
+  BsDevice *device;
+} DeviceSource;
 
-struct _BsStreamDeck
+struct _BsDevice
 {
   GObject parent_instance;
 
@@ -130,7 +130,7 @@ struct _BsStreamDeck
 
   BsDeviceUpdate *update;
 
-  const StreamDeckModelInfo *model_info;
+  const DeviceModelInfo *model_info;
   GUsbDevice *device;
   hid_device *handle;
 
@@ -149,10 +149,10 @@ static gboolean save_after_timeout_cb (gpointer data);
 
 static void g_initable_iface_init (GInitableIface *iface);
 
-G_DEFINE_FINAL_TYPE_WITH_CODE (BsStreamDeck, bs_stream_deck, G_TYPE_OBJECT,
+G_DEFINE_FINAL_TYPE_WITH_CODE (BsDevice, bs_device, G_TYPE_OBJECT,
                                G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, g_initable_iface_init))
 
-G_DEFINE_QUARK (BsStreamDeck, bs_stream_deck_error);
+G_DEFINE_QUARK (BsDevice, bs_device_error);
 
 enum
 {
@@ -176,7 +176,7 @@ static GParamSpec *properties[N_PROPS];
  */
 
 static inline void
-ensure_device_update (BsStreamDeck *self)
+ensure_device_update (BsDevice *self)
 {
   if (!self->update)
     self->update = bs_device_update_new ();
@@ -185,7 +185,7 @@ ensure_device_update (BsStreamDeck *self)
 }
 
 static char *
-get_profile_path (BsStreamDeck *self)
+get_profile_path (BsDevice *self)
 {
   g_autofree char *profile_filename = NULL;
 
@@ -197,14 +197,14 @@ get_profile_path (BsStreamDeck *self)
 }
 
 static BsButton *
-find_button_at_region (BsStreamDeck *self,
-                       const char   *region_id,
-                       size_t        button_index)
+find_button_at_region (BsDevice   *self,
+                       const char *region_id,
+                       size_t      button_index)
 {
   g_autoptr (BsButton) button = NULL;
   BsButtonGrid *button_grid = NULL;
 
-  button_grid = BS_BUTTON_GRID (bs_stream_deck_get_region (self, region_id));
+  button_grid = BS_BUTTON_GRID (bs_device_get_region (self, region_id));
   button = g_list_model_get_item (bs_button_grid_get_buttons (button_grid), button_index);
   g_assert (BS_IS_BUTTON (button));
 
@@ -212,8 +212,8 @@ find_button_at_region (BsStreamDeck *self,
 }
 
 static void
-update_page_items (BsStreamDeck *self,
-                   BsPage       *page)
+update_page_items (BsDevice *self,
+                   BsPage   *page)
 {
   for (size_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
     {
@@ -226,13 +226,13 @@ update_page_items (BsStreamDeck *self,
                            bs_button_get_custom_icon (button));
     }
 
-  if (self->model_info->features & BS_STREAM_DECK_FEATURE_TOUCHSCREEN)
+  if (self->model_info->features & BS_DEVICE_FEATURE_TOUCHSCREEN)
     {
       g_autoptr (JsonNode) region_data = NULL;
       BsTouchscreen *touchscreen;
       GListModel *touchscreen_slots;
 
-      touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
+      touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
       touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
 
       region_data = bs_device_region_serialize (BS_DEVICE_REGION (touchscreen));
@@ -252,20 +252,20 @@ update_page_items (BsStreamDeck *self,
 }
 
 static void
-update_pages (BsStreamDeck *self)
+update_pages (BsDevice *self)
 {
   BsPage *active_page;
 
   BS_ENTRY;
 
-  active_page = bs_stream_deck_get_active_page (self);
+  active_page = bs_device_get_active_page (self);
   update_page_items (self, active_page);
 
   BS_EXIT;
 }
 
 static void
-save_profiles (BsStreamDeck *self)
+save_profiles (BsDevice *self)
 {
   g_autoptr (JsonGenerator) generator = NULL;
   g_autoptr (JsonBuilder) builder = NULL;
@@ -320,8 +320,8 @@ save_profiles (BsStreamDeck *self)
 }
 
 static void
-maybe_create_backup (BsStreamDeck *self,
-                     uint32_t      version)
+maybe_create_backup (BsDevice *self,
+                     uint32_t  version)
 {
   g_autoptr (GError) error = NULL;
   g_autofree char *backup_file_path = NULL;
@@ -333,7 +333,7 @@ maybe_create_backup (BsStreamDeck *self,
 
   BS_ENTRY;
 
-  g_assert (BS_IS_STREAM_DECK (self));
+  g_assert (BS_IS_DEVICE (self));
   g_assert (version > 0);
 
   backup_folder = g_build_filename (g_get_user_data_dir (),
@@ -370,7 +370,7 @@ maybe_create_backup (BsStreamDeck *self,
 }
 
 static void
-load_profiles (BsStreamDeck  *self)
+load_profiles (BsDevice *self)
 {
   g_autoptr (JsonParser) parser = NULL;
   g_autoptr (BsProfile) active_profile = NULL;
@@ -435,21 +435,21 @@ out:
       g_list_store_append (self->profiles, active_profile);
     }
 
-  bs_stream_deck_load_profile (self, active_profile);
+  bs_device_load_profile (self, active_profile);
 
   BS_EXIT;
 }
 
 static void
-load_active_page (BsStreamDeck *self)
+load_active_page (BsDevice *self)
 {
   BsPage *active_page;
 
   BS_ENTRY;
 
-  active_page = bs_stream_deck_get_active_page (self);
+  active_page = bs_device_get_active_page (self);
 
-  g_assert (self->model_info->features & BS_STREAM_DECK_FEATURE_BUTTONS);
+  g_assert (self->model_info->features & BS_DEVICE_FEATURE_BUTTONS);
 
   for (uint8_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
     {
@@ -476,13 +476,13 @@ load_active_page (BsStreamDeck *self)
       bs_button_uninhibit_page_updates (button);
     }
 
-  if (self->model_info->features & BS_STREAM_DECK_FEATURE_TOUCHSCREEN)
+  if (self->model_info->features & BS_DEVICE_FEATURE_TOUCHSCREEN)
     {
       BsTouchscreen *touchscreen;
       GListModel *touchscreen_slots;
       JsonNode *region_data;
 
-      touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
+      touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
       touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
 
       region_data = bs_page_get_region_data (active_page, "touchscreen");
@@ -515,8 +515,8 @@ load_active_page (BsStreamDeck *self)
 }
 
 static inline uint8_t
-swap_button_index_original (BsStreamDeck *self,
-                            uint8_t       button_index)
+swap_button_index_original (BsDevice *self,
+                            uint8_t   button_index)
 {
   int column = button_index % self->model_info->button_layout.columns;
   int actual_index = ((int) button_index - column) + ((int) self->model_info->button_layout.columns - 1 - column);
@@ -524,9 +524,9 @@ swap_button_index_original (BsStreamDeck *self,
 }
 
 static void
-schedule_save (BsStreamDeck *self)
+schedule_save (BsDevice *self)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
 
   BS_ENTRY;
 
@@ -544,7 +544,7 @@ schedule_save (BsStreamDeck *self)
 static gboolean
 save_after_timeout_cb (gpointer data)
 {
-  BsStreamDeck *self = BS_STREAM_DECK (data);
+  BsDevice *self = BS_DEVICE (data);
 
   BS_ENTRY;
 
@@ -562,10 +562,10 @@ save_after_timeout_cb (gpointer data)
 /* Mini & Original (gen 1) */
 
 static gboolean
-set_button_texture_mini (BsStreamDeck  *self,
-                         BsButton      *button,
-                         GdkTexture    *texture,
-                         GError       **error)
+set_button_texture_mini (BsDevice    *self,
+                         BsButton    *button,
+                         GdkTexture  *texture,
+                         GError     **error)
 {
   g_autofree uint8_t *payload = NULL;
   g_autofree uint8_t *buffer = NULL;
@@ -633,7 +633,7 @@ set_button_texture_mini (BsStreamDeck  *self,
 }
 
 static gboolean
-read_state_mini (BsStreamDeck *self)
+read_state_mini (BsDevice *self)
 {
   const BsButtonLayout *layout;
   uint8_t *states;
@@ -673,7 +673,7 @@ read_state_mini (BsStreamDeck *self)
 }
 
 static void
-reset_mini_original (BsStreamDeck *self)
+reset_mini_original (BsDevice *self)
 {
   const uint8_t reset_command[] = {
     0x0b,
@@ -689,7 +689,7 @@ reset_mini_original (BsStreamDeck *self)
 }
 
 static char *
-get_serial_number_mini_original (BsStreamDeck *self)
+get_serial_number_mini_original (BsDevice *self)
 {
   g_autofree char *serial = NULL;
   uint8_t data[17];
@@ -707,7 +707,7 @@ get_serial_number_mini_original (BsStreamDeck *self)
 }
 
 static char *
-get_firmware_version_mini_original (BsStreamDeck *self)
+get_firmware_version_mini_original (BsDevice *self)
 {
   g_autofree char *firmware_version = NULL;
   uint8_t data[17];
@@ -725,8 +725,8 @@ get_firmware_version_mini_original (BsStreamDeck *self)
 }
 
 static void
-set_brightness_mini_original (BsStreamDeck *self,
-                              gdouble       brightness)
+set_brightness_mini_original (BsDevice *self,
+                              double    brightness)
 {
   const uint8_t b = CLAMP (brightness * 100, 0, 100);
   const uint8_t data[] = {
@@ -743,10 +743,10 @@ set_brightness_mini_original (BsStreamDeck *self,
 }
 
 static gboolean
-set_button_texture_original (BsStreamDeck  *self,
-                             BsButton      *button,
-                             GdkTexture    *texture,
-                             GError       **error)
+set_button_texture_original (BsDevice    *self,
+                             BsButton    *button,
+                             GdkTexture  *texture,
+                             GError     **error)
 {
   g_autofree uint8_t *payload = NULL;
   g_autofree uint8_t *buffer = NULL;
@@ -827,7 +827,7 @@ set_button_texture_original (BsStreamDeck  *self,
 }
 
 static gboolean
-read_state_original (BsStreamDeck *self)
+read_state_original (BsDevice *self)
 {
   const BsButtonLayout *layout;
   uint8_t *states;
@@ -871,7 +871,7 @@ read_state_original (BsStreamDeck *self)
 /* 2nd generation */
 
 static void
-reset_gen2 (BsStreamDeck *self)
+reset_gen2 (BsDevice *self)
 {
   const uint8_t reset_command[] = {
       0x03,
@@ -889,7 +889,7 @@ reset_gen2 (BsStreamDeck *self)
 }
 
 static char *
-get_serial_number_gen2 (BsStreamDeck *self)
+get_serial_number_gen2 (BsDevice *self)
 {
   uint8_t data[32];
   char *serial;
@@ -907,7 +907,7 @@ get_serial_number_gen2 (BsStreamDeck *self)
 }
 
 static char *
-get_firmware_version_gen2 (BsStreamDeck *self)
+get_firmware_version_gen2 (BsDevice *self)
 {
   uint8_t data[32];
   char *serial;
@@ -925,8 +925,8 @@ get_firmware_version_gen2 (BsStreamDeck *self)
 }
 
 static void
-set_brightness_gen2 (BsStreamDeck *self,
-                     gdouble       brightness)
+set_brightness_gen2 (BsDevice *self,
+                     double    brightness)
 {
   const uint8_t b = CLAMP (brightness * 100, 0, 100);
   const uint8_t data[] = {
@@ -945,10 +945,10 @@ set_brightness_gen2 (BsStreamDeck *self,
 }
 
 static gboolean
-set_button_texture_gen2 (BsStreamDeck  *self,
-                         BsButton      *button,
-                         GdkTexture    *texture,
-                         GError       **error)
+set_button_texture_gen2 (BsDevice    *self,
+                         BsButton    *button,
+                         GdkTexture  *texture,
+                         GError     **error)
 {
   g_autofree uint8_t *payload = NULL;
   g_autofree uint8_t *buffer = NULL;
@@ -1006,7 +1006,7 @@ set_button_texture_gen2 (BsStreamDeck  *self,
 }
 
 static gboolean
-read_state_gen2 (BsStreamDeck *self)
+read_state_gen2 (BsDevice *self)
 {
   const BsButtonLayout *layout;
   uint8_t *states;
@@ -1048,25 +1048,25 @@ read_state_gen2 (BsStreamDeck *self)
 /* noops for devices without visual feedback */
 
 static void
-set_brightness_pedal (BsStreamDeck *self,
-                      double        brightness)
+set_brightness_pedal (BsDevice *self,
+                      double    brightness)
 {
   BS_ENTRY;
   BS_EXIT;
 }
 
 static gboolean
-set_button_texture_pedal (BsStreamDeck  *self,
-                          BsButton      *button,
-                          GdkTexture    *texture,
-                          GError       **error)
+set_button_texture_pedal (BsDevice    *self,
+                          BsButton    *button,
+                          GdkTexture  *texture,
+                          GError     **error)
 {
   BS_ENTRY;
   BS_RETURN (TRUE);
 }
 
 static void
-reset_pedal (BsStreamDeck *self)
+reset_pedal (BsDevice *self)
 {
   BS_ENTRY;
   BS_EXIT;
@@ -1084,7 +1084,7 @@ convert_dial_value (uint8_t value)
 }
 
 static gboolean
-read_state_plus (BsStreamDeck *self)
+read_state_plus (BsDevice *self)
 {
   const BsButtonLayout *layout;
   const size_t states_length = 14;
@@ -1141,7 +1141,7 @@ read_state_plus (BsStreamDeck *self)
         graphene_point_t position;
         BsTouchscreen *touchscreen;
 
-        touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
+        touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
 
         graphene_point_init (&position,
                              (states[7] << 8) + states[6],
@@ -1197,11 +1197,11 @@ read_state_plus (BsStreamDeck *self)
         BsDialGrid *dial_grid;
         GListModel *dials;
 
-        dial_grid = BS_DIAL_GRID (bs_stream_deck_get_region (self, "dial-grid"));
+        dial_grid = BS_DIAL_GRID (bs_device_get_region (self, "dial-grid"));
         dials = bs_dial_grid_get_dials (dial_grid);
         g_assert (g_list_model_get_n_items (dials) == 4);
 
-        touchscreen = BS_TOUCHSCREEN (bs_stream_deck_get_region (self, "touchscreen"));
+        touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
         touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
         g_assert (g_list_model_get_n_items (touchscreen_slots) == 4);
 
@@ -1249,7 +1249,7 @@ read_state_plus (BsStreamDeck *self)
 }
 
 static gboolean
-set_touchscreen_texture_plus (BsStreamDeck   *self,
+set_touchscreen_texture_plus (BsDevice       *self,
                               BsTouchscreen  *touchscreen,
                               GdkTexture     *texture,
                               GError        **error)
@@ -1320,7 +1320,7 @@ set_touchscreen_texture_plus (BsStreamDeck   *self,
   BS_RETURN (TRUE);
 }
 
-static const StreamDeckModelInfo models_vtable[] = {
+static const DeviceModelInfo models_vtable[] = {
   {
     .product_id = STREAMDECK_MINI_PRODUCT_ID,
     /* Translators: this is a product name. In most cases, it is not translated.
@@ -1328,7 +1328,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck Mini"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 6,
       .columns = 3,
@@ -1353,7 +1353,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck Mini"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 6,
       .columns = 3,
@@ -1378,7 +1378,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 15,
       .columns = 5,
@@ -1403,7 +1403,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 15,
       .columns = 5,
@@ -1428,7 +1428,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck XL"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 32,
       .columns = 8,
@@ -1453,7 +1453,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck XL"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 32,
       .columns = 8,
@@ -1478,7 +1478,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck MK.2"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 15,
       .columns = 5,
@@ -1503,7 +1503,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck Pedal"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 3,
       .columns = 3,
@@ -1528,9 +1528,9 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck +"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS |
-                BS_STREAM_DECK_FEATURE_TOUCHSCREEN |
-                BS_STREAM_DECK_FEATURE_DIALS,
+    .features = BS_DEVICE_FEATURE_BUTTONS |
+                BS_DEVICE_FEATURE_TOUCHSCREEN |
+                BS_DEVICE_FEATURE_DIALS,
     .button_layout = {
       .n_buttons = 8,
       .columns = 4,
@@ -1569,7 +1569,7 @@ static const StreamDeckModelInfo models_vtable[] = {
      */
     .name = N_("Stream Deck Neo"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 8,
       .columns = 4,
@@ -1595,50 +1595,50 @@ static const StreamDeckModelInfo models_vtable[] = {
  */
 
 static void
-reset_fake (BsStreamDeck *self)
+reset_fake (BsDevice *self)
 {
 }
 
 static char *
-get_serial_number_fake (BsStreamDeck *self)
+get_serial_number_fake (BsDevice *self)
 {
   static unsigned int counter = 0;
   return g_strdup_printf ("feaneron-hangar-xl-serial-%u", counter++);
 }
 
 static char *
-get_firmware_version_fake (BsStreamDeck *self)
+get_firmware_version_fake (BsDevice *self)
 {
   return g_strdup ("feaneron-hangar-xl-firmware-version");
 }
 
 static void
-set_brightness_fake (BsStreamDeck *self,
-                     double        brightness)
+set_brightness_fake (BsDevice *self,
+                     double    brightness)
 {
 }
 
 static gboolean
-set_button_texture_fake (BsStreamDeck  *self,
-                         BsButton      *button,
-                         GdkTexture    *texture,
-                         GError       **error)
+set_button_texture_fake (BsDevice    *self,
+                         BsButton    *button,
+                         GdkTexture  *texture,
+                         GError     **error)
 {
   return TRUE;
 }
 
 static gboolean
-read_state_fake (BsStreamDeck *self)
+read_state_fake (BsDevice *self)
 {
   return TRUE;
 }
 
-static const StreamDeckModelInfo fake_models_vtable[] = {
+static const DeviceModelInfo fake_models_vtable[] = {
   {
     .product_id = 0x0001,
     .name = N_("Feaneron Hangar Original"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 15,
       .columns = 5,
@@ -1660,7 +1660,7 @@ static const StreamDeckModelInfo fake_models_vtable[] = {
     .product_id = 0x0001,
     .name = N_("Feaneron Hangar XL"),
     .icon_name = "input-dialpad-symbolic",
-    .features = BS_STREAM_DECK_FEATURE_BUTTONS,
+    .features = BS_DEVICE_FEATURE_BUTTONS,
     .button_layout = {
       .n_buttons = 32,
       .columns = 8,
@@ -1685,7 +1685,7 @@ static const StreamDeckModelInfo fake_models_vtable[] = {
  */
 
 static void
-apply_touchscreen_update (BsStreamDeck        *self,
+apply_touchscreen_update (BsDevice            *self,
                           BsTouchscreenUpdate *touchscreen_update)
 {
   g_autoptr (GdkTexture) texture = NULL;
@@ -1694,7 +1694,7 @@ apply_touchscreen_update (BsStreamDeck        *self,
   BsTouchscreen *touchscreen;
   BsRenderer *renderer;
 
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (self->model_info->set_button_texture != NULL);
 
   touchscreen = touchscreen_update->touchscreen;
@@ -1718,7 +1718,7 @@ apply_touchscreen_update (BsStreamDeck        *self,
 }
 
 static void
-apply_button_update (BsStreamDeck   *self,
+apply_button_update (BsDevice       *self,
                      BsButtonUpdate *button_update)
 {
   g_autoptr (GdkTexture) texture = NULL;
@@ -1730,7 +1730,7 @@ apply_button_update (BsStreamDeck   *self,
 
   BS_TRACE_MSG ("Applying button update %p", button_update);
 
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (self->model_info->set_button_texture != NULL);
 
   button = button_update->button;
@@ -1754,12 +1754,12 @@ apply_button_update (BsStreamDeck   *self,
 }
 
 static gboolean
-stream_deck_source_dispatch (GSource     *source,
-                             GSourceFunc  callback,
-                             gpointer     user_data)
+device_source_dispatch (GSource     *source,
+                        GSourceFunc  callback,
+                        gpointer     user_data)
 {
-  StreamDeckSource *stream_deck_source = (StreamDeckSource *)source;
-  BsStreamDeck *self = stream_deck_source->stream_deck;
+  DeviceSource *device_source = (DeviceSource *)source;
+  BsDevice *self = device_source->device;
   gint64 current_time;
   gint64 expiration;
 
@@ -1789,23 +1789,23 @@ stream_deck_source_dispatch (GSource     *source,
   return TRUE;
 }
 
-GSourceFuncs stream_deck_source_funcs =
+GSourceFuncs device_source_funcs =
 {
   NULL, /* prepare */
   NULL, /* check */
-  stream_deck_source_dispatch,
+  device_source_dispatch,
   NULL, NULL, NULL,
 };
 
 static GSource *
-stream_deck_source_new (BsStreamDeck *self)
+device_source_new (BsDevice *self)
 {
-  StreamDeckSource *stream_deck_source;
+  DeviceSource *device_source;
   GSource *source;
 
-  source = g_source_new (&stream_deck_source_funcs, sizeof (StreamDeckSource));
-  stream_deck_source = (StreamDeckSource *)source;
-  stream_deck_source->stream_deck = self;
+  source = g_source_new (&device_source_funcs, sizeof (DeviceSource));
+  device_source = (DeviceSource *)source;
+  device_source->device = self;
 
   g_source_set_ready_time (source, g_get_monotonic_time ());
 
@@ -1820,7 +1820,7 @@ stream_deck_source_new (BsStreamDeck *self)
 static void
 on_button_grid_button_changed_cb (BsButtonGrid *button_grid,
                                   BsButton     *button,
-                                  BsStreamDeck *self)
+                                  BsDevice     *self)
 {
   BsAction *action;
   BsIcon *custom_icon;
@@ -1851,7 +1851,7 @@ on_button_grid_button_changed_cb (BsButtonGrid *button_grid,
 static void
 on_touchscreen_slot_changed_cb (BsTouchscreen     *touchscreen,
                                 BsTouchscreenSlot *slot,
-                                BsStreamDeck      *self)
+                                BsDevice          *self)
 {
   BsAction *action;
   BsPage *active_page;
@@ -1879,11 +1879,11 @@ on_touchscreen_slot_changed_cb (BsTouchscreen     *touchscreen,
 }
 
 static gboolean
-bs_stream_deck_initable_init (GInitable     *initable,
-                              GCancellable  *cancellable,
-                              GError       **error)
+bs_device_initable_init (GInitable     *initable,
+                         GCancellable  *cancellable,
+                         GError       **error)
 {
-  BsStreamDeck *self = BS_STREAM_DECK (initable);
+  BsDevice *self = BS_DEVICE (initable);
   unsigned int row = 0;
 
   BS_ENTRY;
@@ -1901,8 +1901,8 @@ bs_stream_deck_initable_init (GInitable     *initable,
   if (g_usb_device_get_vid (self->device) != ELGATO_SYSTEMS_VENDOR_ID)
     {
       g_set_error (error,
-                   BS_STREAM_DECK_ERROR,
-                   BS_STREAM_DECK_ERROR_UNRECOGNIZED,
+                   BS_DEVICE_ERROR,
+                   BS_DEVICE_ERROR_UNRECOGNIZED,
                    "Not an Elgato device");
       BS_RETURN (FALSE);
     }
@@ -1919,8 +1919,8 @@ bs_stream_deck_initable_init (GInitable     *initable,
   if (!self->model_info)
     {
       g_set_error (error,
-                   BS_STREAM_DECK_ERROR,
-                   BS_STREAM_DECK_ERROR_UNRECOGNIZED,
+                   BS_DEVICE_ERROR,
+                   BS_DEVICE_ERROR_UNRECOGNIZED,
                    "Not a recognized Stream Deck device");
       BS_RETURN (FALSE);
     }
@@ -1940,7 +1940,7 @@ bs_stream_deck_initable_init (GInitable     *initable,
 
   hid_set_nonblocking (self->handle, TRUE);
 
-  self->poll_source = stream_deck_source_new (self);
+  self->poll_source = device_source_new (self);
 
 out:
   self->serial_number = self->model_info->get_serial_number (self);
@@ -1948,9 +1948,9 @@ out:
   self->icon = g_themed_icon_new (self->model_info->icon_name);
 
   /* All Elgato Stream Decks have one button grid */
-  g_assert (self->model_info->features & BS_STREAM_DECK_FEATURE_BUTTONS);
+  g_assert (self->model_info->features & BS_DEVICE_FEATURE_BUTTONS);
 
-  if (self->model_info->features & BS_STREAM_DECK_FEATURE_BUTTONS)
+  if (self->model_info->features & BS_DEVICE_FEATURE_BUTTONS)
     {
       g_autoptr (BsButtonGrid) button_grid = NULL;
 
@@ -1969,7 +1969,7 @@ out:
       g_list_store_append (self->regions, button_grid);
     }
 
-  if (self->model_info->features & BS_STREAM_DECK_FEATURE_TOUCHSCREEN)
+  if (self->model_info->features & BS_DEVICE_FEATURE_TOUCHSCREEN)
     {
       g_autoptr (BsTouchscreen) touchscreen = NULL;
 
@@ -1987,7 +1987,7 @@ out:
       g_list_store_append (self->regions, touchscreen);
     }
 
-  if (self->model_info->features & BS_STREAM_DECK_FEATURE_DIALS)
+  if (self->model_info->features & BS_DEVICE_FEATURE_DIALS)
     {
       g_autoptr (BsDialGrid) dial_grid = NULL;
 
@@ -2008,7 +2008,7 @@ out:
 static void
 g_initable_iface_init (GInitableIface *iface)
 {
-  iface->init = bs_stream_deck_initable_init;
+  iface->init = bs_device_initable_init;
 }
 
 /*
@@ -2016,16 +2016,16 @@ g_initable_iface_init (GInitableIface *iface)
  */
 
 static void
-bs_stream_deck_finalize (GObject *object)
+bs_device_finalize (GObject *object)
 {
-  BsStreamDeck *self = (BsStreamDeck *)object;
+  BsDevice *self = (BsDevice *) object;
 
   BS_ENTRY;
 
   if (self->initialized)
     {
       save_profiles (self);
-      bs_stream_deck_reset (self);
+      bs_device_reset (self);
     }
 
   if (self->device)
@@ -2044,23 +2044,23 @@ bs_stream_deck_finalize (GObject *object)
   g_clear_object (&self->profiles);
   g_clear_object (&self->update);
 
-  G_OBJECT_CLASS (bs_stream_deck_parent_class)->finalize (object);
+  G_OBJECT_CLASS (bs_device_parent_class)->finalize (object);
 
   BS_EXIT;
 }
 
 static void
-bs_stream_deck_get_property (GObject    *object,
-                             guint       prop_id,
-                             GValue     *value,
-                             GParamSpec *pspec)
+bs_device_get_property (GObject    *object,
+                        guint       prop_id,
+                        GValue     *value,
+                        GParamSpec *pspec)
 {
-  BsStreamDeck *self = BS_STREAM_DECK (object);
+  BsDevice *self = BS_DEVICE (object);
 
   switch (prop_id)
     {
     case PROP_ACTIVE_PAGE:
-      g_value_set_object (value, bs_stream_deck_get_active_page (self));
+      g_value_set_object (value, bs_device_get_active_page (self));
       break;
 
     case PROP_ACTIVE_PROFILE:
@@ -2080,11 +2080,11 @@ bs_stream_deck_get_property (GObject    *object,
       break;
 
     case PROP_NAME:
-      g_value_set_string (value, bs_stream_deck_get_name (self));
+      g_value_set_string (value, bs_device_get_name (self));
       break;
 
     case PROP_SERIAL_NUMBER:
-      g_value_set_string (value, bs_stream_deck_get_serial_number (self));
+      g_value_set_string (value, bs_device_get_serial_number (self));
       break;
 
     default:
@@ -2093,17 +2093,17 @@ bs_stream_deck_get_property (GObject    *object,
 }
 
 static void
-bs_stream_deck_set_property (GObject      *object,
-                             guint         prop_id,
-                             const GValue *value,
-                             GParamSpec   *pspec)
+bs_device_set_property (GObject      *object,
+                        guint         prop_id,
+                        const GValue *value,
+                        GParamSpec   *pspec)
 {
-  BsStreamDeck *self = BS_STREAM_DECK (object);
+  BsDevice *self = BS_DEVICE (object);
 
   switch (prop_id)
     {
     case PROP_BRIGHTNESS:
-      bs_stream_deck_set_brightness (self, g_value_get_double (value));
+      bs_device_set_brightness (self, g_value_get_double (value));
       break;
 
     case PROP_DEVICE:
@@ -2121,13 +2121,13 @@ bs_stream_deck_set_property (GObject      *object,
 }
 
 static void
-bs_stream_deck_class_init (BsStreamDeckClass *klass)
+bs_device_class_init (BsDeviceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = bs_stream_deck_finalize;
-  object_class->get_property = bs_stream_deck_get_property;
-  object_class->set_property = bs_stream_deck_set_property;
+  object_class->finalize = bs_device_finalize;
+  object_class->get_property = bs_device_get_property;
+  object_class->set_property = bs_device_set_property;
 
   properties[PROP_ACTIVE_PAGE] = g_param_spec_object ("active-page", NULL, NULL,
                                                       BS_TYPE_PAGE,
@@ -2163,28 +2163,28 @@ bs_stream_deck_class_init (BsStreamDeckClass *klass)
 }
 
 static void
-bs_stream_deck_init (BsStreamDeck *self)
+bs_device_init (BsDevice *self)
 {
   self->profiles = g_list_store_new (BS_TYPE_PROFILE);
   self->regions = g_list_store_new (BS_TYPE_DEVICE_REGION);
   self->active_pages = g_queue_new ();
 }
 
-BsStreamDeck *
-bs_stream_deck_new (GUsbDevice  *gusb_device,
-                    GError     **error)
+BsDevice *
+bs_device_new (GUsbDevice  *gusb_device,
+               GError     **error)
 {
-  return g_initable_new (BS_TYPE_STREAM_DECK,
+  return g_initable_new (BS_TYPE_DEVICE,
                          NULL,
                          error,
                          "device", gusb_device,
                          NULL);
 }
 
-BsStreamDeck *
-bs_stream_deck_new_fake (GError **error)
+BsDevice *
+bs_device_new_fake (GError **error)
 {
-  return g_initable_new (BS_TYPE_STREAM_DECK,
+  return g_initable_new (BS_TYPE_DEVICE,
                          NULL,
                          error,
                          "fake", TRUE,
@@ -2192,82 +2192,82 @@ bs_stream_deck_new_fake (GError **error)
 }
 
 void
-bs_stream_deck_reset (BsStreamDeck *self)
+bs_device_reset (BsDevice *self)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (self->model_info->reset != NULL);
 
   self->model_info->reset (self);
 }
 
 GUsbDevice *
-bs_stream_deck_get_device (BsStreamDeck *self)
+bs_device_get_device (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return self->device;
 }
 
 const char *
-bs_stream_deck_get_name (BsStreamDeck *self)
+bs_device_get_name (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return _(self->model_info->name);
 }
 
 const char *
-bs_stream_deck_get_serial_number (BsStreamDeck *self)
+bs_device_get_serial_number (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return self->serial_number;
 }
 
 const char *
-bs_stream_deck_get_firmware_version (BsStreamDeck *self)
+bs_device_get_firmware_version (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return self->firmware_version;
 }
 
 GIcon *
-bs_stream_deck_get_icon (BsStreamDeck *self)
+bs_device_get_icon (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return self->icon;
 }
 
 /**
- * bs_stream_deck_get_brightness:
- * @self: a #BsStreamDeck
+ * bs_device_get_brightness:
+ * @self: a #BsDevice
  *
  * Retrieves the current brightness of the device.
  *
  * Returns: device brightness ranging between [0.0, 1.0]
  */
 double
-bs_stream_deck_get_brightness (BsStreamDeck *self)
+bs_device_get_brightness (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), 0.0);
+  g_return_val_if_fail (BS_IS_DEVICE (self), 0.0);
 
   return self->brightness;
 }
 
 /**
- * bs_stream_deck_set_brightness:
- * @self: a #BsStreamDeck
+ * bs_device_set_brightness:
+ * @self: a #BsDevice
  * @brightness: a double between and including 0.0 and 1.0
  *
  * Sets the brightness of @self to @brightness.
  */
 void
-bs_stream_deck_set_brightness (BsStreamDeck *self,
-                               double        brightness)
+bs_device_set_brightness (BsDevice *self,
+                          double    brightness)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (brightness >= 0.0 && brightness <= 1.0);
   g_return_if_fail (self->model_info->set_brightness != NULL);
 
@@ -2281,18 +2281,18 @@ bs_stream_deck_set_brightness (BsStreamDeck *self,
 }
 
 GListModel *
-bs_stream_deck_get_regions (BsStreamDeck *self)
+bs_device_get_regions (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return G_LIST_MODEL (self->regions);
 }
 
 BsDeviceRegion *
-bs_stream_deck_get_region (BsStreamDeck *self,
-                           const char   *region_id)
+bs_device_get_region (BsDevice   *self,
+                      const char *region_id)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
   g_return_val_if_fail (region_id && g_utf8_validate (region_id, -1, NULL), NULL);
 
   for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->regions)); i++)
@@ -2307,18 +2307,18 @@ bs_stream_deck_get_region (BsStreamDeck *self,
 }
 
 gboolean
-bs_stream_deck_is_initialized (BsStreamDeck *self)
+bs_device_is_initialized (BsDevice *self)
 {
-  g_assert (BS_IS_STREAM_DECK (self));
+  g_assert (BS_IS_DEVICE (self));
 
   return self->initialized;
 }
 
 void
-bs_stream_deck_upload_button (BsStreamDeck *self,
-                              BsButton     *button)
+bs_device_upload_button (BsDevice *self,
+                         BsButton *button)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (self->model_info->set_button_texture != NULL);
 
   ensure_device_update (self);
@@ -2327,11 +2327,11 @@ bs_stream_deck_upload_button (BsStreamDeck *self,
 }
 
 void
-bs_stream_deck_upload_touchscreen (BsStreamDeck          *self,
-                                   BsTouchscreen         *touchscreen,
-                                   const graphene_rect_t *region)
+bs_device_upload_touchscreen (BsDevice              *self,
+                              BsTouchscreen         *touchscreen,
+                              const graphene_rect_t *region)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (self->model_info->set_button_texture != NULL);
 
   ensure_device_update (self);
@@ -2340,26 +2340,26 @@ bs_stream_deck_upload_touchscreen (BsStreamDeck          *self,
 }
 
 GListModel *
-bs_stream_deck_get_profiles (BsStreamDeck *self)
+bs_device_get_profiles (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return G_LIST_MODEL (self->profiles);
 }
 
 BsProfile *
-bs_stream_deck_get_active_profile (BsStreamDeck *self)
+bs_device_get_active_profile (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return self->active_profile;
 }
 
 void
-bs_stream_deck_load_profile (BsStreamDeck *self,
-                             BsProfile    *profile)
+bs_device_load_profile (BsDevice  *self,
+                        BsProfile *profile)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (g_list_store_find (self->profiles, profile, NULL));
 
   BS_ENTRY;
@@ -2376,8 +2376,8 @@ bs_stream_deck_load_profile (BsStreamDeck *self,
 
   self->loading_profile = TRUE;
 
-  bs_stream_deck_set_brightness (self, bs_profile_get_brightness (profile));
-  bs_stream_deck_push_page (self, bs_profile_get_root_page (profile));
+  bs_device_set_brightness (self, bs_profile_get_brightness (profile));
+  bs_device_push_page (self, bs_profile_get_root_page (profile));
 
   self->loading_profile = FALSE;
 
@@ -2387,18 +2387,18 @@ bs_stream_deck_load_profile (BsStreamDeck *self,
 }
 
 BsPage *
-bs_stream_deck_get_active_page (BsStreamDeck *self)
+bs_device_get_active_page (BsDevice *self)
 {
-  g_return_val_if_fail (BS_IS_STREAM_DECK (self), NULL);
+  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
   return g_queue_peek_head (self->active_pages);
 }
 
 void
-bs_stream_deck_push_page (BsStreamDeck  *self,
-                          BsPage        *page)
+bs_device_push_page (BsDevice *self,
+                     BsPage   *page)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (BS_IS_PAGE (page));
   g_return_if_fail (g_queue_find (self->active_pages, page) == NULL);
 
@@ -2417,11 +2417,11 @@ bs_stream_deck_push_page (BsStreamDeck  *self,
 }
 
 void
-bs_stream_deck_pop_page (BsStreamDeck *self)
+bs_device_pop_page (BsDevice *self)
 {
   g_autoptr (BsPage) page = NULL;
 
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (g_queue_get_length (self->active_pages) > 1);
 
   BS_ENTRY;
@@ -2437,9 +2437,9 @@ bs_stream_deck_pop_page (BsStreamDeck *self)
 }
 
 void
-bs_stream_deck_load (BsStreamDeck *self)
+bs_device_load (BsDevice *self)
 {
-  g_return_if_fail (BS_IS_STREAM_DECK (self));
+  g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (!self->loaded);
 
   if (!self->fake)

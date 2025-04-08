@@ -40,7 +40,7 @@ struct _BsDeviceEditor
   AdwToolbarView *empty_page;
   GtkGrid *regions_grid;
 
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
 
   GHashTable *region_to_widget;
 
@@ -178,7 +178,7 @@ add_touchscreen (BsDeviceEditor *self,
 static void
 build_regions (BsDeviceEditor *self)
 {
-  GListModel *regions = bs_stream_deck_get_regions (self->stream_deck);
+  GListModel *regions = bs_device_get_regions (self->device);
 
   for (unsigned int i = 0; i < g_list_model_get_n_items (regions); i++)
     {
@@ -224,7 +224,7 @@ bs_device_editor_finalize (GObject *object)
 
   g_clear_pointer (&self->region_to_widget, g_hash_table_destroy);
   g_clear_object (&self->selection_controller);
-  g_clear_object (&self->stream_deck);
+  g_clear_object (&self->device);
 
   G_OBJECT_CLASS (bs_device_editor_parent_class)->finalize (object);
 }
@@ -240,7 +240,7 @@ bs_device_editor_get_property (GObject    *object,
   switch (prop_id)
     {
     case PROP_STREAM_DECK:
-      g_value_set_object (value, self->stream_deck);
+      g_value_set_object (value, self->device);
       break;
 
     default:
@@ -259,8 +259,8 @@ bs_device_editor_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_STREAM_DECK:
-      g_assert (self->stream_deck == NULL);
-      self->stream_deck = g_value_dup_object (value);
+      g_assert (self->device == NULL);
+      self->device = g_value_dup_object (value);
       build_regions (self);
       break;
 
@@ -280,7 +280,7 @@ bs_device_editor_class_init (BsDeviceEditorClass *klass)
   object_class->set_property = bs_device_editor_set_property;
 
   properties[PROP_STREAM_DECK] = g_param_spec_object ("stream-deck", NULL, NULL,
-                                                      BS_TYPE_STREAM_DECK,
+                                                      BS_TYPE_DEVICE,
                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
@@ -308,9 +308,9 @@ bs_device_editor_init (BsDeviceEditor *self)
 }
 
 GtkWidget *
-bs_device_editor_new (BsStreamDeck *stream_deck)
+bs_device_editor_new (BsDevice *device)
 {
   return g_object_new (BS_TYPE_DEVICE_EDITOR,
-                       "stream-deck", stream_deck,
+                       "stream-deck", device,
                        NULL);
 }

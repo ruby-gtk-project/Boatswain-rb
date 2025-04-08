@@ -33,9 +33,9 @@ G_BEGIN_DECLS
 #define BS_TYPE_PROFILE (bs_profile_get_type())
 G_DECLARE_FINAL_TYPE (BsProfile, bs_profile, BS, PROFILE, GObject)
 
-BsProfile * bs_profile_new_empty (BsStreamDeck *stream_deck);
+BsProfile * bs_profile_new_empty (BsDevice *device);
 
-BsProfile * bs_profile_new_from_json (BsStreamDeck *stream_deck,
+BsProfile * bs_profile_new_from_json (BsDevice *device,
                                       JsonNode     *node);
 
 JsonNode * bs_profile_to_json (BsProfile *self);
@@ -50,7 +50,7 @@ const char * bs_profile_get_name (BsProfile *self);
 void bs_profile_set_name (BsProfile  *self,
                           const char *name);
 
-BsStreamDeck * bs_profile_get_stream_deck (BsProfile *self);
+BsDevice * bs_profile_get_device (BsProfile *self);
 
 BsPage * bs_profile_get_root_page (BsProfile *self);
 

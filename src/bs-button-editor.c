@@ -73,15 +73,15 @@ static GParamSpec *properties [N_PROPS];
 static void
 setup_button (BsButtonEditor *self)
 {
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   BsIcon *custom_icon;
 
-  stream_deck = bs_button_get_stream_deck (self->button);
+  device = bs_button_get_device (self->button);
   custom_icon = bs_button_get_custom_icon (self->button);
 
   gtk_widget_set_sensitive (GTK_WIDGET (self),
                             bs_button_get_position (self->button) != 0 ||
-                            bs_page_is_root (bs_stream_deck_get_active_page (stream_deck)));
+                            bs_page_is_root (bs_device_get_active_page (device)));
 
   gtk_widget_set_visible (self->remove_custom_icon_button, custom_icon != NULL);
 
@@ -191,15 +191,15 @@ on_action_selector_action_selected_cb (BsActionSelector *selector,
   g_autoptr (GError) error = NULL;
   PeasPluginInfo *plugin_info;
   BsDeviceRegion *region;
-  BsStreamDeck *stream_deck;
   BsPageItem *item;
+  BsDevice *device;
   BsIcon *custom_icon;
   BsPage *active_page;
   const char *region_id;
   size_t position;
 
-  stream_deck = bs_button_get_stream_deck (self->button);
-  active_page = bs_stream_deck_get_active_page (stream_deck);
+  device = bs_button_get_device (self->button);
+  active_page = bs_device_get_active_page (device);
   plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
   region = bs_button_get_region (self->button);
   region_id = bs_device_region_get_id (region);

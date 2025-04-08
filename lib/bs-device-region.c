@@ -21,7 +21,7 @@
 
 #include "bs-device-region.h"
 
-#include "bs-stream-deck.h"
+#include "bs-device.h"
 
 typedef struct
 {
@@ -32,7 +32,7 @@ typedef struct
   unsigned int row;
   unsigned int row_span;
 
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   char *id;
 } BsDeviceRegionPrivate;
 
@@ -128,7 +128,7 @@ bs_device_region_get_property (GObject    *object,
       break;
 
     case PROP_STREAM_DECK:
-      g_value_set_object (value, priv->stream_deck);
+      g_value_set_object (value, priv->device);
       break;
 
     default:
@@ -168,7 +168,7 @@ bs_device_region_set_property (GObject      *object,
       break;
 
     case PROP_STREAM_DECK:
-      priv->stream_deck = g_value_get_object (value);
+      priv->device = g_value_get_object (value);
       break;
 
     default:
@@ -210,7 +210,7 @@ bs_device_region_class_init (BsDeviceRegionClass *klass)
                                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_STREAM_DECK] = g_param_spec_object ("stream-deck", NULL, NULL,
-                                                      BS_TYPE_STREAM_DECK,
+                                                      BS_TYPE_DEVICE,
                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
@@ -279,15 +279,15 @@ bs_device_region_get_row_span (BsDeviceRegion *self)
   return priv->row_span;
 }
 
-BsStreamDeck *
-bs_device_region_get_stream_deck (BsDeviceRegion *self)
+BsDevice *
+bs_device_region_get_device (BsDeviceRegion *self)
 {
   BsDeviceRegionPrivate *priv;
 
   g_return_val_if_fail (BS_IS_DEVICE_REGION (self), NULL);
 
   priv = bs_device_region_get_instance_private (self);
-  return priv->stream_deck;
+  return priv->device;
 }
 
 BsRenderer *

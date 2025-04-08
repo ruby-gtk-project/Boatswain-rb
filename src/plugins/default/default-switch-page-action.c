@@ -41,15 +41,15 @@ default_switch_page_action_handle_event (BsAction *action,
                                          BsEvent  *event)
 {
   DefaultSwitchPageAction *self = DEFAULT_SWITCH_PAGE_ACTION (action);
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
 
   if (bs_event_get_event_type (event) != BS_BUTTON_PRESS &&
       bs_event_get_event_type (event) != BS_CURSOR_DOUBLE_CLICK)
     return;
 
-  stream_deck = bs_event_get_device (event);
+  device = bs_event_get_device (event);
 
-  bs_stream_deck_push_page (stream_deck, self->page);
+  bs_device_push_page (device, self->page);
 }
 
 static JsonNode *

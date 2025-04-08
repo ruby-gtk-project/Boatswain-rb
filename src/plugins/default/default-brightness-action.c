@@ -94,27 +94,27 @@ default_brightness_action_handle_event (BsAction *action,
                                         BsEvent  *event)
 {
   DefaultBrightnessAction *self = DEFAULT_BRIGHTNESS_ACTION (action);
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   double brightness;
 
   if (bs_event_get_event_type (event) != BS_BUTTON_PRESS)
     return;
 
-  stream_deck = bs_event_get_device (event);
-  brightness = bs_stream_deck_get_brightness (stream_deck);
+  device = bs_event_get_device (event);
+  brightness = bs_device_get_brightness (device);
 
   switch (self->mode)
     {
     case MODE_SET_VALUE:
-      bs_stream_deck_set_brightness (stream_deck, self->value);
+      bs_device_set_brightness (device, self->value);
       break;
 
     case MODE_INCREASE:
-      bs_stream_deck_set_brightness (stream_deck, CLAMP (brightness + self->value, 0.0, 1.0));
+      bs_device_set_brightness (device, CLAMP (brightness + self->value, 0.0, 1.0));
       break;
 
     case MODE_DECREASE:
-      bs_stream_deck_set_brightness (stream_deck, CLAMP (brightness - self->value, 0.0, 1.0));
+      bs_device_set_brightness (device, CLAMP (brightness - self->value, 0.0, 1.0));
       break;
     }
 }

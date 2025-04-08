@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 #define BS_TYPE_BUTTON (bs_button_get_type())
 G_DECLARE_FINAL_TYPE (BsButton, bs_button, BS, BUTTON, GObject)
 
-BsStreamDeck * bs_button_get_stream_deck (BsButton *self);
+BsDevice * bs_button_get_device (BsButton *self);
 
 BsDeviceRegion * bs_button_get_region (BsButton *self);
 

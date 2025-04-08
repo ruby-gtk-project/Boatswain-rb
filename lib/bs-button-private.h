@@ -27,7 +27,7 @@
 
 G_BEGIN_DECLS
 
-BsButton * bs_button_new (BsStreamDeck   *stream_deck,
+BsButton * bs_button_new (BsDevice       *device,
                           BsDeviceRegion *region,
                           uint8_t         position,
                           unsigned int    icon_width,

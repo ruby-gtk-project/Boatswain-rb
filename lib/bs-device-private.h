@@ -20,31 +20,31 @@
 
 #pragma once
 
-#include "bs-stream-deck.h"
+#include "bs-device.h"
 
 #include <gusb.h>
 
 G_BEGIN_DECLS
 
-BsStreamDeck * bs_stream_deck_new (GUsbDevice  *gusb_device,
-                                   GError     **error);
+BsDevice * bs_device_new (GUsbDevice  *gusb_device,
+                          GError     **error);
 
-BsStreamDeck * bs_stream_deck_new_fake (GError **error);
+BsDevice * bs_device_new_fake (GError **error);
 
-GUsbDevice * bs_stream_deck_get_device (BsStreamDeck *self);
+GUsbDevice * bs_device_get_device (BsDevice *self);
 
-BsDeviceRegion * bs_stream_deck_get_region (BsStreamDeck *self,
-                                            const char   *region_id);
+BsDeviceRegion * bs_device_get_region (BsDevice   *self,
+                                       const char *region_id);
 
-gboolean bs_stream_deck_is_initialized (BsStreamDeck *self);
+gboolean bs_device_is_initialized (BsDevice *self);
 
-void bs_stream_deck_upload_button (BsStreamDeck *self,
-                                   BsButton     *button);
+void bs_device_upload_button (BsDevice *self,
+                              BsButton *button);
 
-void bs_stream_deck_upload_touchscreen (BsStreamDeck          *self,
-                                        BsTouchscreen         *touchscreen,
-                                        const graphene_rect_t *region);
+void bs_device_upload_touchscreen (BsDevice              *self,
+                                   BsTouchscreen         *touchscreen,
+                                   const graphene_rect_t *region);
 
-void bs_stream_deck_load (BsStreamDeck *self);
+void bs_device_load (BsDevice *self);
 
 G_END_DECLS

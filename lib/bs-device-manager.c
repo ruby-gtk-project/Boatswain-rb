@@ -24,15 +24,15 @@
 
 #include "bs-config.h"
 #include "bs-debug.h"
+#include "bs-device-private.h"
 #include "bs-device-manager-private.h"
-#include "bs-stream-deck-private.h"
 
 struct _BsDeviceManager
 {
   GObject parent_instance;
 
   GUsbContext *gusb_context;
-  GListStore *stream_decks;
+  GListStore *devices;
   gboolean emulate_devices;
   gboolean loaded;
 };
@@ -56,37 +56,37 @@ static guint signals[N_SIGNALS] = { 0, };
  */
 
 static void
-enumerate_fake_stream_decks (BsDeviceManager *self)
+enumerate_fake_devices (BsDeviceManager *self)
 {
   int n_devices = MAX (atoi (g_getenv ("BOATSWAIN_N_DEVICES") ?: "1"), 0);
 
   for (int i = 0; i < n_devices; i++)
     {
-      g_autoptr (BsStreamDeck) stream_deck = NULL;
+      g_autoptr (BsDevice) device = NULL;
       g_autoptr (GError) error = NULL;
 
-      stream_deck = bs_stream_deck_new_fake (&error);
+      device = bs_device_new_fake (&error);
 
       if (error)
         {
-          if (!g_error_matches (error, BS_STREAM_DECK_ERROR, BS_STREAM_DECK_ERROR_UNRECOGNIZED))
-            g_warning ("Error opening Stream Deck device: %s", error->message);
+          if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
+            g_warning ("Error opening device: %s", error->message);
           continue;
         }
 
       g_debug ("Created fake device %s (%s)",
-               bs_stream_deck_get_name (stream_deck),
-               bs_stream_deck_get_serial_number (stream_deck));
+               bs_device_get_name (device),
+               bs_device_get_serial_number (device));
 
-      bs_stream_deck_load (stream_deck);
+      bs_device_load (device);
 
-      g_list_store_append (self->stream_decks, stream_deck);
-      g_signal_emit (self, signals[DEVICE_ADDED], 0, stream_deck);
+      g_list_store_append (self->devices, device);
+      g_signal_emit (self, signals[DEVICE_ADDED], 0, device);
     }
 }
 
 static void
-enumerate_stream_decks (BsDeviceManager *self)
+enumerate_devices (BsDeviceManager *self)
 {
   g_autoptr (GPtrArray) devices = NULL;
   unsigned int i;
@@ -96,30 +96,30 @@ enumerate_stream_decks (BsDeviceManager *self)
   devices = g_usb_context_get_devices (self->gusb_context);
   for (i = 0; devices && i < devices->len; i++)
     {
-      g_autoptr (BsStreamDeck) stream_deck = NULL;
+      g_autoptr (BsDevice) device = NULL;
       g_autoptr (GError) error = NULL;
       GUsbDevice *usb_device;
 
       usb_device = g_ptr_array_index (devices, i);
-      stream_deck = bs_stream_deck_new (usb_device, &error);
+      device = bs_device_new (usb_device, &error);
 
       if (error)
         {
-          if (!g_error_matches (error, BS_STREAM_DECK_ERROR, BS_STREAM_DECK_ERROR_UNRECOGNIZED))
-            g_warning ("Error opening Stream Deck device: %s", error->message);
+          if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
+            g_warning ("Error opening device: %s", error->message);
           continue;
         }
 
       g_debug ("Found %s (%s) at bus %hu, port %hu",
-               bs_stream_deck_get_name (stream_deck),
-               bs_stream_deck_get_serial_number (stream_deck),
+               bs_device_get_name (device),
+               bs_device_get_serial_number (device),
                g_usb_device_get_bus (usb_device),
                g_usb_device_get_port_number (usb_device));
 
-      bs_stream_deck_load (stream_deck);
+      bs_device_load (device);
 
-      g_list_store_append (self->stream_decks, stream_deck);
-      g_signal_emit (self, signals[DEVICE_ADDED], 0, stream_deck);
+      g_list_store_append (self->devices, device);
+      g_signal_emit (self, signals[DEVICE_ADDED], 0, device);
     }
 }
 
@@ -130,51 +130,51 @@ enumerate_stream_decks (BsDeviceManager *self)
 
 static void
 on_gusb_context_device_added_cb (GUsbContext     *gusb_context,
-                                 GUsbDevice      *device,
+                                 GUsbDevice      *usb_device,
                                  BsDeviceManager *self)
 {
-  g_autoptr (BsStreamDeck) stream_deck = NULL;
+  g_autoptr (BsDevice) device = NULL;
   g_autoptr (GError) error = NULL;
 
   BS_ENTRY;
 
-  stream_deck = bs_stream_deck_new (device, &error);
+  device = bs_device_new (usb_device, &error);
 
   if (error)
     {
-      if (!g_error_matches (error, BS_STREAM_DECK_ERROR, BS_STREAM_DECK_ERROR_UNRECOGNIZED))
-        g_warning ("Error opening Stream Deck device: %s", error->message);
+      if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
+        g_warning ("Error opening device: %s", error->message);
       BS_RETURN ();
     }
 
-  g_list_store_append (self->stream_decks, g_object_ref (stream_deck));
-  g_signal_emit (self, signals[DEVICE_ADDED], 0, stream_deck);
+  g_list_store_append (self->devices, g_object_ref (device));
+  g_signal_emit (self, signals[DEVICE_ADDED], 0, device);
 
   BS_EXIT;
 }
 
 static void
 on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
-                                   GUsbDevice      *device,
+                                   GUsbDevice      *usb_device,
                                    BsDeviceManager *self)
 {
   unsigned int i = 0;
 
   BS_ENTRY;
 
-  while (i < g_list_model_get_n_items (G_LIST_MODEL (self->stream_decks)))
+  while (i < g_list_model_get_n_items (G_LIST_MODEL (self->devices)))
     {
-      g_autoptr (BsStreamDeck) stream_deck = NULL;
+      g_autoptr (BsDevice) device = NULL;
       GUsbDevice *d;
 
-      stream_deck = g_list_model_get_item (G_LIST_MODEL (self->stream_decks), i);
-      d = bs_stream_deck_get_device (stream_deck);
+      device = g_list_model_get_item (G_LIST_MODEL (self->devices), i);
+      d = bs_device_get_device (device);
 
-      if (d == device)
+      if (d == usb_device)
         {
-          g_message ("Removing Stream Deck device %p", stream_deck);
-          g_signal_emit (self, signals[DEVICE_REMOVED], 0, stream_deck);
-          g_list_store_remove (self->stream_decks, i);
+          g_message ("Removing device %p", device);
+          g_signal_emit (self, signals[DEVICE_REMOVED], 0, device);
+          g_list_store_remove (self->devices, i);
           continue;
         }
 
@@ -185,7 +185,7 @@ on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
 }
 
 static void
-on_stream_decks_items_changed_cb (GListModel      *model,
+on_devices_items_changed_cb (GListModel      *model,
                                   unsigned int     position,
                                   unsigned int     removed,
                                   unsigned int     added,
@@ -202,7 +202,7 @@ on_stream_decks_items_changed_cb (GListModel      *model,
 static GType
 bs_device_manager_get_item_type (GListModel *model)
 {
-  return BS_TYPE_STREAM_DECK;
+  return BS_TYPE_DEVICE;
 }
 
 static gpointer
@@ -210,14 +210,14 @@ bs_device_manager_get_item (GListModel *model,
                             guint       i)
 {
   BsDeviceManager *self = BS_DEVICE_MANAGER (model);
-  return g_list_model_get_item (G_LIST_MODEL (self->stream_decks), i);
+  return g_list_model_get_item (G_LIST_MODEL (self->devices), i);
 }
 
 static guint
 bs_device_manager_get_n_items (GListModel *model)
 {
   BsDeviceManager *self = BS_DEVICE_MANAGER (model);
-  return g_list_model_get_n_items (G_LIST_MODEL (self->stream_decks));
+  return g_list_model_get_n_items (G_LIST_MODEL (self->devices));
 }
 
 static void
@@ -240,7 +240,7 @@ bs_device_manager_finalize (GObject *object)
 
   BS_ENTRY;
 
-  g_clear_object (&self->stream_decks);
+  g_clear_object (&self->devices);
   g_clear_object (&self->gusb_context);
 
   G_OBJECT_CLASS (bs_device_manager_parent_class)->finalize (object);
@@ -261,7 +261,7 @@ bs_device_manager_class_init (BsDeviceManagerClass *klass)
                                         0, NULL, NULL, NULL,
                                         G_TYPE_NONE,
                                         1,
-                                        BS_TYPE_STREAM_DECK);
+                                        BS_TYPE_DEVICE);
 
   signals[DEVICE_REMOVED] = g_signal_new ("device-removed",
                                           BS_TYPE_DEVICE_MANAGER,
@@ -269,7 +269,7 @@ bs_device_manager_class_init (BsDeviceManagerClass *klass)
                                           0, NULL, NULL, NULL,
                                           G_TYPE_NONE,
                                           1,
-                                          BS_TYPE_STREAM_DECK);
+                                          BS_TYPE_DEVICE);
 }
 
 static void
@@ -281,10 +281,10 @@ bs_device_manager_init (BsDeviceManager *self)
                           emulate_devices != NULL &&
                           *emulate_devices == '1';
 
-  self->stream_decks = g_list_store_new (BS_TYPE_STREAM_DECK);
-  g_signal_connect (self->stream_decks,
+  self->devices = g_list_store_new (BS_TYPE_DEVICE);
+  g_signal_connect (self->devices,
                     "items-changed",
-                    G_CALLBACK (on_stream_decks_items_changed_cb),
+                    G_CALLBACK (on_devices_items_changed_cb),
                     self);
 }
 
@@ -308,13 +308,13 @@ bs_device_manager_load (BsDeviceManager  *self,
       if (!self->gusb_context)
         goto out;
 
-      enumerate_stream_decks (self);
+      enumerate_devices (self);
       g_signal_connect (self->gusb_context, "device-added", G_CALLBACK (on_gusb_context_device_added_cb), self);
       g_signal_connect (self->gusb_context, "device-removed", G_CALLBACK (on_gusb_context_device_removed_cb), self);
     }
   else
     {
-      enumerate_fake_stream_decks (self);
+      enumerate_fake_devices (self);
     }
 
 out:

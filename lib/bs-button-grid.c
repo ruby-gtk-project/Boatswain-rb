@@ -22,9 +22,10 @@
 #include "bs-button-grid.h"
 
 #include "bs-button-private.h"
+#include "bs-device.h"
 #include "bs-device-region.h"
 #include "bs-renderer.h"
-#include "bs-stream-deck.h"
+#include "bs-device.h"
 
 struct _BsButtonGrid
 {
@@ -179,7 +180,7 @@ bs_button_grid_init (BsButtonGrid *self)
 
 BsButtonGrid *
 bs_button_grid_new (const char        *id,
-                    BsStreamDeck      *stream_deck,
+                    BsDevice          *device,
                     const BsImageInfo *image_info,
                     unsigned int       n_buttons,
                     unsigned int       grid_columns,
@@ -190,12 +191,12 @@ bs_button_grid_new (const char        *id,
 {
   g_autoptr (BsButtonGrid) self = NULL;
 
-  g_assert (BS_IS_STREAM_DECK (stream_deck));
+  g_assert (BS_IS_DEVICE (device));
   g_assert (image_info != NULL);
 
   self = g_object_new (BS_TYPE_BUTTON_GRID,
                        "id", id,
-                       "stream-deck", stream_deck,
+                       "stream-deck", device,
                        "grid-columns", grid_columns,
                        "column", column,
                        "row", row,
@@ -211,7 +212,7 @@ bs_button_grid_new (const char        *id,
     {
       g_autoptr (BsButton) button = NULL;
 
-      button = bs_button_new (stream_deck,
+      button = bs_button_new (device,
                               BS_DEVICE_REGION (self),
                               i,
                               image_info->width,

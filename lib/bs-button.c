@@ -24,10 +24,10 @@
 
 #include "bs-actionable-private.h"
 #include "bs-action.h"
+#include "bs-device-private.h"
 #include "bs-device-region.h"
 #include "bs-icon.h"
 #include "bs-page.h"
-#include "bs-stream-deck-private.h"
 
 struct _BsButton
 {
@@ -35,7 +35,7 @@ struct _BsButton
 
   BsAction *action;
   BsIcon *custom_icon;
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   BsDeviceRegion *region; /* unowned */
   unsigned int icon_width;
   unsigned int icon_height;
@@ -97,10 +97,10 @@ update_relative_icon (BsButton *self)
 static void
 upload_icon (BsButton *self)
 {
-  if (!bs_stream_deck_is_initialized (self->stream_deck))
+  if (!bs_device_is_initialized (self->device))
     return;
 
-  bs_stream_deck_upload_button (self->stream_deck, self);
+  bs_device_upload_button (self->device, self);
 }
 
 static void
@@ -320,7 +320,7 @@ bs_button_init (BsButton *self)
 }
 
 BsButton *
-bs_button_new (BsStreamDeck   *stream_deck,
+bs_button_new (BsDevice   *device,
                BsDeviceRegion *region,
                uint8_t         position,
                unsigned int    icon_width,
@@ -329,7 +329,7 @@ bs_button_new (BsStreamDeck   *stream_deck,
   BsButton *self;
 
   self = g_object_new (BS_TYPE_BUTTON, NULL);
-  self->stream_deck = stream_deck;
+  self->device = device;
   self->region = region;
   self->position = position;
   self->icon_width = icon_width;
@@ -338,12 +338,12 @@ bs_button_new (BsStreamDeck   *stream_deck,
   return self;
 }
 
-BsStreamDeck *
-bs_button_get_stream_deck (BsButton *self)
+BsDevice *
+bs_button_get_device (BsButton *self)
 {
   g_return_val_if_fail (BS_IS_BUTTON (self), NULL);
 
-  return self->stream_deck;
+  return self->device;
 }
 
 uint8_t

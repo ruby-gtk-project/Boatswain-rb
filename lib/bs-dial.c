@@ -21,7 +21,7 @@
 
 #include "bs-dial.h"
 
-#include "bs-stream-deck.h"
+#include "bs-device.h"
 
 struct _BsDial
 {
@@ -29,7 +29,7 @@ struct _BsDial
 
   gboolean pressed;
 
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   uint8_t position;
 };
 
@@ -97,13 +97,13 @@ bs_dial_init (BsDial *self)
 }
 
 BsDial *
-bs_dial_new (BsStreamDeck *stream_deck,
+bs_dial_new (BsDevice *device,
              uint8_t       position)
 {
   g_autoptr (BsDial) self = NULL;
 
   self = g_object_new (BS_TYPE_DIAL, NULL);
-  self->stream_deck = stream_deck;
+  self->device = device;
   self->position = position;
 
   return g_steal_pointer (&self);

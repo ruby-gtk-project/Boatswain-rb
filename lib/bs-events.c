@@ -22,7 +22,7 @@
 #include "bs-events-private.h"
 
 #include "bs-button.h"
-#include "bs-stream-deck.h"
+#include "bs-device.h"
 #include "bs-touchscreen-slot.h"
 
 /* Map BsEventType to the appropriate GType */
@@ -50,7 +50,7 @@ struct _BsEvent
   GObject parent_instance;
 
   BsEventType event_type;
-  BsStreamDeck *device;
+  BsDevice *device;
 };
 
 struct _BsEventClass
@@ -71,8 +71,8 @@ bs_event_init (BsEvent *self)
 }
 
 static gpointer
-bs_event_alloc (BsEventType   event_type,
-                BsStreamDeck *device)
+bs_event_alloc (BsEventType  event_type,
+                BsDevice    *device)
 {
   g_autoptr (BsEvent) event = NULL;
 
@@ -94,7 +94,7 @@ bs_event_get_event_type (BsEvent *self)
   return self->event_type;
 }
 
-BsStreamDeck *
+BsDevice *
 bs_event_get_device (BsEvent *self)
 {
   g_return_val_if_fail (BS_IS_EVENT (self), 0);
@@ -134,15 +134,15 @@ bs_button_event_init (BsButtonEvent *self)
 }
 
 BsEvent *
-bs_button_event_new (BsEventType   event_type,
-                     BsStreamDeck *device,
-                     BsButton     *button)
+bs_button_event_new (BsEventType  event_type,
+                     BsDevice    *device,
+                     BsButton    *button)
 {
   g_autoptr (BsButtonEvent) button_event = NULL;
 
   g_assert (event_type == BS_BUTTON_PRESS ||
             event_type == BS_BUTTON_RELEASE);
-  g_assert (BS_IS_STREAM_DECK (device));
+  g_assert (BS_IS_DEVICE (device));
   g_assert (BS_IS_BUTTON (button));
 
   button_event = bs_event_alloc (event_type, device);
@@ -197,13 +197,13 @@ bs_cursor_event_init (BsCursorEvent *self)
 }
 
 BsEvent *
-bs_cursor_event_new (BsEventType   event_type,
-                     BsStreamDeck *device)
+bs_cursor_event_new (BsEventType  event_type,
+                     BsDevice    *device)
 {
   g_autoptr (BsCursorEvent) cursor_event = NULL;
 
   g_assert (event_type == BS_CURSOR_DOUBLE_CLICK);
-  g_assert (BS_IS_STREAM_DECK (device));
+  g_assert (BS_IS_DEVICE (device));
 
   cursor_event = bs_event_alloc (event_type, device);
   g_assert (BS_IS_CURSOR_EVENT (cursor_event));
@@ -245,17 +245,17 @@ bs_dial_event_init (BsDialEvent *self)
 }
 
 BsEvent *
-bs_dial_event_new (BsEventType   event_type,
-                   BsStreamDeck *device,
-                   BsDial       *dial,
-                   int           rotation)
+bs_dial_event_new (BsEventType  event_type,
+                   BsDevice    *device,
+                   BsDial      *dial,
+                   int          rotation)
 {
   g_autoptr (BsDialEvent) dial_event = NULL;
 
   g_assert (event_type == BS_DIAL_ROTATE ||
             event_type == BS_DIAL_PRESS ||
             event_type == BS_DIAL_RELEASE);
-  g_assert (BS_IS_STREAM_DECK (device));
+  g_assert (BS_IS_DEVICE (device));
 
   dial_event = bs_event_alloc (event_type, device);
   g_assert (BS_IS_DIAL_EVENT (dial_event));
@@ -334,7 +334,7 @@ bs_touchscreen_event_init (BsTouchscreenEvent *self)
 
 BsEvent *
 bs_touchscreen_event_new (BsEventType             event_type,
-                          BsStreamDeck           *device,
+                          BsDevice               *device,
                           BsTouchscreenSlot      *slot,
                           const graphene_point_t *start,
                           const graphene_point_t *end)
@@ -344,7 +344,7 @@ bs_touchscreen_event_new (BsEventType             event_type,
   g_assert (event_type == BS_TOUCHSCREEN_SHORT_PRESS ||
             event_type == BS_TOUCHSCREEN_LONG_PRESS ||
             event_type == BS_TOUCHSCREEN_SWIPE);
-  g_assert (BS_IS_STREAM_DECK (device));
+  g_assert (BS_IS_DEVICE (device));
   g_assert (BS_IS_TOUCHSCREEN_SLOT (slot));
   g_assert (start != NULL);
   g_assert (end != NULL);

@@ -40,10 +40,10 @@ struct _BsWindow
   GtkListBox *profiles_listbox;
   GtkEditable *new_profile_name_entry;
   AdwNavigationSplitView *split_view;
-  GtkListBox *stream_decks_listbox;
+  GtkListBox *devices_listbox;
 
   GBinding *brightness_binding;
-  BsStreamDeck *current_stream_deck;
+  BsDevice *current_device;
 };
 
 static GtkWidget * create_profile_row_cb (gpointer item,
@@ -79,40 +79,40 @@ append_new_profile (BsWindow *self)
   if (g_utf8_strlen (new_profile_name, -1) == 0)
     return;
 
-  new_profile = bs_profile_new_empty (self->current_stream_deck);
+  new_profile = bs_profile_new_empty (self->current_device);
   bs_profile_set_name (new_profile, new_profile_name);
 
-  profiles = bs_stream_deck_get_profiles (self->current_stream_deck);
+  profiles = bs_device_get_profiles (self->current_device);
   g_list_store_append (G_LIST_STORE (profiles), new_profile);
 
-  bs_stream_deck_load_profile (self->current_stream_deck, new_profile);
+  bs_device_load_profile (self->current_device, new_profile);
 
   gtk_editable_set_text (self->new_profile_name_entry, "");
 }
 
 static void
-select_stream_deck (BsWindow     *self,
-                    BsStreamDeck *stream_deck)
+select_device (BsWindow     *self,
+                    BsDevice *device)
 {
   g_autofree char *page_name = NULL;
 
-  if (self->current_stream_deck == stream_deck)
+  if (self->current_device == device)
     return;
 
   gtk_stack_set_visible_child_name (self->main_stack, "devices");
 
-  page_name = g_strdup_printf ("%p", stream_deck);
+  page_name = g_strdup_printf ("%p", device);
   gtk_stack_set_visible_child_name (self->devices_stack, page_name);
 
   g_clear_pointer (&self->brightness_binding, g_binding_unbind);
 
-  self->current_stream_deck = stream_deck;
+  self->current_device = device;
 
-  if (stream_deck)
+  if (device)
     {
-      gtk_label_set_label (self->firmware_version_label, bs_stream_deck_get_firmware_version (stream_deck));
+      gtk_label_set_label (self->firmware_version_label, bs_device_get_firmware_version (device));
 
-      self->brightness_binding = g_object_bind_property (stream_deck,
+      self->brightness_binding = g_object_bind_property (device,
                                                          "brightness",
                                                          self->brightness_adjustment,
                                                          "value",
@@ -120,7 +120,7 @@ select_stream_deck (BsWindow     *self,
     }
 
   gtk_list_box_bind_model (self->profiles_listbox,
-                           stream_deck ? bs_stream_deck_get_profiles (stream_deck) : NULL,
+                           device ? bs_device_get_profiles (device) : NULL,
                            create_profile_row_cb,
                            self,
                            NULL);
@@ -142,7 +142,7 @@ on_profile_row_move_cb (BsProfileRow *profile_row,
   BsProfile *profile;
   unsigned int position;
 
-  profiles = bs_stream_deck_get_profiles (self->current_stream_deck);
+  profiles = bs_device_get_profiles (self->current_device);
   profile = bs_profile_row_get_profile (profile_row);
 
   g_object_ref (profile);
@@ -161,23 +161,23 @@ create_profile_row_cb (gpointer item,
 
   self = BS_WINDOW (user_data);
 
-  row = bs_profile_row_new (self->current_stream_deck, BS_PROFILE (item));
+  row = bs_profile_row_new (self->current_device, BS_PROFILE (item));
   g_signal_connect (row, "move", G_CALLBACK (on_profile_row_move_cb), self);
 
   return row;
 }
 
 static GtkWidget *
-create_stream_deck_row_cb (gpointer item,
-                           gpointer user_data)
+create_device_row_cb (gpointer item,
+                      gpointer user_data)
 {
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   GtkWidget *subtitle;
   GtkWidget *title;
   GtkWidget *box;
   GtkWidget *row;
 
-  stream_deck = BS_STREAM_DECK (item);
+  device = BS_DEVICE (item);
 
   box = g_object_new (GTK_TYPE_BOX,
                       "orientation", GTK_ORIENTATION_VERTICAL,
@@ -189,7 +189,7 @@ create_stream_deck_row_cb (gpointer item,
   title = g_object_new (GTK_TYPE_LABEL,
                         "hexpand", TRUE,
                         "halign", GTK_ALIGN_START,
-                        "label", bs_stream_deck_get_name (stream_deck),
+                        "label", bs_device_get_name (device),
                         "xalign", 0.0,
                         NULL);
   gtk_box_append (GTK_BOX (box), title);
@@ -197,7 +197,7 @@ create_stream_deck_row_cb (gpointer item,
   subtitle = g_object_new (GTK_TYPE_LABEL,
                            "hexpand", TRUE,
                            "halign", GTK_ALIGN_START,
-                           "label", bs_stream_deck_get_serial_number (stream_deck),
+                           "label", bs_device_get_serial_number (device),
                            "xalign", 0.0,
                            NULL);
   gtk_widget_add_css_class (subtitle, "caption");
@@ -213,29 +213,29 @@ create_stream_deck_row_cb (gpointer item,
 
 static void
 on_device_manager_device_added_cb (BsDeviceManager *device_manager,
-                                   BsStreamDeck    *stream_deck,
+                                   BsDevice        *device,
                                    BsWindow        *self)
 {
   g_autofree char *page_name = NULL;
   GtkWidget *editor;
 
-  editor = bs_device_editor_new (stream_deck);
-  page_name = g_strdup_printf ("%p", stream_deck);
+  editor = bs_device_editor_new (device);
+  page_name = g_strdup_printf ("%p", device);
   gtk_stack_add_named (self->devices_stack, editor, page_name);
 
   if (g_list_model_get_n_items (G_LIST_MODEL (device_manager)) == 1)
-    select_stream_deck (self, stream_deck);
+    select_device (self, device);
 }
 
 static void
 on_device_manager_device_removed_cb (BsDeviceManager *device_manager,
-                                     BsStreamDeck    *stream_deck,
+                                     BsDevice        *device,
                                      BsWindow        *self)
 {
   g_autofree char *page_name = NULL;
   GtkWidget *child;
 
-  page_name = g_strdup_printf ("%p", stream_deck);
+  page_name = g_strdup_printf ("%p", device);
   child = gtk_stack_get_child_by_name (self->devices_stack, page_name);
 
   gtk_stack_remove (self->devices_stack, child);
@@ -290,24 +290,24 @@ on_profiles_listbox_row_activated_cb (GtkListBox    *listbox,
   g_autoptr (BsProfile) profile = NULL;
   GListModel *profiles;
 
-  profiles = bs_stream_deck_get_profiles (self->current_stream_deck);
+  profiles = bs_device_get_profiles (self->current_device);
   profile = g_list_model_get_item (profiles, gtk_list_box_row_get_index (row));
 
-  bs_stream_deck_load_profile (self->current_stream_deck, profile);
+  bs_device_load_profile (self->current_device, profile);
 }
 
 static void
-on_stream_decks_listbox_row_activated_cb (GtkListBox    *listbox,
-                                          GtkListBoxRow *row,
-                                          BsWindow      *self)
+on_devices_listbox_row_activated_cb (GtkListBox    *listbox,
+                                     GtkListBoxRow *row,
+                                     BsWindow      *self)
 {
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   GtkWidget *menu_button;
 
-  stream_deck = g_object_get_data (G_OBJECT (row), "stream-deck");
-  select_stream_deck (self, stream_deck);
+  device = g_object_get_data (G_OBJECT (row), "stream-deck");
+  select_device (self, device);
 
-  menu_button = gtk_widget_get_ancestor (GTK_WIDGET (self->stream_decks_listbox),
+  menu_button = gtk_widget_get_ancestor (GTK_WIDGET (self->devices_listbox),
                                          GTK_TYPE_MENU_BUTTON);
   gtk_menu_button_popdown (GTK_MENU_BUTTON (menu_button));
 }
@@ -335,25 +335,25 @@ bs_window_constructed (GObject *object)
 
   for (i = 0; i < g_list_model_get_n_items (devices); i++)
     {
-      g_autoptr (BsStreamDeck) stream_deck = NULL;
+      g_autoptr (BsDevice) device = NULL;
       g_autofree char *page_name = NULL;
       GtkWidget *editor;
 
-      stream_deck = g_list_model_get_item (devices, i);
-      editor = bs_device_editor_new (stream_deck);
-      page_name = g_strdup_printf ("%p", stream_deck);
+      device = g_list_model_get_item (devices, i);
+      editor = bs_device_editor_new (device);
+      page_name = g_strdup_printf ("%p", device);
       gtk_stack_add_named (self->devices_stack, editor, page_name);
 
       if (first)
         {
-          select_stream_deck (self, stream_deck);
+          select_device (self, device);
           first = FALSE;
         }
     }
 
-  gtk_list_box_bind_model (self->stream_decks_listbox,
+  gtk_list_box_bind_model (self->devices_listbox,
                            devices,
-                           create_stream_deck_row_cb,
+                           create_device_row_cb,
                            self,
                            NULL);
 
@@ -382,7 +382,7 @@ bs_window_get_property (GObject    *object,
   switch (prop_id)
     {
     case PROP_DEVICE:
-      g_value_set_object (value, self->current_stream_deck);
+      g_value_set_object (value, self->current_device);
       break;
 
     default:
@@ -401,7 +401,7 @@ bs_window_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_DEVICE:
-      select_stream_deck (self, g_value_get_object (value));
+      select_device (self, g_value_get_object (value));
       break;
 
     default:
@@ -420,7 +420,7 @@ bs_window_class_init (BsWindowClass *klass)
   object_class->set_property = bs_window_set_property;
 
   properties[PROP_DEVICE] = g_param_spec_object ("device", NULL, NULL,
-                                                 BS_TYPE_STREAM_DECK,
+                                                 BS_TYPE_DEVICE,
                                                  G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
@@ -436,11 +436,11 @@ bs_window_class_init (BsWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, BsWindow, main_stack);
   gtk_widget_class_bind_template_child (widget_class, BsWindow, new_profile_name_entry);
   gtk_widget_class_bind_template_child (widget_class, BsWindow, profiles_listbox);
-  gtk_widget_class_bind_template_child (widget_class, BsWindow, stream_decks_listbox);
+  gtk_widget_class_bind_template_child (widget_class, BsWindow, devices_listbox);
 
+  gtk_widget_class_bind_template_callback (widget_class, on_devices_listbox_row_activated_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_new_profile_name_entry_activate_cb);
   gtk_widget_class_bind_template_callback (widget_class, on_profiles_listbox_row_activated_cb);
-  gtk_widget_class_bind_template_callback (widget_class, on_stream_decks_listbox_row_activated_cb);
 
   gtk_widget_class_add_binding_action (widget_class, GDK_KEY_w, GDK_CONTROL_MASK, "window.close", NULL);
 }

@@ -66,9 +66,9 @@ on_flowbox_child_activated_cb (GtkFlowBox         *flowbox,
   if (action)
     {
       g_autoptr (BsEvent) cursor_event = NULL;
-      BsStreamDeck *device;
+      BsDevice *device;
 
-      device = bs_device_region_get_stream_deck (BS_DEVICE_REGION (self->button_grid));
+      device = bs_device_region_get_device (BS_DEVICE_REGION (self->button_grid));
       cursor_event = bs_cursor_event_new (BS_CURSOR_DOUBLE_CLICK, device);
 
       bs_action_handle_event (action, cursor_event);

@@ -34,7 +34,7 @@ G_BEGIN_DECLS
 #define BS_TYPE_DIAL (bs_dial_get_type())
 G_DECLARE_FINAL_TYPE (BsDial, bs_dial, BS, DIAL, GObject)
 
-BsStreamDeck * bs_dial_get_stream_deck (BsDial *self);
+BsDevice * bs_dial_get_device (BsDial *self);
 
 uint8_t bs_dial_get_position (BsDial *self);
 

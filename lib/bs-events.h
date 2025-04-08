@@ -64,7 +64,7 @@ typedef struct _BsEventClass BsEventClass;
 GType bs_event_get_type (void) G_GNUC_CONST;
 
 BsEventType bs_event_get_event_type (BsEvent *self);
-BsStreamDeck * bs_event_get_device (BsEvent *self);
+BsDevice * bs_event_get_device (BsEvent *self);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsEvent, g_object_unref)
 
@@ -112,8 +112,8 @@ GType bs_cursor_event_get_type (void) G_GNUC_CONST;
  * FIXME: make it private
  */
 
-BsEvent * bs_cursor_event_new (BsEventType   event_type,
-                               BsStreamDeck *device);
+BsEvent * bs_cursor_event_new (BsEventType  event_type,
+                               BsDevice    *device);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BsCursorEvent, g_object_unref)
 

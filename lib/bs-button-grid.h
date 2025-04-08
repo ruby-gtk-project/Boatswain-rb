@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (BsButtonGrid, bs_button_grid, BS, BUTTON_GRID, BsDeviceRegion)
 
 BsButtonGrid * bs_button_grid_new (const char        *id,
-                                   BsStreamDeck      *stream_deck,
+                                   BsDevice          *device,
                                    const BsImageInfo *image_info,
                                    unsigned int       n_buttons,
                                    unsigned int       grid_columns,

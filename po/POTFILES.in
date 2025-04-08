@@ -3,13 +3,13 @@
 data/com.feaneron.Boatswain.desktop.in.in
 data/com.feaneron.Boatswain.gschema.xml
 data/com.feaneron.Boatswain.metainfo.xml.in.in
+lib/bs-device.c
+lib/bs-profile.c
 src/bs-application.c
 src/bs-button-editor.c
 src/bs-button-editor.ui
 src/bs-device-editor.ui
-src/bs-profile.c
 src/bs-profile-row.ui
-src/bs-stream-deck.c
 src/bs-touchscreen-background-dialog.c
 src/bs-touchscreen-background-dialog.ui
 src/bs-touchscreen-slot-editor.c

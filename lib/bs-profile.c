@@ -21,7 +21,7 @@
 #include "bs-profile.h"
 
 #include "bs-page-private.h"
-#include "bs-stream-deck.h"
+#include "bs-device.h"
 
 #include <glib/gi18n.h>
 
@@ -33,7 +33,7 @@ struct _BsProfile
   char *name;
   double brightness;
   BsPage *root_page;
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
 };
 
 G_DEFINE_FINAL_TYPE (BsProfile, bs_profile, G_TYPE_OBJECT)
@@ -95,7 +95,7 @@ bs_profile_get_property (GObject    *object,
       break;
 
     case PROP_STREAM_DECK:
-      g_value_set_object (value, self->stream_deck);
+      g_value_set_object (value, self->device);
       break;
 
     default:
@@ -127,8 +127,8 @@ bs_profile_set_property (GObject      *object,
       break;
 
     case PROP_STREAM_DECK:
-      g_assert (self->stream_deck == NULL);
-      self->stream_deck = g_value_get_object (value);
+      g_assert (self->device == NULL);
+      self->device = g_value_get_object (value);
       break;
 
     default:
@@ -162,7 +162,7 @@ bs_profile_class_init (BsProfileClass *klass)
                                                G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_STREAM_DECK] = g_param_spec_object ("stream-deck", NULL, NULL,
-                                                      BS_TYPE_STREAM_DECK,
+                                                      BS_TYPE_DEVICE,
                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
@@ -175,7 +175,7 @@ bs_profile_init (BsProfile *self)
 }
 
 BsProfile *
-bs_profile_new_empty (BsStreamDeck *stream_deck)
+bs_profile_new_empty (BsDevice *device)
 {
   g_autoptr (BsProfile) profile = NULL;
   g_autofree char *id = g_uuid_string_random ();
@@ -183,7 +183,7 @@ bs_profile_new_empty (BsStreamDeck *stream_deck)
   profile = g_object_new (BS_TYPE_PROFILE,
                           "id", id,
                           "name", _("Unnamed profile"),
-                          "stream-deck", stream_deck,
+                          "stream-deck", device,
                           NULL);
 
   profile->root_page = bs_page_new_root (NULL);
@@ -192,7 +192,7 @@ bs_profile_new_empty (BsStreamDeck *stream_deck)
 }
 
 BsProfile *
-bs_profile_new_from_json (BsStreamDeck *stream_deck,
+bs_profile_new_from_json (BsDevice *device,
                           JsonNode     *node)
 {
   g_autoptr (BsProfile) profile = NULL;
@@ -201,7 +201,7 @@ bs_profile_new_from_json (BsStreamDeck *stream_deck,
   if (!JSON_NODE_HOLDS_OBJECT (node))
     {
       g_warning ("JSON node is not an object");
-      return bs_profile_new_empty (stream_deck);
+      return bs_profile_new_empty (device);
     }
 
   object = json_node_get_object (node);
@@ -210,7 +210,7 @@ bs_profile_new_from_json (BsStreamDeck *stream_deck,
                           "id", json_object_get_string_member (object, "id"),
                           "name", json_object_get_string_member (object, "name"),
                           "brightness", json_object_get_double_member (object, "brightness"),
-                          "stream-deck", stream_deck,
+                          "stream-deck", device,
                           NULL);
 
   profile->root_page = bs_page_new_root (json_object_get_member (object, "page"));
@@ -299,12 +299,12 @@ bs_profile_set_name (BsProfile  *self,
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_NAME]);
 }
 
-BsStreamDeck *
-bs_profile_get_stream_deck (BsProfile *self)
+BsDevice *
+bs_profile_get_device (BsProfile *self)
 {
   g_return_val_if_fail (BS_IS_PROFILE (self), NULL);
 
-  return self->stream_deck;
+  return self->device;
 }
 
 BsPage *

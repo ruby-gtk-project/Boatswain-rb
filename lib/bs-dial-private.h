@@ -25,7 +25,7 @@
 
 G_BEGIN_DECLS
 
-BsDial *bs_dial_new (BsStreamDeck *stream_deck,
+BsDial *bs_dial_new (BsDevice *device,
                      uint8_t       position);
 
 void bs_dial_set_pressed (BsDial   *self,

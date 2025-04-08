@@ -55,7 +55,7 @@ is_move_page_up_action (BsButtonWidget *self)
 {
   const PeasPluginInfo *plugin_info;
   BsActionFactory *factory;
-  BsStreamDeck *stream_deck;
+  BsDevice *device;
   BsAction *action;
   BsPage *active_page;
 
@@ -65,8 +65,8 @@ is_move_page_up_action (BsButtonWidget *self)
 
   factory = bs_action_get_factory (action);
   plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
-  stream_deck = bs_button_get_stream_deck (self->button);
-  active_page = bs_stream_deck_get_active_page (stream_deck);
+  device = bs_button_get_device (self->button);
+  active_page = bs_device_get_active_page (device);
 
   return bs_button_get_position (self->button) == 0 &&
          !bs_page_is_root (active_page) &&

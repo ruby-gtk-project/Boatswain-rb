@@ -28,6 +28,6 @@ G_BEGIN_DECLS
 #define BS_TYPE_DEVICE_EDITOR (bs_device_editor_get_type())
 G_DECLARE_FINAL_TYPE (BsDeviceEditor, bs_device_editor, BS, DEVICE_EDITOR, AdwBin)
 
-GtkWidget * bs_device_editor_new (BsStreamDeck *stream_deck);
+GtkWidget * bs_device_editor_new (BsDevice *device);
 
 G_END_DECLS
