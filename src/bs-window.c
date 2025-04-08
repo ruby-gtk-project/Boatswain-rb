@@ -19,12 +19,10 @@
 #include "bs-application-private.h"
 #include "bs-config.h"
 #include "bs-device-editor.h"
-#include "bs-device-manager.h"
-#include "bs-profile.h"
 #include "bs-profile-row.h"
-#include "bs-stream-deck.h"
 #include "bs-window.h"
 
+#include <boatswain.h>
 #include <glib/gi18n.h>
 
 struct _BsWindow
@@ -322,8 +320,8 @@ on_stream_decks_listbox_row_activated_cb (GtkListBox    *listbox,
 static void
 bs_window_constructed (GObject *object)
 {
-  BsDeviceManager *device_manager;
-  GApplication *application;
+  GListModel *devices;
+  BsContext *context;
   BsWindow *self;
   gboolean first;
   size_t i;
@@ -332,16 +330,16 @@ bs_window_constructed (GObject *object)
 
   self = BS_WINDOW (object);
   first = TRUE;
-  application = g_application_get_default ();
-  device_manager = bs_application_get_device_manager (BS_APPLICATION (application));
+  context = bs_context_get_default ();
+  devices = bs_context_get_devices (context);
 
-  for (i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (device_manager)); i++)
+  for (i = 0; i < g_list_model_get_n_items (devices); i++)
     {
       g_autoptr (BsStreamDeck) stream_deck = NULL;
       g_autofree char *page_name = NULL;
       GtkWidget *editor;
 
-      stream_deck = g_list_model_get_item (G_LIST_MODEL (device_manager), i);
+      stream_deck = g_list_model_get_item (devices, i);
       editor = bs_device_editor_new (stream_deck);
       page_name = g_strdup_printf ("%p", stream_deck);
       gtk_stack_add_named (self->devices_stack, editor, page_name);
@@ -354,18 +352,19 @@ bs_window_constructed (GObject *object)
     }
 
   gtk_list_box_bind_model (self->stream_decks_listbox,
-                           G_LIST_MODEL (device_manager),
+                           devices,
                            create_stream_deck_row_cb,
                            self,
                            NULL);
 
-  g_signal_connect_object (device_manager,
+  /* FIXME */
+  g_signal_connect_object (devices,
                            "device-added",
                            G_CALLBACK (on_device_manager_device_added_cb),
                            self,
                            0);
 
-  g_signal_connect_object (device_manager,
+  g_signal_connect_object (devices,
                            "device-removed",
                            G_CALLBACK (on_device_manager_device_removed_cb),
                            self,

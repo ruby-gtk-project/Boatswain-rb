@@ -20,8 +20,6 @@
 
 #define G_LOG_DOMAIN "HTTP Request"
 
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "network-http-action.h"
 #include "network-http-action-prefs.h"
 

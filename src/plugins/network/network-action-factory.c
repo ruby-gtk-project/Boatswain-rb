@@ -18,8 +18,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
 #include "network-action-factory.h"
 #include "network-http-action.h"
 

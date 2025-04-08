@@ -19,8 +19,6 @@
  */
 
 
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "obs-connection-settings.h"
 #include "obs-virtualcam-action.h"
 

@@ -18,8 +18,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "launcher-launch-action.h"
 #include "launcher-launch-preferences.h"
 

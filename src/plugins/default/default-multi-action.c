@@ -20,15 +20,8 @@
 
 #define G_LOG_DOMAIN "Multiaction"
 
-#include "bs-action-factory.h"
-#include "bs-action-private.h"
-#include "bs-application-private.h"
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "default-multi-action-editor.h"
 #include "default-multi-action-private.h"
-
-#include <libpeas.h>
 
 struct _DefaultMultiAction
 {
@@ -51,39 +44,28 @@ G_DEFINE_FINAL_TYPE (DefaultMultiAction, default_multi_action, BS_TYPE_ACTION)
  * Auxiliary methods
  */
 
-typedef struct
-{
-  const char *factory_id;
-  BsActionFactory *factory;
-} FindFactoryData;
-
-static void
-find_action_factory_cb (PeasExtensionSet *set,
-                        PeasPluginInfo   *info,
-                        GObject          *extension,
-                        gpointer          data)
-{
-  FindFactoryData *find_data = data;
-
-  if (g_strcmp0 (peas_plugin_info_get_module_name (info), find_data->factory_id) == 0)
-    find_data->factory = BS_ACTION_FACTORY (extension);
-}
-
 static BsActionFactory *
 get_action_factory (const char *factory_id)
 {
-  FindFactoryData find_data;
-  GApplication *application;
+  GListModel *factories;
+  BsContext *context;
 
-  find_data.factory_id = factory_id;
-  find_data.factory = NULL;
+  context = bs_context_get_default ();
+  factories = bs_context_get_available_action_factories (context);
 
-  application = g_application_get_default ();
-  peas_extension_set_foreach (bs_application_get_action_factory_set (BS_APPLICATION (application)),
-                              find_action_factory_cb,
-                              &find_data);
+  for (size_t i = 0; i < g_list_model_get_n_items (factories); i++)
+    {
+      g_autoptr (BsActionFactory) factory = g_list_model_get_item (factories, i);
+      PeasPluginInfo *plugin_info;
 
-  return find_data.factory;
+      g_assert (BS_IS_ACTION_FACTORY (factory));
+
+      plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
+      if (g_strcmp0 (peas_plugin_info_get_module_name (plugin_info), factory_id) == 0)
+        return g_steal_pointer (&factory);
+    }
+
+  return NULL;
 }
 
 static const char *
@@ -309,7 +291,7 @@ default_multi_action_deserialize_settings (BsAction   *action,
         }
       else if (g_strcmp0 (type, "action") == 0)
         {
-          BsActionFactory *factory;
+          g_autoptr (BsActionFactory) factory = NULL;
           BsActionInfo *action_info;
           JsonNode *settings;
 

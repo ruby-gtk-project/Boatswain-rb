@@ -21,10 +21,7 @@
 
 #pragma once
 
-#include <glib-object.h>
-
-#include "bs-action.h"
-#include "bs-types.h"
+#include <boatswain.h>
 
 G_BEGIN_DECLS
 

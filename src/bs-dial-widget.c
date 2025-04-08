@@ -21,8 +21,6 @@
 
 #include "bs-dial-widget.h"
 
-#include "bs-dial.h"
-
 struct _BsDialWidget
 {
   GtkWidget parent_instance;

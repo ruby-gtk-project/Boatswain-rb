@@ -18,9 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-profile.h"
 #include "bs-profile-row.h"
-#include "bs-stream-deck.h"
 
 struct _BsProfileRow
 {

@@ -20,8 +20,7 @@
 
 #pragma once
 
-#include "bs-action.h"
-
+#include <boatswain.h>
 #include <libsoup/soup.h>
 
 G_BEGIN_DECLS

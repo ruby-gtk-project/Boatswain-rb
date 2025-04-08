@@ -18,7 +18,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-icon.h"
 #include "obs-action.h"
 #include "obs-connection-settings.h"
 

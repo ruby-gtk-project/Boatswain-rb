@@ -18,8 +18,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
 #include "launcher-action-factory.h"
 #include "launcher-launch-action.h"
 #include "launcher-open-file-action.h"

@@ -18,11 +18,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
-#include "bs-action-private.h"
 #include "default-multi-action-row.h"
 
+#include <boatswain.h>
 #include <glib/gi18n.h>
 
 struct _DefaultMultiActionRow

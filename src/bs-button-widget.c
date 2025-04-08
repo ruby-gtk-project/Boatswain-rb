@@ -19,20 +19,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#define G_LOG_DOMAIN "Stream Deck Button Widget"
+#define G_LOG_DOMAIN "Button Widget"
 
 #include "bs-button-widget.h"
-
-#include "bs-actionable-private.h"
-#include "bs-action-private.h"
-#include "bs-debug.h"
-#include "bs-empty-action.h"
-#include "bs-icon.h"
-#include "bs-page.h"
-#include "bs-stream-deck.h"
-#include "bs-button.h"
-
-#include <libpeas.h>
 
 struct _BsButtonWidget
 {
@@ -170,7 +159,6 @@ on_drop_target_drop_cb (GtkDropTarget            *drop_target,
   if (dropped_button_icon)
     g_object_ref (dropped_button_icon);
 
-  bs_actionable_set_action (BS_ACTIONABLE (dragged_button), dropped_button_action);
   bs_actionable_set_action (BS_ACTIONABLE (dropped_button), dragged_button_action);
 
   bs_button_set_custom_icon (dragged_button, dropped_button_icon);

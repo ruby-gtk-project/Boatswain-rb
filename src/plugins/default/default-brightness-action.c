@@ -18,12 +18,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-events.h"
-#include "bs-icon.h"
-#include "bs-stream-deck.h"
-#include "bs-button.h"
 #include "default-brightness-action.h"
 
+#include <adwaita.h>
 #include <glib/gi18n.h>
 
 typedef enum

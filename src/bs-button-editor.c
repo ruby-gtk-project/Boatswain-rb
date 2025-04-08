@@ -18,26 +18,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "bs-action-selector.h"
 #include "bs-button-editor.h"
 
-#include "bs-actionable-private.h"
-#include "bs-action.h"
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
-#include "bs-action-private.h"
-#include "bs-action-selector.h"
-#include "bs-application-private.h"
-#include "bs-button-private.h"
-#include "bs-device-region.h"
-#include "bs-empty-action.h"
-#include "bs-icon.h"
-#include "bs-page.h"
-#include "bs-page-item.h"
-#include "bs-stream-deck.h"
-#include "bs-button.h"
-
 #include <glib/gi18n.h>
-#include <libpeas.h>
 
 struct _BsButtonEditor
 {

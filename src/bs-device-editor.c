@@ -22,28 +22,15 @@
 
 #include "bs-device-editor.h"
 
-#include "bs-action-private.h"
-#include "bs-button-grid.h"
-#include "bs-debug.h"
-#include "bs-dial.h"
-#include "bs-dial-grid.h"
 #include "bs-dial-widget.h"
-#include "bs-icon.h"
-#include "bs-page.h"
-#include "bs-stream-deck.h"
-#include "bs-button.h"
 #include "bs-button-editor.h"
 #include "bs-button-grid-widget.h"
 #include "bs-button-widget.h"
 #include "bs-selection-controller.h"
-#include "bs-stream-deck-private.h"
-#include "bs-touchscreen-private.h"
-#include "bs-touchscreen-slot.h"
 #include "bs-touchscreen-slot-editor.h"
 #include "bs-touchscreen-widget.h"
 
 #include <glib/gi18n.h>
-#include <libpeas.h>
 
 struct _BsDeviceEditor
 {

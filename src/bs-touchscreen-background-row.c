@@ -22,9 +22,8 @@
 #include "bs-touchscreen-background-row.h"
 
 #include "bs-touchscreen-background-dialog.h"
-#include "bs-touchscreen-content.h"
-#include "bs-touchscreen-private.h"
 
+#include <boatswain.h>
 #include <glib/gi18n.h>
 
 struct _BsTouchscreenBackgroundRow

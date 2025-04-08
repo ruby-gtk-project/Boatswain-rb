@@ -18,16 +18,14 @@
 
 #pragma once
 
-#include "bs-types.h"
-
 #include <adwaita.h>
-#include <libpeas.h>
+#include <boatswain.h>
 
 G_BEGIN_DECLS
 
 #define BS_TYPE_APPLICATION (bs_application_get_type())
 G_DECLARE_FINAL_TYPE (BsApplication, bs_application, BS, APPLICATION, AdwApplication)
 
-BsDesktopController * bs_application_get_desktop_controller (BsApplication *self);
+BsApplication * bs_application_new (void);
 
 G_END_DECLS

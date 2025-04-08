@@ -20,10 +20,8 @@
 
 #pragma once
 
-#include <glib-object.h>
+#include <boatswain.h>
 
-#include "bs-action.h"
-#include "bs-types.h"
 #include "obs-connection-manager.h"
 
 G_BEGIN_DECLS

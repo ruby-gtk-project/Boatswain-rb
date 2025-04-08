@@ -20,7 +20,6 @@
 
 #include <libpeas.h>
 
-#include "bs-action-factory.h"
 #include "obs-action-factory.h"
 
 G_MODULE_EXPORT void

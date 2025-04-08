@@ -21,14 +21,13 @@
 
 #pragma once
 
-#include "bs-action.h"
-#include "bs-desktop-controller.h"
+#include <boatswain.h>
 
 G_BEGIN_DECLS
 
 #define DESKTOP_TYPE_KEYBOARD_SHORTCUT_ACTION (desktop_keyboard_shortcut_action_get_type())
 G_DECLARE_FINAL_TYPE (DesktopKeyboardShortcutAction, desktop_keyboard_shortcut_action, DESKTOP, KEYBOARD_SHORTCUT_ACTION, BsAction)
 
-BsAction * desktop_keyboard_shortcut_action_new (BsDesktopController *desktop_controller);
+BsAction * desktop_keyboard_shortcut_action_new (BsContext *context);
 
 G_END_DECLS

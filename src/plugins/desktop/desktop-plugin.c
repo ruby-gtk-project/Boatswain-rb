@@ -19,9 +19,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <boatswain.h>
 #include <libpeas.h>
 
-#include "bs-action-factory.h"
 #include "desktop-action-factory.h"
 
 G_MODULE_EXPORT void

@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include <glib-object.h>
-
 #include "obs-action.h"
 
 G_BEGIN_DECLS

@@ -23,20 +23,8 @@
 
 #include "bs-touchscreen-slot-editor.h"
 
-#include "bs-actionable-private.h"
 #include "bs-action-selector.h"
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
-#include "bs-application-private.h"
-#include "bs-empty-action.h"
-#include "bs-icon.h"
-#include "bs-page.h"
-#include "bs-page-item.h"
-#include "bs-stream-deck.h"
 #include "bs-touchscreen-background-row.h"
-#include "bs-touchscreen-content.h"
-#include "bs-touchscreen-private.h"
-#include "bs-touchscreen-slot.h"
 
 #include <glib/gi18n.h>
 

@@ -18,8 +18,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
 #include "soundboard-action-factory.h"
 #include "soundboard-mpris-action.h"
 #include "soundboard-play-action.h"

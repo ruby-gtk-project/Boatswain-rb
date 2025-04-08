@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "bs-action.h"
+#include <boatswain.h>
+
 #include "mpris-controller.h"
 
 G_BEGIN_DECLS

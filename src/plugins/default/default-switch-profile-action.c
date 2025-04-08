@@ -18,15 +18,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-application-private.h"
-#include "bs-device-manager.h"
-#include "bs-events.h"
-#include "bs-icon.h"
-#include "bs-profile.h"
-#include "bs-stream-deck.h"
-#include "bs-button.h"
 #include "default-switch-profile-action.h"
 
+#include <adwaita.h>
 #include <glib/gi18n.h>
 
 struct _DefaultSwitchProfileAction
@@ -55,17 +49,17 @@ static BsStreamDeck *
 find_stream_deck (const char   *serial_number,
                   unsigned int *out_position)
 {
-  BsDeviceManager *device_manager;
-  BsApplication *application;
+  GListModel *devices;
+  BsContext *context;
 
-  application = BS_APPLICATION (g_application_get_default ());
-  device_manager = bs_application_get_device_manager (application);
+  context = bs_context_get_default ();
+  devices = bs_context_get_devices (context);
 
-  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (device_manager)); i++)
+  for (unsigned int i = 0; i < g_list_model_get_n_items (devices); i++)
     {
       g_autoptr (BsStreamDeck) stream_deck = NULL;
 
-      stream_deck = g_list_model_get_item (G_LIST_MODEL (device_manager), i);
+      stream_deck = g_list_model_get_item (devices, i);
 
       if (g_strcmp0 (bs_stream_deck_get_serial_number (stream_deck), serial_number) == 0)
         {
@@ -214,16 +208,10 @@ on_combo_row_selected_item_changed_cb (AdwComboRow                *combo_row,
 }
 
 static void
-on_device_manager_device_added_cb (BsDeviceManager            *device_manager,
-                                   BsStreamDeck               *stream_deck,
-                                   DefaultSwitchProfileAction *self)
-{
-  update_active_profile (self);
-}
-
-static void
-on_device_manager_device_removed_cb (BsDeviceManager            *device_manager,
-                                     BsStreamDeck               *stream_deck,
+on_context_devices_items_changed_cb (GListModel                 *model,
+                                     unsigned int                position,
+                                     unsigned int                removed,
+                                     unsigned int                added,
                                      DefaultSwitchProfileAction *self)
 {
   update_active_profile (self);
@@ -255,10 +243,9 @@ static GtkWidget *
 default_switch_profile_action_get_preferences (BsAction *action)
 {
   DefaultSwitchProfileAction *self = DEFAULT_SWITCH_PROFILE_ACTION (action);
-  BsDeviceManager *device_manager;
-  BsApplication *application;
   BsStreamDeck *stream_deck;
   GListModel *profiles;
+  BsContext *context;
   GtkWidget *group;
   GtkWidget *row;
   unsigned int position;
@@ -268,8 +255,7 @@ default_switch_profile_action_get_preferences (BsAction *action)
   if (self->profiles_row)
     g_object_remove_weak_pointer (G_OBJECT (self->profiles_row), (gpointer *) &self->profiles_row);
 
-  application = BS_APPLICATION (g_application_get_default ());
-  device_manager = bs_application_get_device_manager (application);
+  context = bs_context_get_default ();
 
   group = adw_preferences_group_new ();
 
@@ -278,7 +264,7 @@ default_switch_profile_action_get_preferences (BsAction *action)
   adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), _("Stream Deck"));
   adw_combo_row_set_expression (ADW_COMBO_ROW (row),
                                 gtk_property_expression_new (BS_TYPE_PROFILE, NULL, "name"));
-  adw_combo_row_set_model (ADW_COMBO_ROW (row), G_LIST_MODEL (device_manager));
+  adw_combo_row_set_model (ADW_COMBO_ROW (row), bs_context_get_devices (context));
 
   if ((stream_deck = find_stream_deck (self->serial_number, &position)) != NULL)
     adw_combo_row_set_selected (ADW_COMBO_ROW (row), position);
@@ -393,12 +379,20 @@ static void
 default_switch_profile_action_constructed (GObject *object)
 {
   DefaultSwitchProfileAction *self = (DefaultSwitchProfileAction *)object;
+  BsContext *context;
   BsIcon *icon;
 
   G_OBJECT_CLASS (default_switch_profile_action_parent_class)->constructed (object);
 
   icon = bs_action_get_icon (BS_ACTION (self));
   bs_icon_set_icon_name (icon, "preferences-desktop-apps-symbolic");
+
+  context = bs_context_get_default ();
+  g_signal_connect_object (bs_context_get_devices (context),
+                           "items-changed",
+                           G_CALLBACK (on_context_devices_items_changed_cb),
+                           self,
+                           0);
 
   update_active_profile (self);
 }
@@ -422,19 +416,6 @@ default_switch_profile_action_class_init (DefaultSwitchProfileActionClass *klass
 static void
 default_switch_profile_action_init (DefaultSwitchProfileAction *self)
 {
-  BsApplication *application = BS_APPLICATION (g_application_get_default ());
-  BsDeviceManager *device_manager = bs_application_get_device_manager (application);
-
-  g_signal_connect_object (device_manager,
-                           "device-added",
-                           G_CALLBACK (on_device_manager_device_added_cb),
-                           self,
-                           0);
-  g_signal_connect_object (device_manager,
-                           "device-removed",
-                           G_CALLBACK (on_device_manager_device_removed_cb),
-                           self,
-                           0);
 }
 
 BsAction *

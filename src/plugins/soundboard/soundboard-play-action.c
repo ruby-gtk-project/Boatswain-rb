@@ -18,8 +18,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "soundboard-play-action.h"
 #include "soundboard-play-action-prefs.h"
 

@@ -16,13 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bs-action-factory.h"
 #include "bs-application.h"
 #include "bs-config.h"
-#include "bs-desktop-controller-private.h"
 #include "bs-device-manager.h"
-#include "bs-events-private.h"
-#include "bs-log.h"
 #include "bs-window.h"
 
 #include <glib/gi18n.h>
@@ -36,10 +32,7 @@ struct _BsApplication
 
   GtkWindow *window;
 
-  PeasExtensionSet *action_factories_set;
-  BsDeviceManager *device_manager;
   XdpPortal *portal;
-  BsDesktopController *desktop_controller;
 };
 
 static void on_request_background_called_cb (GObject      *object,
@@ -56,32 +49,6 @@ static GOptionEntry bs_application_options[] = {
   },
   { NULL }
 };
-
-
-/*
- * Auxiliary methods
- */
-
-static void
-load_plugin (PeasEngine     *engine,
-             PeasPluginInfo *plugin_info)
-{
-  g_autofree char *icons_dir = NULL;
-  GtkIconTheme *icon_theme;
-  const char *plugin_datadir;
-
-  peas_engine_load_plugin (engine, plugin_info);
-
-  /* Add icons */
-  plugin_datadir = peas_plugin_info_get_data_dir (plugin_info);
-
-  if (g_str_has_prefix (plugin_datadir, "resource://"))
-    plugin_datadir += strlen ("resource://");
-  icons_dir = g_strdup_printf ("%s/icons", plugin_datadir);
-
-  icon_theme = gtk_icon_theme_get_for_display (gdk_display_get_default ());
-  gtk_icon_theme_add_resource_path (icon_theme, icons_dir);
-}
 
 
 /*
@@ -188,52 +155,27 @@ bs_application_startup (GApplication *application)
   g_autoptr (GError) error = NULL;
   AdwStyleManager *style_manager;
   BsApplication *self;
-  PeasEngine *engine;
+  BsContext *context;
 
   self = BS_APPLICATION (application);
-
-  bs_event_init_types_once ();
 
   /* Add legacy gdk-pixbuf loaders to the search path */
   gdk_pixbuf_init_modules ("/app/lib/gdk-pixbuf-2.0/2.10.0", NULL);
 
   G_APPLICATION_CLASS (bs_application_parent_class)->startup (application);
 
-  /* All plugins must be loaded before profiles and Stream Decks */
-  engine = peas_engine_get_default ();
-  peas_engine_enable_loader (engine, "gjs");
-  peas_engine_add_search_path (engine,
-                               "resource:///com/feaneron/Boatswain/plugins",
-                               "resource:///com/feaneron/Boatswain/plugins");
-
-  for (uint32_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (engine)); i++)
-    {
-      g_autoptr (PeasPluginInfo) plugin_info = NULL;
-
-      plugin_info = g_list_model_get_item (G_LIST_MODEL (engine), i);
-      load_plugin (engine, plugin_info);
-    }
-
-  self->action_factories_set = peas_extension_set_new (peas_engine_get_default (),
-                                                       BS_TYPE_ACTION_FACTORY,
-                                                       NULL);
+  bs_init ();
 
   self->portal = xdp_portal_new ();
-  self->desktop_controller = bs_desktop_controller_new (self->portal);
 
-  style_manager = adw_application_get_style_manager (ADW_APPLICATION (application));
-  adw_style_manager_set_color_scheme (style_manager, ADW_COLOR_SCHEME_PREFER_DARK);
-
-  self->device_manager = bs_device_manager_new ();
-  g_signal_connect (self->device_manager,
+  context = bs_context_get_default ();
+  g_signal_connect (bs_context_get_devices (context),
                     "items-changed",
                     G_CALLBACK (on_device_manager_items_changed_cb),
                     self);
 
-  bs_device_manager_load (self->device_manager, &error);
-
-  if (error)
-    g_warning ("Error loading device manager: %s", error->message);
+  style_manager = adw_application_get_style_manager (ADW_APPLICATION (application));
+  adw_style_manager_set_color_scheme (style_manager, ADW_COLOR_SCHEME_PREFER_DARK);
 }
 
 static void
@@ -258,20 +200,9 @@ bs_application_shutdown (GApplication *application)
   BsApplication *self = BS_APPLICATION (application);
 
   g_clear_pointer (&self->window, gtk_window_destroy);
-  g_clear_object (&self->device_manager);
   g_clear_object (&self->portal);
 
   G_APPLICATION_CLASS (bs_application_parent_class)->shutdown (application);
-}
-
-static gint
-bs_application_handle_local_options (GApplication *app,
-                                     GVariantDict *options)
-{
-  if (g_variant_dict_contains (options, "debug"))
-    bs_log_init ();
-
-  return -1;
 }
 
 
@@ -284,7 +215,6 @@ bs_application_finalize (GObject *object)
 {
   BsApplication *self = (BsApplication *)object;
 
-  g_clear_object (&self->device_manager);
   g_clear_object (&self->portal);
 
   G_OBJECT_CLASS (bs_application_parent_class)->finalize (object);
@@ -301,7 +231,6 @@ bs_application_class_init (BsApplicationClass *klass)
   app_class->startup = bs_application_startup;
   app_class->activate = bs_application_activate;
   app_class->shutdown = bs_application_shutdown;
-  app_class->handle_local_options = bs_application_handle_local_options;
 }
 
 static void
@@ -335,36 +264,4 @@ bs_application_new (void)
                        "flags", G_APPLICATION_DEFAULT_FLAGS,
                        "resource-base-path", "/com/feaneron/Boatswain",
                        NULL);
-}
-
-BsDeviceManager *
-bs_application_get_device_manager (BsApplication *self)
-{
-  g_return_val_if_fail (BS_IS_APPLICATION (self), NULL);
-
-  return self->device_manager;
-}
-
-PeasExtensionSet *
-bs_application_get_action_factory_set (BsApplication *self)
-{
-  g_return_val_if_fail (BS_IS_APPLICATION (self), NULL);
-
-  return self->action_factories_set;
-}
-
-/**
- * bs_application_get_desktop_controller:
- * @self: a #BsApplication
- *
- * Retrieves the application-wide desktop controller.
- *
- * Returns: (transfer none): a #BsDesktopController
- */
-BsDesktopController *
-bs_application_get_desktop_controller (BsApplication *self)
-{
-  g_return_val_if_fail (BS_IS_APPLICATION (self), NULL);
-
-  return self->desktop_controller;
 }

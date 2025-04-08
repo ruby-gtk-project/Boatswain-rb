@@ -19,10 +19,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "launcher-open-file-action.h"
 
+#include <adwaita.h>
 #include <glib/gi18n.h>
 
 struct _LauncherOpenFileAction

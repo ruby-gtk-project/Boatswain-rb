@@ -22,17 +22,8 @@
 #define G_LOG_DOMAIN "Button Grid Widget"
 
 #include "bs-button-grid-widget.h"
-
-#include "bs-actionable.h"
-#include "bs-action-private.h"
-#include "bs-button-private.h"
-#include "bs-button-grid.h"
 #include "bs-button-widget.h"
-#include "bs-debug.h"
-#include "bs-events-private.h"
 #include "bs-selection-controller.h"
-
-#include <libpeas.h>
 
 struct _BsButtonGridWidget
 {

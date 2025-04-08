@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "bs-action.h"
+#include <boatswain.h>
 
 G_BEGIN_DECLS
 

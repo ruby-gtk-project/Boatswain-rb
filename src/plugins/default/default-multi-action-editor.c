@@ -18,15 +18,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
-#include "bs-action-private.h"
-#include "bs-application-private.h"
-#include "bs-stream-deck.h"
 #include "default-multi-action-editor.h"
 #include "default-multi-action-private.h"
 #include "default-multi-action-row.h"
 
+#include <boatswain.h>
 #include <glib/gi18n.h>
 
 #define DEFAULT_DELAY_MS 250
@@ -45,6 +41,9 @@ struct _DefaultMultiActionEditor
 
   DefaultMultiAction *multi_action;
 };
+
+static void on_action_row_activated_cb (AdwActionRow             *row,
+                                        DefaultMultiActionEditor *self);
 
 static void on_entry_row_changed_cb (DefaultMultiActionRow    *entry_row,
                                      DefaultMultiActionEditor *self);
@@ -94,6 +93,52 @@ can_add_action (const PeasPluginInfo *plugin_info,
     }
 
   return TRUE;
+}
+
+static void
+add_action_factory (DefaultMultiActionEditor *self,
+                    BsActionFactory          *factory)
+{
+  PeasPluginInfo *plugin_info;
+  GtkWidget *expander_row;
+  GtkWidget *image;
+
+  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
+
+  expander_row = adw_expander_row_new ();
+  adw_preferences_row_set_title (ADW_PREFERENCES_ROW (expander_row),
+                                 peas_plugin_info_get_name (plugin_info));
+
+  image = gtk_image_new_from_icon_name (peas_plugin_info_get_icon_name (plugin_info));
+  adw_expander_row_add_prefix (ADW_EXPANDER_ROW (expander_row), image);
+
+  adw_preferences_group_add (self->actions_group, expander_row);
+
+  for (uint32_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (factory)); i++)
+    {
+      g_autoptr (BsActionInfo) info = NULL;
+      GtkWidget *image;
+      GtkWidget *row;
+
+      info = g_list_model_get_item (G_LIST_MODEL (factory), i);
+
+      if (!can_add_action (plugin_info, info))
+        continue;
+
+      row = adw_action_row_new ();
+      adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), bs_action_info_get_name (info));
+      adw_action_row_set_subtitle (ADW_ACTION_ROW (row), bs_action_info_get_description (info));
+      gtk_list_box_row_set_activatable (GTK_LIST_BOX_ROW (row), TRUE);
+      g_object_set_data (G_OBJECT (row), "factory", factory);
+      g_object_set_data (G_OBJECT (row), "action-info", (gpointer) info);
+      g_object_set_data (G_OBJECT (row), "plugin-info", (gpointer) plugin_info);
+      g_signal_connect (row, "activated", G_CALLBACK (on_action_row_activated_cb), self);
+
+      image = gtk_image_new_from_icon_name (bs_action_info_get_icon_name (info));
+      adw_action_row_add_prefix (ADW_ACTION_ROW (row), image);
+
+      adw_expander_row_add_row (ADW_EXPANDER_ROW (expander_row), row);
+    }
 }
 
 static void
@@ -147,58 +192,6 @@ on_action_row_activated_cb (AdwActionRow             *row,
   recreate_entry_rows (self);
 
   gtk_window_close (self->actions_dialog);
-}
-
-static void
-on_action_factory_added_cb (PeasExtensionSet *extension_set,
-                            PeasPluginInfo   *plugin_info,
-                            GObject          *extension,
-                            gpointer          user_data)
-{
-  DefaultMultiActionEditor *self;
-  BsActionFactory *action_factory;
-  GtkWidget *expander_row;
-  GtkWidget *image;
-
-  self = DEFAULT_MULTI_ACTION_EDITOR (user_data);
-  action_factory = BS_ACTION_FACTORY (extension);
-
-  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (extension));
-
-  expander_row = adw_expander_row_new ();
-  adw_preferences_row_set_title (ADW_PREFERENCES_ROW (expander_row),
-                                 peas_plugin_info_get_name (plugin_info));
-
-  image = gtk_image_new_from_icon_name (peas_plugin_info_get_icon_name (plugin_info));
-  adw_expander_row_add_prefix (ADW_EXPANDER_ROW (expander_row), image);
-
-  adw_preferences_group_add (self->actions_group, expander_row);
-
-  for (uint32_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (action_factory)); i++)
-    {
-      g_autoptr (BsActionInfo) info = NULL;
-      GtkWidget *image;
-      GtkWidget *row;
-
-      info = g_list_model_get_item (G_LIST_MODEL (action_factory), i);
-
-      if (!can_add_action (plugin_info, info))
-        continue;
-
-      row = adw_action_row_new ();
-      adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), bs_action_info_get_name (info));
-      adw_action_row_set_subtitle (ADW_ACTION_ROW (row), bs_action_info_get_description (info));
-      gtk_list_box_row_set_activatable (GTK_LIST_BOX_ROW (row), TRUE);
-      g_object_set_data (G_OBJECT (row), "factory", action_factory);
-      g_object_set_data (G_OBJECT (row), "action-info", (gpointer) info);
-      g_object_set_data (G_OBJECT (row), "plugin-info", (gpointer) plugin_info);
-      g_signal_connect (row, "activated", G_CALLBACK (on_action_row_activated_cb), self);
-
-      image = gtk_image_new_from_icon_name (bs_action_info_get_icon_name (info));
-      adw_action_row_add_prefix (ADW_ACTION_ROW (row), image);
-
-      adw_expander_row_add_row (ADW_EXPANDER_ROW (expander_row), row);
-    }
 }
 
 static void
@@ -288,19 +281,22 @@ static void
 default_multi_action_editor_constructed (GObject *object)
 {
   DefaultMultiActionEditor *self = (DefaultMultiActionEditor *)object;
-  PeasExtensionSet *extension_set;
-  GApplication *application;
+  GListModel *factories;
+  BsContext *context;
   GtkWidget *row;
 
   G_OBJECT_CLASS (default_multi_action_editor_parent_class)->constructed (object);
 
   /* Actions */
-  application = g_application_get_default ();
-  extension_set = bs_application_get_action_factory_set (BS_APPLICATION (application));
+  context = bs_context_get_default ();
+  factories = bs_context_get_available_action_factories (context);
 
-  peas_extension_set_foreach (extension_set,
-                              (PeasExtensionSetForeachFunc) on_action_factory_added_cb,
-                              self);
+  for (size_t i = 0; i < g_list_model_get_n_items (factories); i++)
+    {
+      g_autoptr (BsActionFactory) factory = g_list_model_get_item (factories, i);
+
+      add_action_factory (self, factory);
+    }
 
   /* Delay */
   row = adw_action_row_new ();

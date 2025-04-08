@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "bs-action-factory.h"
+#include <boatswain.h>
 
 G_BEGIN_DECLS
 

@@ -21,8 +21,6 @@
 
 #include "bs-touchscreen-slot-widget.h"
 
-#include "bs-touchscreen-slot.h"
-
 struct _BsTouchscreenSlotWidget
 {
   GtkFlowBoxChild parent_instance;

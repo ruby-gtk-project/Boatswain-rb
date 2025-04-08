@@ -21,9 +21,8 @@
 
 #pragma once
 
-#include "bs-types.h"
-
 #include <adwaita.h>
+#include <boatswain.h>
 
 G_BEGIN_DECLS
 

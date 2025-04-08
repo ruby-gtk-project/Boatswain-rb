@@ -19,9 +19,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
-#include "bs-application.h"
 #include "desktop-action-factory.h"
 #include "desktop-keyboard-shortcut-action.h"
 
@@ -48,16 +45,14 @@ desktop_action_factory_create_action (BsActionFactory *action_factory,
                                       BsActionInfo    *action_info)
 {
   DesktopActionFactory *self = (DesktopActionFactory *)action_factory;
-  BsDesktopController *desktop_controller;
-  BsApplication *application;
+  BsContext *context;
 
   g_assert (DESKTOP_IS_ACTION_FACTORY (self));
 
-  application = BS_APPLICATION (g_application_get_default ());
-  desktop_controller = bs_application_get_desktop_controller (application);
+  context = bs_action_factory_get_context (action_factory);
 
   if (g_strcmp0 (bs_action_info_get_id (action_info), "desktop-keyboard-shortcut") == 0)
-    return desktop_keyboard_shortcut_action_new (desktop_controller);
+    return desktop_keyboard_shortcut_action_new (context);
 
 
   return NULL;

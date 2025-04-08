@@ -18,8 +18,8 @@
 
 #include <glib/gi18n.h>
 
+#include "bs-application.h"
 #include "bs-config.h"
-#include "bs-application-private.h"
 
 int
 main (int   argc,

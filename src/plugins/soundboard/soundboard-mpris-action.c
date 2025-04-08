@@ -18,10 +18,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "soundboard-mpris-action.h"
 
+#include <adwaita.h>
 #include <glib/gi18n.h>
 
 typedef enum

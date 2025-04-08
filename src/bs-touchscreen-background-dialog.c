@@ -23,9 +23,6 @@
 
 #include "bs-touchscreen-background-dialog.h"
 
-#include "bs-touchscreen-content.h"
-#include "bs-touchscreen-private.h"
-
 #include <glib/gi18n.h>
 
 struct _BsTouchscreenBackgroundDialog

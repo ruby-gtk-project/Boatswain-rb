@@ -25,9 +25,4 @@
 
 G_BEGIN_DECLS
 
-BsApplication * bs_application_new (void);
-
-BsDeviceManager * bs_application_get_device_manager (BsApplication *self);
-PeasExtensionSet * bs_application_get_action_factory_set (BsApplication *self);
-
 G_END_DECLS

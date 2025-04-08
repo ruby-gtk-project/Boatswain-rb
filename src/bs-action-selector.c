@@ -23,11 +23,7 @@
 
 #include "bs-action-selector.h"
 
-#include "bs-action.h"
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
-#include "bs-application-private.h"
-#include "bs-debug.h"
+#include <boatswain.h>
 
 struct _BsActionSelector
 {
@@ -48,56 +44,6 @@ enum
 };
 
 static guint signals[N_SIGNALS];
-
-/*
- * Auxiliary methods
- */
-
-static void
-add_action_factory (BsActionSelector *self,
-                    BsActionFactory  *action_factory)
-{
-  PeasPluginInfo *plugin_info;
-  GtkWidget *expander_row;
-  GtkWidget *image;
-
-  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (action_factory));
-
-  expander_row = adw_expander_row_new ();
-  adw_preferences_row_set_title (ADW_PREFERENCES_ROW (expander_row),
-                                 peas_plugin_info_get_name (plugin_info));
-
-  image = gtk_image_new_from_icon_name (peas_plugin_info_get_icon_name (plugin_info));
-  adw_expander_row_add_prefix (ADW_EXPANDER_ROW (expander_row), image);
-
-  gtk_list_box_append (self->actions_listbox, expander_row);
-
-  for (uint32_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (action_factory)); i++)
-    {
-      g_autoptr (BsActionInfo) info = NULL;
-      GtkWidget *image;
-      GtkWidget *row;
-
-      info = g_list_model_get_item (G_LIST_MODEL (action_factory), i);
-
-      if (bs_action_info_get_hidden (info))
-        continue;
-
-      row = adw_action_row_new ();
-      adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), bs_action_info_get_name (info));
-      adw_action_row_set_subtitle (ADW_ACTION_ROW (row), bs_action_info_get_description (info));
-      gtk_list_box_row_set_activatable (GTK_LIST_BOX_ROW (row), TRUE);
-      g_object_set_data (G_OBJECT (row), "factory", action_factory);
-      g_object_set_data (G_OBJECT (row), "action-info", (gpointer) info);
-      g_object_set_data (G_OBJECT (row), "plugin-info", (gpointer) plugin_info);
-      g_signal_connect (row, "activated", G_CALLBACK (on_action_row_activated_cb), self);
-
-      image = gtk_image_new_from_icon_name (bs_action_info_get_icon_name (info));
-      adw_action_row_add_prefix (ADW_ACTION_ROW (row), image);
-
-      adw_expander_row_add_row (ADW_EXPANDER_ROW (expander_row), row);
-    }
-}
 
 
 /*
@@ -125,23 +71,56 @@ on_action_row_activated_cb (GtkListBoxRow    *row,
   g_signal_emit (self, signals[ACTION_SELECTED], 0, factory, action_info);
 }
 
-static void
-on_action_factory_added_cb (PeasExtensionSet *extension_set,
-                            PeasPluginInfo   *plugin_info,
-                            GObject          *extension,
-                            gpointer          user_data)
+static GtkWidget *
+create_factory_row_cb (gpointer item,
+                       gpointer user_data)
 {
-  BsActionSelector *self = BS_ACTION_SELECTOR (user_data);
+  BsActionSelector *self = (BsActionSelector *) user_data;
+  BsActionFactory *action_factory;
+  PeasPluginInfo *plugin_info;
+  GtkWidget *expander_row;
+  GtkWidget *image;
 
-  add_action_factory (self, BS_ACTION_FACTORY (extension));
-}
+  g_assert (BS_IS_ACTION_SELECTOR (self));
+  g_assert (BS_IS_ACTION_FACTORY (item));
 
-static void
-on_action_factory_removed_cb (PeasExtensionSet *extension_set,
-                              PeasPluginInfo   *plugin_info,
-                              GObject          *extension,
-                              gpointer          user_data)
-{
+  action_factory = (BsActionFactory *) item;
+  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (action_factory));
+
+  expander_row = adw_expander_row_new ();
+  adw_preferences_row_set_title (ADW_PREFERENCES_ROW (expander_row),
+                                 peas_plugin_info_get_name (plugin_info));
+
+  image = gtk_image_new_from_icon_name (peas_plugin_info_get_icon_name (plugin_info));
+  adw_expander_row_add_prefix (ADW_EXPANDER_ROW (expander_row), image);
+
+  for (uint32_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (action_factory)); i++)
+    {
+      g_autoptr (BsActionInfo) info = NULL;
+      GtkWidget *image;
+      GtkWidget *row;
+
+      info = g_list_model_get_item (G_LIST_MODEL (action_factory), i);
+
+      if (bs_action_info_get_hidden (info))
+        continue;
+
+      row = adw_action_row_new ();
+      adw_preferences_row_set_title (ADW_PREFERENCES_ROW (row), bs_action_info_get_name (info));
+      adw_action_row_set_subtitle (ADW_ACTION_ROW (row), bs_action_info_get_description (info));
+      gtk_list_box_row_set_activatable (GTK_LIST_BOX_ROW (row), TRUE);
+      g_object_set_data (G_OBJECT (row), "factory", action_factory);
+      g_object_set_data (G_OBJECT (row), "action-info", (gpointer) info);
+      g_object_set_data (G_OBJECT (row), "plugin-info", (gpointer) plugin_info);
+      g_signal_connect (row, "activated", G_CALLBACK (on_action_row_activated_cb), self);
+
+      image = gtk_image_new_from_icon_name (bs_action_info_get_icon_name (info));
+      adw_action_row_add_prefix (ADW_ACTION_ROW (row), image);
+
+      adw_expander_row_add_row (ADW_EXPANDER_ROW (expander_row), row);
+    }
+
+  return expander_row;
 }
 
 
@@ -184,18 +163,13 @@ bs_action_selector_class_init (BsActionSelectorClass *klass)
 static void
 bs_action_selector_init (BsActionSelector *self)
 {
-  PeasExtensionSet *extension_set;
-  GApplication *application;
+  GListModel *factories;
+  BsContext *context;
 
   gtk_widget_init_template (GTK_WIDGET (self));
 
-  application = g_application_get_default ();
-  extension_set = bs_application_get_action_factory_set (BS_APPLICATION (application));
+  context = bs_context_get_default ();
+  factories = bs_context_get_available_action_factories (context);
 
-  peas_extension_set_foreach (extension_set,
-                              (PeasExtensionSetForeachFunc) on_action_factory_added_cb,
-                              self);
-
-  g_signal_connect (extension_set, "extension-added", G_CALLBACK (on_action_factory_added_cb), self);
-  g_signal_connect (extension_set, "extension-removed", G_CALLBACK (on_action_factory_removed_cb), self);
+  gtk_list_box_bind_model (self->actions_listbox, factories, create_factory_row_cb, self, NULL);
 }

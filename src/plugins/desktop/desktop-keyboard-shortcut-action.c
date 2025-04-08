@@ -19,8 +19,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-events.h"
-#include "bs-icon.h"
 #include "desktop-keyboard-shortcut-action.h"
 #include "desktop-shortcut-dialog.h"
 
@@ -35,7 +33,6 @@ struct _DesktopKeyboardShortcutAction
 {
   BsAction parent_instance;
 
-  BsDesktopController *desktop_controller;
   GtkListBoxRow *row;
 
   GdkModifierType modifiers;
@@ -46,15 +43,6 @@ struct _DesktopKeyboardShortcutAction
 };
 
 G_DEFINE_FINAL_TYPE (DesktopKeyboardShortcutAction, desktop_keyboard_shortcut_action, BS_TYPE_ACTION)
-
-enum
-{
-  PROP_0,
-  PROP_DESKTOP_CONTROLLER,
-  N_PROPS
-};
-
-static GParamSpec *properties [N_PROPS] = { NULL, };
 
 
 /*
@@ -92,31 +80,43 @@ update_shortcut_row (DesktopKeyboardShortcutAction *self,
 static void
 activate_shortcut (DesktopKeyboardShortcutAction *self)
 {
+  BsDesktopController *desktop_controller;
+  BsContext *context;
+
+  context = bs_context_get_default ();
+  desktop_controller = bs_context_get_desktop_controller (context);
+
   if (self->modifiers & GDK_SUPER_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Super_L);
+    bs_desktop_controller_press_key (desktop_controller, GDK_KEY_Super_L);
   if (self->modifiers & GDK_CONTROL_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Control_L);
+    bs_desktop_controller_press_key (desktop_controller, GDK_KEY_Control_L);
   if (self->modifiers & GDK_SHIFT_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Shift_L);
+    bs_desktop_controller_press_key (desktop_controller, GDK_KEY_Shift_L);
   if (self->modifiers & GDK_ALT_MASK)
-    bs_desktop_controller_press_key (self->desktop_controller, GDK_KEY_Alt_L);
+    bs_desktop_controller_press_key (desktop_controller, GDK_KEY_Alt_L);
   if (self->keysym != 0)
-    bs_desktop_controller_press_key (self->desktop_controller, self->keysym);
+    bs_desktop_controller_press_key (desktop_controller, self->keysym);
 }
 
 static void
 deactivate_shortcut (DesktopKeyboardShortcutAction *self)
 {
+  BsDesktopController *desktop_controller;
+  BsContext *context;
+
+  context = bs_context_get_default ();
+  desktop_controller = bs_context_get_desktop_controller (context);
+
   if (self->keysym != 0)
-    bs_desktop_controller_release_key (self->desktop_controller, self->keysym);
+    bs_desktop_controller_release_key (desktop_controller, self->keysym);
   if (self->modifiers & GDK_ALT_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Alt_L);
+    bs_desktop_controller_release_key (desktop_controller, GDK_KEY_Alt_L);
   if (self->modifiers & GDK_SHIFT_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Shift_L);
+    bs_desktop_controller_release_key (desktop_controller, GDK_KEY_Shift_L);
   if (self->modifiers & GDK_CONTROL_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Control_L);
+    bs_desktop_controller_release_key (desktop_controller, GDK_KEY_Control_L);
   if (self->modifiers & GDK_SUPER_MASK)
-    bs_desktop_controller_release_key (self->desktop_controller, GDK_KEY_Super_L);
+    bs_desktop_controller_release_key (desktop_controller, GDK_KEY_Super_L);
 }
 
 
@@ -306,11 +306,18 @@ desktop_keyboard_shortcut_action_dispose (GObject *object)
   DesktopKeyboardShortcutAction *self = (DesktopKeyboardShortcutAction *)object;
 
   if (self->acquired)
-    bs_desktop_controller_release (self->desktop_controller);
+    {
+      BsDesktopController *desktop_controller;
+      BsContext *context;
+
+      context = bs_context_get_default ();
+      desktop_controller = bs_context_get_desktop_controller (context);
+
+      bs_desktop_controller_release (desktop_controller);
+    }
 
   g_cancellable_cancel (self->cancellable);
 
-  g_clear_object (&self->desktop_controller);
   g_clear_object (&self->cancellable);
 
   G_OBJECT_CLASS (desktop_keyboard_shortcut_action_parent_class)->dispose (object);
@@ -320,54 +327,19 @@ static void
 desktop_keyboard_shortcut_action_constructed (GObject *object)
 {
   DesktopKeyboardShortcutAction *self = (DesktopKeyboardShortcutAction *)object;
+  BsDesktopController *desktop_controller;
+  BsContext *context;
 
   G_OBJECT_CLASS (desktop_keyboard_shortcut_action_parent_class)->constructed (object);
 
+  context = bs_context_get_default ();
+  desktop_controller = bs_context_get_desktop_controller (context);
+
   self->cancellable = g_cancellable_new ();
-  bs_desktop_controller_acquire (self->desktop_controller,
+  bs_desktop_controller_acquire (desktop_controller,
                                  self->cancellable,
                                  on_desktop_controller_acquired_cb,
                                  self);
-}
-
-static void
-desktop_keyboard_shortcut_action_get_property (GObject    *object,
-                                               guint       prop_id,
-                                               GValue     *value,
-                                               GParamSpec *pspec)
-{
-  DesktopKeyboardShortcutAction *self = DESKTOP_KEYBOARD_SHORTCUT_ACTION (object);
-
-  switch (prop_id)
-    {
-    case PROP_DESKTOP_CONTROLLER:
-      g_value_set_object (value, self->desktop_controller);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-static void
-desktop_keyboard_shortcut_action_set_property (GObject      *object,
-                                               guint         prop_id,
-                                               const GValue *value,
-                                               GParamSpec   *pspec)
-{
-  DesktopKeyboardShortcutAction *self = DESKTOP_KEYBOARD_SHORTCUT_ACTION (object);
-
-  switch (prop_id)
-    {
-    case PROP_DESKTOP_CONTROLLER:
-      g_assert (self->desktop_controller == NULL);
-      self->desktop_controller = g_value_dup_object (value);
-      g_assert (self->desktop_controller != NULL);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
 }
 
 static void
@@ -378,20 +350,11 @@ desktop_keyboard_shortcut_action_class_init (DesktopKeyboardShortcutActionClass 
 
   object_class->dispose = desktop_keyboard_shortcut_action_dispose;
   object_class->constructed = desktop_keyboard_shortcut_action_constructed;
-  object_class->get_property = desktop_keyboard_shortcut_action_get_property;
-  object_class->set_property = desktop_keyboard_shortcut_action_set_property;
 
   action_class->handle_event = desktop_keyboard_shortcut_action_handle_event;
   action_class->serialize_settings = desktop_keyboard_shortcut_action_serialize_settings;
   action_class->deserialize_settings = desktop_keyboard_shortcut_action_deserialize_settings;
   action_class->get_preferences = desktop_keyboard_shortcut_action_get_preferences;
-
-  properties[PROP_DESKTOP_CONTROLLER] =
-    g_param_spec_object ("desktop-controller", "", "",
-                         BS_TYPE_DESKTOP_CONTROLLER,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
-
-  g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
 static void
@@ -402,9 +365,9 @@ desktop_keyboard_shortcut_action_init (DesktopKeyboardShortcutAction *self)
 }
 
 BsAction *
-desktop_keyboard_shortcut_action_new (BsDesktopController *desktop_controller)
+desktop_keyboard_shortcut_action_new (BsContext *context)
 {
   return g_object_new (DESKTOP_TYPE_KEYBOARD_SHORTCUT_ACTION,
-                       "desktop-controller", desktop_controller,
+                       "context", context,
                        NULL);
 }
