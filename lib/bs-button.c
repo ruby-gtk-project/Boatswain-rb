@@ -26,6 +26,7 @@
 #include "bs-action.h"
 #include "bs-device-private.h"
 #include "bs-device-region.h"
+#include "bs-events.h"
 #include "bs-icon.h"
 #include "bs-page.h"
 
@@ -198,10 +199,39 @@ bs_button_actionable_set_action (BsActionable *actionable,
 }
 
 static void
+bs_button_actionable_handle_event (BsActionable *actionable,
+                                   BsEvent      *event)
+{
+  BsActionableInterface *default_actionable_iface;
+  BsButton *self = (BsButton *) actionable;
+
+  g_assert (BS_IS_BUTTON (actionable));
+  g_assert (BS_IS_EVENT (event));
+
+  default_actionable_iface = g_type_default_interface_get (BS_TYPE_ACTIONABLE);
+  default_actionable_iface->handle_event (actionable, event);
+
+  switch (bs_event_get_event_type (event))
+    {
+    case BS_BUTTON_PRESS:
+      bs_button_set_pressed (self, TRUE);
+      break;
+
+    case BS_BUTTON_RELEASE:
+      bs_button_set_pressed (self, FALSE);
+      break;
+
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static void
 bs_actionable_interface_init (BsActionableInterface *iface)
 {
   iface->get_action = bs_button_actionable_get_action;
   iface->set_action = bs_button_actionable_set_action;
+  iface->handle_event = bs_button_actionable_handle_event;
 }
 
 
