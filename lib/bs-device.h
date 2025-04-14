@@ -46,14 +46,13 @@ typedef enum
 GQuark  bs_device_error_quark (void);
 
 #define BS_TYPE_DEVICE (bs_device_get_type())
-G_DECLARE_FINAL_TYPE (BsDevice, bs_device, BS, DEVICE, GObject)
+G_DECLARE_DERIVABLE_TYPE (BsDevice, bs_device, BS, DEVICE, GObject)
 
 void bs_device_reset (BsDevice *self);
 
 const char * bs_device_get_name (BsDevice *self);
 const char * bs_device_get_serial_number (BsDevice *self);
 const char * bs_device_get_firmware_version (BsDevice *self);
-GIcon * bs_device_get_icon (BsDevice *self);
 
 double bs_device_get_brightness (BsDevice *self);
 void bs_device_set_brightness (BsDevice *self,
@@ -74,5 +73,7 @@ void bs_device_push_page (BsDevice *self,
 void bs_device_pop_page (BsDevice *self);
 
 GListModel * bs_device_get_regions (BsDevice *self);
+BsDeviceRegion * bs_device_get_region (BsDevice   *self,
+                                       const char *region_id);
 
 G_END_DECLS

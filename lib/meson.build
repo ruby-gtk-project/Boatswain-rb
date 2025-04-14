@@ -96,11 +96,13 @@ libboatswain_include_directories = [
   include_directories('.'),
 ]
 
+subdir('devices')
+
 libboatswain_static = static_library('boatswain-static',
   libboatswain_sources + generated_sources,
   c_args: libboatswain_cflags,
   install: false,
-  dependencies: libboatswain_deps,
+  dependencies: [libboatswain_deps, libboatswain_devices_dep],
   include_directories: libboatswain_include_directories,
 )
 
@@ -130,8 +132,10 @@ gir_headers = [
   'bs-action-factory.h',
   'bs-action-info.h',
   'bs-button.h',
+  'bs-context.h',
   'bs-desktop-controller.h',
   'bs-device.h',
+  'bs-dial.h',
   'bs-empty-action.h',
   'bs-events.h',
   'bs-icon.h',
@@ -139,6 +143,7 @@ gir_headers = [
   'bs-page-item.h',
   'bs-profile.h',
   'bs-touchscreen.h',
+  'bs-touchscreen-content.h',
   'bs-touchscreen-slot.h',
 ]
 

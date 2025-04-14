@@ -20,20 +20,23 @@
 
 #define G_LOG_DOMAIN "Device Manager"
 
-#include <gusb.h>
+#include <gtk/gtk.h>
+#include <libpeas.h>
 
 #include "bs-config.h"
 #include "bs-debug.h"
-#include "bs-device-private.h"
 #include "bs-device-manager-private.h"
+#include "bs-device-private.h"
+#include "bs-device-provider-private.h"
 
 struct _BsDeviceManager
 {
   GObject parent_instance;
 
-  GUsbContext *gusb_context;
-  GListStore *devices;
-  gboolean emulate_devices;
+  PeasEngine *devices_engine;
+  PeasExtensionSet *device_providers;
+
+  GListModel *devices;
   gboolean loaded;
 };
 
@@ -51,145 +54,17 @@ enum
 
 static guint signals[N_SIGNALS] = { 0, };
 
-/*
- * Auxiliary methods
- */
-
-static void
-enumerate_fake_devices (BsDeviceManager *self)
-{
-  int n_devices = MAX (atoi (g_getenv ("BOATSWAIN_N_DEVICES") ?: "1"), 0);
-
-  for (int i = 0; i < n_devices; i++)
-    {
-      g_autoptr (BsDevice) device = NULL;
-      g_autoptr (GError) error = NULL;
-
-      device = bs_device_new_fake (&error);
-
-      if (error)
-        {
-          if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
-            g_warning ("Error opening device: %s", error->message);
-          continue;
-        }
-
-      g_debug ("Created fake device %s (%s)",
-               bs_device_get_name (device),
-               bs_device_get_serial_number (device));
-
-      bs_device_load (device);
-
-      g_list_store_append (self->devices, device);
-      g_signal_emit (self, signals[DEVICE_ADDED], 0, device);
-    }
-}
-
-static void
-enumerate_devices (BsDeviceManager *self)
-{
-  g_autoptr (GPtrArray) devices = NULL;
-  unsigned int i;
-
-  g_usb_context_enumerate (self->gusb_context);
-
-  devices = g_usb_context_get_devices (self->gusb_context);
-  for (i = 0; devices && i < devices->len; i++)
-    {
-      g_autoptr (BsDevice) device = NULL;
-      g_autoptr (GError) error = NULL;
-      GUsbDevice *usb_device;
-
-      usb_device = g_ptr_array_index (devices, i);
-      device = bs_device_new (usb_device, &error);
-
-      if (error)
-        {
-          if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
-            g_warning ("Error opening device: %s", error->message);
-          continue;
-        }
-
-      g_debug ("Found %s (%s) at bus %hu, port %hu",
-               bs_device_get_name (device),
-               bs_device_get_serial_number (device),
-               g_usb_device_get_bus (usb_device),
-               g_usb_device_get_port_number (usb_device));
-
-      bs_device_load (device);
-
-      g_list_store_append (self->devices, device);
-      g_signal_emit (self, signals[DEVICE_ADDED], 0, device);
-    }
-}
-
 
 /*
  * Callbacks
  */
 
 static void
-on_gusb_context_device_added_cb (GUsbContext     *gusb_context,
-                                 GUsbDevice      *usb_device,
-                                 BsDeviceManager *self)
-{
-  g_autoptr (BsDevice) device = NULL;
-  g_autoptr (GError) error = NULL;
-
-  BS_ENTRY;
-
-  device = bs_device_new (usb_device, &error);
-
-  if (error)
-    {
-      if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
-        g_warning ("Error opening device: %s", error->message);
-      BS_RETURN ();
-    }
-
-  g_list_store_append (self->devices, g_object_ref (device));
-  g_signal_emit (self, signals[DEVICE_ADDED], 0, device);
-
-  BS_EXIT;
-}
-
-static void
-on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
-                                   GUsbDevice      *usb_device,
-                                   BsDeviceManager *self)
-{
-  unsigned int i = 0;
-
-  BS_ENTRY;
-
-  while (i < g_list_model_get_n_items (G_LIST_MODEL (self->devices)))
-    {
-      g_autoptr (BsDevice) device = NULL;
-      GUsbDevice *d;
-
-      device = g_list_model_get_item (G_LIST_MODEL (self->devices), i);
-      d = bs_device_get_device (device);
-
-      if (d == usb_device)
-        {
-          g_message ("Removing device %p", device);
-          g_signal_emit (self, signals[DEVICE_REMOVED], 0, device);
-          g_list_store_remove (self->devices, i);
-          continue;
-        }
-
-      i++;
-    }
-
-  BS_EXIT;
-}
-
-static void
 on_devices_items_changed_cb (GListModel      *model,
-                                  unsigned int     position,
-                                  unsigned int     removed,
-                                  unsigned int     added,
-                                  BsDeviceManager *self)
+                             unsigned int     position,
+                             unsigned int     removed,
+                             unsigned int     added,
+                             BsDeviceManager *self)
 {
   g_list_model_items_changed (G_LIST_MODEL (self), position, removed, added);
 }
@@ -210,14 +85,14 @@ bs_device_manager_get_item (GListModel *model,
                             guint       i)
 {
   BsDeviceManager *self = BS_DEVICE_MANAGER (model);
-  return g_list_model_get_item (G_LIST_MODEL (self->devices), i);
+  return g_list_model_get_item (self->devices, i);
 }
 
 static guint
 bs_device_manager_get_n_items (GListModel *model)
 {
   BsDeviceManager *self = BS_DEVICE_MANAGER (model);
-  return g_list_model_get_n_items (G_LIST_MODEL (self->devices));
+  return g_list_model_get_n_items (self->devices);
 }
 
 static void
@@ -241,7 +116,8 @@ bs_device_manager_finalize (GObject *object)
   BS_ENTRY;
 
   g_clear_object (&self->devices);
-  g_clear_object (&self->gusb_context);
+  g_clear_object (&self->device_providers);
+  g_clear_object (&self->devices_engine);
 
   G_OBJECT_CLASS (bs_device_manager_parent_class)->finalize (object);
 
@@ -275,17 +151,6 @@ bs_device_manager_class_init (BsDeviceManagerClass *klass)
 static void
 bs_device_manager_init (BsDeviceManager *self)
 {
-  const char *emulate_devices = g_getenv ("BOATSWAIN_EMULATE_DEVICES");
-
-  self->emulate_devices = g_strcmp0 (PROFILE, "development") == 0 &&
-                          emulate_devices != NULL &&
-                          *emulate_devices == '1';
-
-  self->devices = g_list_store_new (BS_TYPE_DEVICE);
-  g_signal_connect (self->devices,
-                    "items-changed",
-                    G_CALLBACK (on_devices_items_changed_cb),
-                    self);
 }
 
 BsDeviceManager *
@@ -302,24 +167,30 @@ bs_device_manager_load (BsDeviceManager  *self,
   g_return_val_if_fail (!error || !*error, FALSE);
   g_return_val_if_fail (!self->loaded, FALSE);
 
-  if (!self->emulate_devices)
-    {
-      self->gusb_context = g_usb_context_new (error);
-      if (!self->gusb_context)
-        goto out;
+  self->devices_engine = peas_engine_new_with_nonglobal_loaders ();
+  peas_engine_add_search_path (self->devices_engine,
+                               "resource:///com/feaneron/Boatswain/devices",
+                               "resource:///com/feaneron/Boatswain/devices");
 
-      enumerate_devices (self);
-      g_signal_connect (self->gusb_context, "device-added", G_CALLBACK (on_gusb_context_device_added_cb), self);
-      g_signal_connect (self->gusb_context, "device-removed", G_CALLBACK (on_gusb_context_device_removed_cb), self);
-    }
-  else
+  for (uint32_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->devices_engine)); i++)
     {
-      enumerate_fake_devices (self);
+      g_autoptr (PeasPluginInfo) plugin_info =
+        g_list_model_get_item (G_LIST_MODEL (self->devices_engine), i);
+
+      peas_engine_load_plugin (self->devices_engine, plugin_info);
     }
 
-out:
+  self->device_providers = peas_extension_set_new (self->devices_engine,
+                                                   BS_TYPE_DEVICE_PROVIDER,
+                                                   NULL);
+
+  self->devices = G_LIST_MODEL (gtk_flatten_list_model_new (G_LIST_MODEL (self->device_providers)));
+  g_signal_connect (self->devices,
+                    "items-changed",
+                    G_CALLBACK (on_devices_items_changed_cb),
+                    self);
+
   self->loaded = TRUE;
-
-  return self->gusb_context != NULL;
+  return TRUE;
 }
 

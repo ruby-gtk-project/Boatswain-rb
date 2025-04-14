@@ -1,0 +1,12 @@
+[Plugin]
+Name = Elgato
+Module = elgato
+Description = Integrate with Elgato Stream Deck devices
+Icon=dialpad-symbolic
+Authors = Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+Copyright = Copyleft © The Boatswain maintainers
+Builtin = true
+License = GPL
+Loader = C
+Embedded = elgato_plugin_register_types
+Depends =

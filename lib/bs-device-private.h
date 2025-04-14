@@ -21,20 +21,32 @@
 #pragma once
 
 #include "bs-device.h"
+#include "bs-device-update-private.h"
 
 #include <gusb.h>
 
 G_BEGIN_DECLS
 
-BsDevice * bs_device_new (GUsbDevice  *gusb_device,
-                          GError     **error);
+struct _BsDeviceClass
+{
+  GObjectClass parent_class;
+
+  /* Required */
+  GListModel * (*create_layout) (BsDevice *self);
+  const char * (*get_name) (BsDevice *self);
+  const char * (*get_serial_number) (BsDevice *self);
+  const char * (*get_firmware_version) (BsDevice *self);
+
+  /* Optional */
+  double (*get_brightness) (BsDevice *self);
+  void   (*set_brightness) (BsDevice *self,
+                            double    brightness);
+
+  void (*load) (BsDevice *self);
+  void (*reset) (BsDevice *self);
+};
 
 BsDevice * bs_device_new_fake (GError **error);
-
-GUsbDevice * bs_device_get_device (BsDevice *self);
-
-BsDeviceRegion * bs_device_get_region (BsDevice   *self,
-                                       const char *region_id);
 
 gboolean bs_device_is_initialized (BsDevice *self);
 
@@ -46,5 +58,7 @@ void bs_device_upload_touchscreen (BsDevice              *self,
                                    const graphene_rect_t *region);
 
 void bs_device_load (BsDevice *self);
+
+BsDeviceUpdate * bs_device_steal_update (BsDevice *self);
 
 G_END_DECLS

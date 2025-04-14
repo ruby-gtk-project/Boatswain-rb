@@ -40,117 +40,32 @@
 #include "bs-touchscreen-slot.h"
 
 #include <glib/gi18n.h>
-#include <hidapi.h>
-
-#define POLL_RATE_MS 16
-
-#define ELGATO_SYSTEMS_VENDOR_ID (0x0fd9)
-
-#define STREAMDECK_ORIGINAL_PRODUCT_ID 0x0060
-#define STREAMDECK_ORIGINAL_V2_PRODUCT_ID  0x006d
-#define STREAMDECK_MINI_PRODUCT_ID  0x0063
-#define STREAMDECK_MINI_V2_PRODUCT_ID  0x0090
-#define STREAMDECK_XL_PRODUCT_ID  0x006c
-#define STREAMDECK_XL_V2_PRODUCT_ID  0x008f
-#define STREAMDECK_MK2_PRODUCT_ID  0x0080
-#define STREAMDECK_PEDAL_PRODUCT_ID  0x0086
-#define STREAMDECK_PLUS_PRODUCT_ID  0x0084
-#define STREAMDECK_NEO_PRODUCT_ID  0x009a
-
-G_STATIC_ASSERT (sizeof (unsigned char) == sizeof (uint8_t));
-
-typedef enum
-{
-  BS_DEVICE_FEATURE_BUTTONS = 1 << 0,
-  BS_DEVICE_FEATURE_TOUCHSCREEN = 1 << 1,
-  BS_DEVICE_FEATURE_DIALS = 1 << 2,
-} BsDeviceFeatureFlags;
 
 typedef struct
-{
-  uint8_t n_buttons;
-  uint8_t columns;
-  BsImageInfo image_info;
-} BsButtonLayout;
-
-typedef struct
-{
-  uint8_t n_dials;
-  uint8_t columns;
-} BsDialLayout;
-
-typedef struct
-{
-  uint32_t n_slots;
-  BsImageInfo image_info;
-} BsTouchscreenLayout;
-
-typedef struct
-{
-  uint8_t product_id;
-  const char *name;
-  const char *icon_name;
-  BsDeviceFeatureFlags features;
-  BsButtonLayout button_layout;
-  BsDialLayout dial_layout;
-  BsTouchscreenLayout touchscreen_layout;
-
-  void (*reset) (BsDevice *self);
-  void (*set_brightness) (BsDevice *self,
-                          double    brightness);
-
-  char * (*get_serial_number) (BsDevice *self);
-  char * (*get_firmware_version) (BsDevice *self);
-  gboolean (*set_button_texture) (BsDevice    *self,
-                                  BsButton    *button,
-                                  GdkTexture  *texture,
-                                  GError     **error);
-  gboolean (*set_touchscreen_texture) (BsDevice       *self,
-                                       BsTouchscreen  *touchscreen,
-                                       GdkTexture     *texture,
-                                       GError        **error);
-  gboolean (*read_state) (BsDevice *self);
-} DeviceModelInfo;
-
-typedef struct
-{
-  GSource source;
-  BsDevice *device;
-} DeviceSource;
-
-struct _BsDevice
 {
   GObject parent_instance;
 
   GListStore *profiles;
-  GListStore *regions;
+  GListModel *regions;
   BsProfile *active_profile;
   GQueue *active_pages;
   guint save_timeout_id;
 
   BsDeviceUpdate *update;
 
-  const DeviceModelInfo *model_info;
-  GUsbDevice *device;
-  hid_device *handle;
-
   double brightness;
-  char *serial_number;
-  char *firmware_version;
-  GIcon *icon;
-  GSource *poll_source;
   gboolean initialized;
   gboolean loaded;
-  gboolean fake;
   gboolean loading_profile;
-};
+} BsDevicePrivate;
 
 static gboolean save_after_timeout_cb (gpointer data);
 
 static void g_initable_iface_init (GInitableIface *iface);
 
-G_DEFINE_FINAL_TYPE_WITH_CODE (BsDevice, bs_device, G_TYPE_OBJECT,
-                               G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, g_initable_iface_init))
+G_DEFINE_ABSTRACT_TYPE_WITH_CODE (BsDevice, bs_device, G_TYPE_OBJECT,
+                                  G_ADD_PRIVATE (BsDevice)
+                                  G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, g_initable_iface_init))
 
 G_DEFINE_QUARK (BsDevice, bs_device_error);
 
@@ -160,9 +75,6 @@ enum
   PROP_ACTIVE_PAGE,
   PROP_ACTIVE_PROFILE,
   PROP_BRIGHTNESS,
-  PROP_DEVICE,
-  PROP_FAKE,
-  PROP_ICON,
   PROP_NAME,
   PROP_SERIAL_NUMBER,
   N_PROPS,
@@ -178,10 +90,12 @@ static GParamSpec *properties[N_PROPS];
 static inline void
 ensure_device_update (BsDevice *self)
 {
-  if (!self->update)
-    self->update = bs_device_update_new ();
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
-  g_assert (BS_IS_DEVICE_UPDATE (self->update));
+  if (!priv->update)
+    priv->update = bs_device_update_new ();
+
+  g_assert (BS_IS_DEVICE_UPDATE (priv->update));
 }
 
 static char *
@@ -189,64 +103,78 @@ get_profile_path (BsDevice *self)
 {
   g_autofree char *profile_filename = NULL;
 
-  profile_filename = g_strdup_printf ("%s.json", self->serial_number);
+  profile_filename = g_strdup_printf ("%s.json", bs_device_get_serial_number (self));
 
   return g_build_filename (g_get_user_data_dir (),
                            profile_filename,
                            NULL);
 }
 
-static BsButton *
-find_button_at_region (BsDevice   *self,
-                       const char *region_id,
-                       size_t      button_index)
-{
-  g_autoptr (BsButton) button = NULL;
-  BsButtonGrid *button_grid = NULL;
-
-  button_grid = BS_BUTTON_GRID (bs_device_get_region (self, region_id));
-  button = g_list_model_get_item (bs_button_grid_get_buttons (button_grid), button_index);
-  g_assert (BS_IS_BUTTON (button));
-
-  return button;
-}
-
 static void
 update_page_items (BsDevice *self,
                    BsPage   *page)
 {
-  for (size_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+  size_t n_regions = g_list_model_get_n_items (priv->regions);
+
+  for (size_t i = 0; i < n_regions; i++)
     {
-      BsButton *button = find_button_at_region (self, "main-button-grid", i);
+      g_autoptr (BsDeviceRegion) region = g_list_model_get_item (priv->regions, i);
+      const char *region_id = bs_device_region_get_id (region);
 
-      bs_page_update_item (page,
-                           "main-button-grid",
-                           i,
-                           bs_actionable_get_action (BS_ACTIONABLE (button)),
-                           bs_button_get_custom_icon (button));
-    }
-
-  if (self->model_info->features & BS_DEVICE_FEATURE_TOUCHSCREEN)
-    {
-      g_autoptr (JsonNode) region_data = NULL;
-      BsTouchscreen *touchscreen;
-      GListModel *touchscreen_slots;
-
-      touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
-      touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
-
-      region_data = bs_device_region_serialize (BS_DEVICE_REGION (touchscreen));
-      bs_page_set_region_data (page, "touchscreen", region_data);
-
-      for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
+      if (BS_IS_BUTTON_GRID (region))
         {
-          g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (touchscreen_slots, i);
+          g_autoptr (JsonNode) region_data = NULL;
+          BsButtonGrid *button_grid;
+          GListModel *buttons;
 
-          bs_page_update_item (page,
-                               "touchscreen",
-                               i,
-                               bs_actionable_get_action (BS_ACTIONABLE (slot)),
-                               NULL);
+          button_grid = BS_BUTTON_GRID (region);
+          buttons = bs_button_grid_get_buttons (button_grid);
+
+          region_data = bs_device_region_serialize (region);
+          bs_page_set_region_data (page, region_id, region_data);
+
+          for (size_t i = 0; i < g_list_model_get_n_items (buttons); i++)
+            {
+              g_autoptr (BsButton) button = g_list_model_get_item (buttons, i);
+
+              bs_page_update_item (page,
+                                   region_id,
+                                   i,
+                                   bs_actionable_get_action (BS_ACTIONABLE (button)),
+                                   bs_button_get_custom_icon (button));
+            }
+        }
+      else if (BS_IS_DIAL_GRID (region))
+        {
+          /* TODO: implement me */
+        }
+      else if (BS_IS_TOUCHSCREEN (region))
+        {
+          g_autoptr (JsonNode) region_data = NULL;
+          BsTouchscreen *touchscreen;
+          GListModel *touchscreen_slots;
+
+          touchscreen = BS_TOUCHSCREEN (region);
+          touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+
+          region_data = bs_device_region_serialize (region);
+          bs_page_set_region_data (page, region_id, region_data);
+
+          for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
+            {
+              g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (touchscreen_slots, i);
+
+              bs_page_update_item (page,
+                                   region_id,
+                                   i,
+                                   bs_actionable_get_action (BS_ACTIONABLE (slot)),
+                                   NULL);
+            }
+        }
+      else
+        {
+          g_assert_not_reached ();
         }
     }
 }
@@ -267,6 +195,7 @@ update_pages (BsDevice *self)
 static void
 save_profiles (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
   g_autoptr (JsonGenerator) generator = NULL;
   g_autoptr (JsonBuilder) builder = NULL;
   g_autoptr (JsonNode) root = NULL;
@@ -276,11 +205,8 @@ save_profiles (BsDevice *self)
 
   BS_ENTRY;
 
-  if (self->fake)
-    BS_RETURN ();
-
   /* Update the active profile */
-  bs_profile_set_brightness (self->active_profile, self->brightness);
+  bs_profile_set_brightness (priv->active_profile, priv->brightness);
   update_pages (self);
 
   builder = json_builder_new ();
@@ -288,15 +214,15 @@ save_profiles (BsDevice *self)
   json_builder_begin_object (builder);
 
   json_builder_set_member_name (builder, "active-profile");
-  json_builder_add_string_value (builder, bs_profile_get_id (self->active_profile));
+  json_builder_add_string_value (builder, bs_profile_get_id (priv->active_profile));
 
   json_builder_set_member_name (builder, "profiles");
   json_builder_begin_array (builder);
-  for (size_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->profiles)); i++)
+  for (size_t i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (priv->profiles)); i++)
     {
       g_autoptr (BsProfile) profile = NULL;
 
-      profile = g_list_model_get_item (G_LIST_MODEL (self->profiles), i);
+      profile = g_list_model_get_item (G_LIST_MODEL (priv->profiles), i);
       json_builder_add_value (builder, bs_profile_to_json (profile));
     }
   json_builder_end_array (builder);
@@ -342,7 +268,7 @@ maybe_create_backup (BsDevice *self,
 
   g_mkdir_with_parents (backup_folder, 0755);
 
-  backup_file_name = g_strdup_printf ("%s.bak.v%u", self->serial_number, version - 1);
+  backup_file_name = g_strdup_printf ("%s.bak.v%u", bs_device_get_serial_number (self), version - 1);
   backup_file_path = g_build_filename (backup_folder,
                                        backup_file_name,
                                        NULL);
@@ -375,6 +301,7 @@ load_profiles (BsDevice *self)
   g_autoptr (JsonParser) parser = NULL;
   g_autoptr (BsProfile) active_profile = NULL;
   g_autoptr (GError) local_error = NULL;
+  BsDevicePrivate *priv;
   g_autofree char *profile_path = NULL;
   const char *active_profile_id;
   JsonObject *object;
@@ -383,6 +310,7 @@ load_profiles (BsDevice *self)
 
   BS_ENTRY;
 
+  priv = bs_device_get_instance_private (self);
   profile_path = get_profile_path (self);
 
   maybe_create_backup (self, 1);
@@ -395,7 +323,7 @@ load_profiles (BsDevice *self)
   if (local_error)
     {
       g_debug ("Error loading profile for device %s: %s",
-               self->serial_number,
+               bs_device_get_serial_number (self),
                local_error->message);
       BS_GOTO (out);
     }
@@ -418,21 +346,21 @@ load_profiles (BsDevice *self)
         continue;
 
       profile = bs_profile_new_from_json (self, profile_node);
-      g_list_store_append (self->profiles, profile);
+      g_list_store_append (priv->profiles, profile);
 
       if (g_strcmp0 (active_profile_id, bs_profile_get_id (profile)) == 0)
         active_profile = g_object_ref (profile);
     }
 
   if (!active_profile)
-    active_profile = g_list_model_get_item (G_LIST_MODEL (self->profiles), 0);
+    active_profile = g_list_model_get_item (G_LIST_MODEL (priv->profiles), 0);
 
 out:
   if (!active_profile)
     {
       active_profile = bs_profile_new_empty (self);
       bs_profile_set_name (active_profile, _("Default"));
-      g_list_store_append (self->profiles, active_profile);
+      g_list_store_append (priv->profiles, active_profile);
     }
 
   bs_device_load_profile (self, active_profile);
@@ -443,95 +371,117 @@ out:
 static void
 load_active_page (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
   BsPage *active_page;
+  size_t n_regions;
 
   BS_ENTRY;
 
   active_page = bs_device_get_active_page (self);
+  n_regions = g_list_model_get_n_items (priv->regions);
 
-  g_assert (self->model_info->features & BS_DEVICE_FEATURE_BUTTONS);
-
-  for (uint8_t i = 0; i < self->model_info->button_layout.n_buttons; i++)
+  for (size_t i = 0; i < n_regions; i++)
     {
-      g_autoptr (BsAction) action = NULL;
-      g_autoptr (BsIcon) custom_icon = NULL;
-      g_autoptr (GError) error = NULL;
-      BsButton *button;
-
-      button = find_button_at_region (self, "main-button-grid", i);
-
-      bs_page_realize (active_page, "main-button-grid", i, &custom_icon, &action, &error);
-
-      if (error)
-        {
-          g_warning ("Failed to construct action and icon from page: %s", error->message);
-          continue;
-        }
-
-      bs_button_inhibit_page_updates (button);
-
-      bs_actionable_set_action (BS_ACTIONABLE (button), action);
-      bs_button_set_custom_icon (button, custom_icon);
-
-      bs_button_uninhibit_page_updates (button);
-    }
-
-  if (self->model_info->features & BS_DEVICE_FEATURE_TOUCHSCREEN)
-    {
-      BsTouchscreen *touchscreen;
-      GListModel *touchscreen_slots;
+      g_autoptr (BsDeviceRegion) region = NULL;
+      const char *region_id;
       JsonNode *region_data;
 
-      touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
-      touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+      region = g_list_model_get_item (priv->regions, i);
+      region_id = bs_device_region_get_id (region);
 
-      region_data = bs_page_get_region_data (active_page, "touchscreen");
-      bs_device_region_deserialize (BS_DEVICE_REGION (touchscreen), region_data);
+      region_data = bs_page_get_region_data (active_page, region_id);
+      if (region_data)
+        bs_device_region_deserialize (region, region_data);
 
-      for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
+      if (BS_IS_BUTTON_GRID (region))
         {
-          g_autoptr (BsTouchscreenSlot) slot = NULL;
-          g_autoptr (BsAction) action = NULL;
-          g_autoptr (BsIcon) custom_icon = NULL;
-          g_autoptr (GError) error = NULL;
+          g_autoptr (JsonNode) region_data = NULL;
+          BsButtonGrid *button_grid;
+          GListModel *buttons;
 
-          bs_page_realize (active_page, "touchscreen", i, &custom_icon, &action, &error);
+          button_grid = BS_BUTTON_GRID (region);
+          buttons = bs_button_grid_get_buttons (button_grid);
 
-          if (error)
+          for (size_t i = 0; i < g_list_model_get_n_items (buttons); i++)
             {
-              g_warning ("Failed to construct action and icon from page: %s", error->message);
-              continue;
+              g_autoptr (BsButton) button = NULL;
+              g_autoptr (BsAction) action = NULL;
+              g_autoptr (BsIcon) custom_icon = NULL;
+              g_autoptr (GError) error = NULL;
+
+              button = g_list_model_get_item (buttons, i);
+
+              bs_page_realize (active_page, region_id, i, &custom_icon, &action, &error);
+
+              if (error)
+                {
+                  g_warning ("Failed to construct action and icon from page: %s", error->message);
+                  continue;
+                }
+
+              bs_button_inhibit_page_updates (button);
+
+              bs_actionable_set_action (BS_ACTIONABLE (button), action);
+              bs_button_set_custom_icon (button, custom_icon);
+
+              bs_button_uninhibit_page_updates (button);
             }
 
-          slot = g_list_model_get_item (touchscreen_slots, i);
-          g_assert (BS_IS_TOUCHSCREEN_SLOT (slot));
+        }
+      else if (BS_IS_DIAL_GRID (region))
+        {
+          /* TODO: implement me */
+        }
+      else if (BS_IS_TOUCHSCREEN (region))
+        {
+          BsTouchscreen *touchscreen;
+          GListModel *touchscreen_slots;
 
-          bs_actionable_set_action (BS_ACTIONABLE (slot), action);
-          //TODO: bs_button_set_custom_icon (slot, custom_icon);
+          touchscreen = BS_TOUCHSCREEN (region);
+          touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
+
+          for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
+            {
+              g_autoptr (BsTouchscreenSlot) slot = NULL;
+              g_autoptr (BsAction) action = NULL;
+              g_autoptr (BsIcon) custom_icon = NULL;
+              g_autoptr (GError) error = NULL;
+
+              bs_page_realize (active_page, region_id, i, &custom_icon, &action, &error);
+
+              if (error)
+                {
+                  g_warning ("Failed to construct action and icon from page: %s", error->message);
+                  continue;
+                }
+
+              slot = g_list_model_get_item (touchscreen_slots, i);
+              g_assert (BS_IS_TOUCHSCREEN_SLOT (slot));
+
+              bs_actionable_set_action (BS_ACTIONABLE (slot), action);
+              //TODO: bs_button_set_custom_icon (slot, custom_icon);
+            }
+        }
+      else
+        {
+          g_assert_not_reached ();
         }
     }
 
   BS_EXIT;
 }
 
-static inline uint8_t
-swap_button_index_original (BsDevice *self,
-                            uint8_t   button_index)
-{
-  int column = button_index % self->model_info->button_layout.columns;
-  int actual_index = ((int) button_index - column) + ((int) self->model_info->button_layout.columns - 1 - column);
-  return (uint8_t) actual_index;
-}
-
 static void
 schedule_save (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_if_fail (BS_IS_DEVICE (self));
 
   BS_ENTRY;
 
-  if (self->save_timeout_id == 0)
-    self->save_timeout_id = g_timeout_add_seconds (5, save_after_timeout_cb, self);
+  if (priv->save_timeout_id == 0)
+    priv->save_timeout_id = g_timeout_add_seconds (5, save_after_timeout_cb, self);
 
   BS_EXIT;
 }
@@ -545,1273 +495,15 @@ static gboolean
 save_after_timeout_cb (gpointer data)
 {
   BsDevice *self = BS_DEVICE (data);
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
   BS_ENTRY;
 
   save_profiles (self);
 
-  self->save_timeout_id = 0;
+  priv->save_timeout_id = 0;
   BS_RETURN (G_SOURCE_REMOVE);
 }
-
-
-/*
- * Device-specific implementations
- */
-
-/* Mini & Original (gen 1) */
-
-static gboolean
-set_button_texture_mini (BsDevice    *self,
-                         BsButton    *button,
-                         GdkTexture  *texture,
-                         GError     **error)
-{
-  g_autofree uint8_t *payload = NULL;
-  g_autofree uint8_t *buffer = NULL;
-  BsDeviceRegion *region;
-  BsRenderer *renderer;
-  const size_t package_size = 1024;
-  const size_t header_size = 16;
-  uint8_t page;
-  size_t bytes_remaining;
-  size_t buffer_size;
-
-  BS_ENTRY;
-
-  region = bs_button_get_region (button);
-  renderer = bs_device_region_get_renderer (region);
-
-  if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
-    BS_RETURN (FALSE);
-
-  payload = g_malloc (sizeof (uint8_t) * package_size);
-  payload[0] = 0x02;
-  payload[1] = 0x01;
-  /* payload[2] set in loop */
-  payload[3] = 0;
-  /* payload[4] set in loop */
-  payload[5] = bs_button_get_position (button) + 1;
-  payload[6] = 0;
-  payload[7] = 0;
-  payload[8] = 0;
-  payload[9] = 0;
-  payload[10] = 0;
-  payload[11] = 0;
-  payload[12] = 0;
-  payload[13] = 0;
-  payload[14] = 0;
-  payload[15] = 0;
-
-  page = 0;
-  bytes_remaining = buffer_size;
-  while (bytes_remaining > 0)
-    {
-      size_t padding_size;
-      size_t chunk_size;
-      size_t bytes_sent;
-
-      chunk_size = MIN (bytes_remaining, package_size - header_size);
-
-      payload[2] = page;
-      payload[4] = chunk_size == bytes_remaining ? 1 : 0;
-
-      bytes_sent = page * (package_size - header_size);
-      memcpy (payload + header_size, buffer + bytes_sent, chunk_size);
-
-      padding_size = package_size - header_size - chunk_size;
-      if (padding_size > 0)
-        memset (payload + header_size + chunk_size, 0, padding_size);
-
-      hid_write (self->handle, payload, package_size);
-
-      bytes_remaining -= chunk_size;
-      page++;
-    }
-
-  BS_RETURN (TRUE);
-}
-
-static gboolean
-read_state_mini (BsDevice *self)
-{
-  const BsButtonLayout *layout;
-  uint8_t *states;
-  size_t states_length;
-  int result;
-
-  layout = &self->model_info->button_layout;
-  states_length = layout->n_buttons + 1;
-
-  g_assert (states_length < 8192);
-  states = g_alloca (sizeof (uint8_t) * states_length);
-
-  result = hid_read (self->handle, states, states_length);
-
-  if (result == 0)
-    return TRUE;
-
-  for (uint8_t i = 0; i < layout->n_buttons; i++)
-    {
-      g_autoptr (BsEvent) button_event = NULL;
-      BsEventType event_type;
-      BsButton *button;
-
-      button = find_button_at_region (self, "main-button-grid", i);
-
-      if (states[i + 1] == bs_button_get_pressed (button))
-        continue;
-
-      bs_button_set_pressed (button, (gboolean) states[i + 1]);
-
-      event_type = states[i + 1] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
-      button_event = bs_button_event_new (event_type, self, button);
-      bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
-    }
-
-  return TRUE;
-}
-
-static void
-reset_mini_original (BsDevice *self)
-{
-  const uint8_t reset_command[] = {
-    0x0b,
-    0x63, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  };
-
-  BS_ENTRY;
-
-  hid_send_feature_report (self->handle, reset_command, sizeof (reset_command));
-
-  BS_EXIT;
-}
-
-static char *
-get_serial_number_mini_original (BsDevice *self)
-{
-  g_autofree char *serial = NULL;
-  uint8_t data[17];
-
-  BS_ENTRY;
-
-  data[0] = 0x03;
-
-  hid_get_feature_report (self->handle, data, sizeof (data));
-
-  serial = g_malloc0 (sizeof (char) * 13);
-  memcpy (serial, &data[5], 12);
-
-  BS_RETURN (g_steal_pointer (&serial));
-}
-
-static char *
-get_firmware_version_mini_original (BsDevice *self)
-{
-  g_autofree char *firmware_version = NULL;
-  uint8_t data[17];
-
-  BS_ENTRY;
-
-  data[0] = 0x04;
-
-  hid_get_feature_report (self->handle, data, sizeof (data));
-
-  firmware_version = g_malloc0 (sizeof (char) * 13);
-  memcpy (firmware_version, &data[5], 12);
-
-  BS_RETURN (g_steal_pointer (&firmware_version));
-}
-
-static void
-set_brightness_mini_original (BsDevice *self,
-                              double    brightness)
-{
-  const uint8_t b = CLAMP (brightness * 100, 0, 100);
-  const uint8_t data[] = {
-    0x05,
-    0x55, 0xaa, 0xd1, 0x01, b   , 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  };
-
-  BS_ENTRY;
-
-  hid_send_feature_report (self->handle, data, sizeof (data));
-
-  BS_EXIT;
-}
-
-static gboolean
-set_button_texture_original (BsDevice    *self,
-                             BsButton    *button,
-                             GdkTexture  *texture,
-                             GError     **error)
-{
-  g_autofree uint8_t *payload = NULL;
-  g_autofree uint8_t *buffer = NULL;
-  BsDeviceRegion *region;
-  BsRenderer *renderer;
-  const size_t package_size = 8191;
-  const size_t header_size = 16;
-  uint8_t button_index;
-  uint8_t page;
-  size_t bytes_remaining;
-  size_t report_size;
-  size_t buffer_size;
-
-  BS_ENTRY;
-
-  region = bs_button_get_region (button);
-  renderer = bs_device_region_get_renderer (region);
-
-  if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
-    BS_RETURN (FALSE);
-
-  report_size = buffer_size / 2;
-
-  /*
-   * BMP images have fixed byte sizes for a given width and height, and
-   * in this case, a 72x72 BMP image should have exactly 15606 bytes.
-   */
-  g_assert (buffer_size == 15606);
-  g_assert (package_size - header_size >= report_size);
-
-  button_index = bs_button_get_position (button);
-
-  payload = g_malloc (sizeof (uint8_t) * package_size);
-  payload[0] = 0x02;
-  payload[1] = 0x01;
-  /* payload[2] set in loop */
-  payload[3] = 0;
-  /* payload[4] set in loop */
-  payload[5] = swap_button_index_original (self, button_index) + 1;
-  payload[6] = 0;
-  payload[7] = 0;
-  payload[8] = 0;
-  payload[9] = 0;
-  payload[10] = 0;
-  payload[11] = 0;
-  payload[12] = 0;
-  payload[13] = 0;
-  payload[14] = 0;
-  payload[15] = 0;
-
-  page = 0;
-  bytes_remaining = buffer_size;
-  while (bytes_remaining > 0)
-    {
-      size_t padding_size;
-      size_t chunk_size;
-      size_t bytes_sent;
-
-      chunk_size = MIN (bytes_remaining, report_size);
-
-      payload[2] = page + 1;
-      payload[4] = chunk_size == bytes_remaining ? 1 : 0;
-
-      bytes_sent = page * report_size;
-      memcpy (payload + header_size, buffer + bytes_sent, chunk_size);
-
-      padding_size = package_size - header_size - chunk_size;
-      if (padding_size > 0)
-        memset (payload + header_size + chunk_size, 0, padding_size);
-
-      hid_write (self->handle, payload, package_size);
-
-      bytes_remaining -= chunk_size;
-      page++;
-    }
-
-  BS_RETURN (TRUE);
-}
-
-static gboolean
-read_state_original (BsDevice *self)
-{
-  const BsButtonLayout *layout;
-  uint8_t *states;
-  size_t states_length;
-  int result;
-
-  layout = &self->model_info->button_layout;
-  states_length = layout->n_buttons + 1;
-
-  g_assert (states_length < 8192);
-  states = g_alloca (sizeof (uint8_t) * states_length);
-
-  result = hid_read (self->handle, states, states_length);
-
-  if (result == 0)
-    return TRUE;
-
-  for (uint8_t i = 0; i < layout->n_buttons; i++)
-    {
-      g_autoptr (BsEvent) button_event = NULL;
-      BsEventType event_type;
-      BsButton *button;
-      uint8_t position;
-
-      position = swap_button_index_original (self, i);
-      button = find_button_at_region (self, "main-button-grid", position);
-
-      if (states[i + 1] == bs_button_get_pressed (button))
-        continue;
-
-      bs_button_set_pressed (button, (gboolean) states[i + 1]);
-
-      event_type = states[i + 1] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
-      button_event = bs_button_event_new (event_type, self, button);
-      bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
-    }
-
-  return TRUE;
-}
-
-/* 2nd generation */
-
-static void
-reset_gen2 (BsDevice *self)
-{
-  const uint8_t reset_command[] = {
-      0x03,
-      0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  };
-
-  BS_ENTRY;
-
-  hid_send_feature_report (self->handle, reset_command, sizeof (reset_command));
-
-  BS_EXIT;
-}
-
-static char *
-get_serial_number_gen2 (BsDevice *self)
-{
-  uint8_t data[32];
-  char *serial;
-
-  BS_ENTRY;
-
-  data[0] = 0x06;
-
-  hid_get_feature_report (self->handle, data, sizeof (data));
-
-  serial = g_malloc0 (sizeof (char) * 31);
-  memcpy (serial, &data[2], 30);
-
-  BS_RETURN (serial);
-}
-
-static char *
-get_firmware_version_gen2 (BsDevice *self)
-{
-  uint8_t data[32];
-  char *serial;
-
-  BS_ENTRY;
-
-  data[0] = 0x05;
-
-  hid_get_feature_report (self->handle, data, sizeof (data));
-
-  serial = g_malloc0 (sizeof (char) * 27);
-  memcpy (serial, &data[6], 26);
-
-  BS_RETURN (serial);
-}
-
-static void
-set_brightness_gen2 (BsDevice *self,
-                     double    brightness)
-{
-  const uint8_t b = CLAMP (brightness * 100, 0, 100);
-  const uint8_t data[] = {
-    0x03,
-    0x08, b   , 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  };
-
-  BS_ENTRY;
-
-  hid_send_feature_report (self->handle, data, sizeof (data));
-
-  BS_EXIT;
-}
-
-static gboolean
-set_button_texture_gen2 (BsDevice    *self,
-                         BsButton    *button,
-                         GdkTexture  *texture,
-                         GError     **error)
-{
-  g_autofree uint8_t *payload = NULL;
-  g_autofree uint8_t *buffer = NULL;
-  BsDeviceRegion *region;
-  BsRenderer *renderer;
-  const size_t package_size = 1024;
-  const size_t header_size = 8;
-  uint8_t page;
-  size_t bytes_remaining;
-  size_t buffer_size;
-
-  BS_ENTRY;
-
-  region = bs_button_get_region (button);
-  renderer = bs_device_region_get_renderer (region);
-
-  if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
-    BS_RETURN (FALSE);
-
-  payload = g_malloc (package_size * sizeof (uint8_t));
-  payload[0] = 0x02;
-  payload[1] = 0x07;
-  payload[2] = bs_button_get_position (button);
-
-  page = 0;
-  bytes_remaining = buffer_size;
-  while (bytes_remaining > 0)
-    {
-      size_t padding_size;
-      size_t chunk_size;
-      size_t bytes_sent;
-
-      chunk_size = MIN (bytes_remaining, package_size - header_size);
-
-      payload[3] = chunk_size == bytes_remaining ? 1 : 0;
-      payload[4] = chunk_size & 0xff;
-      payload[5] = chunk_size >> 8;
-      payload[6] = page & 0xff;
-      payload[7] = page >> 8;
-
-      bytes_sent = page * (package_size - header_size);
-      memcpy (payload + header_size, buffer + bytes_sent, chunk_size);
-
-      padding_size = package_size - header_size - chunk_size;
-      if (padding_size > 0)
-        memset (payload + header_size + chunk_size, 0, padding_size);
-
-      hid_write (self->handle, payload, package_size * sizeof (uint8_t));
-
-      bytes_remaining -= chunk_size;
-      page++;
-    }
-
-  BS_RETURN (TRUE);
-}
-
-static gboolean
-read_state_gen2 (BsDevice *self)
-{
-  const BsButtonLayout *layout;
-  uint8_t *states;
-  size_t states_length;
-  int result;
-
-  layout = &self->model_info->button_layout;
-  states_length = layout->n_buttons + 4;
-
-  g_assert (states_length < 8192);
-  states = g_alloca (sizeof (uint8_t) * states_length);
-
-  result = hid_read (self->handle, states, states_length);
-
-  if (result == 0)
-    return TRUE;
-
-  for (uint8_t i = 0; i < layout->n_buttons; i++)
-    {
-      g_autoptr (BsEvent) button_event = NULL;
-      BsEventType event_type;
-      BsButton *button;
-
-      button = find_button_at_region (self, "main-button-grid", i);
-
-      if (states[i + 4] == bs_button_get_pressed (button))
-        continue;
-
-      bs_button_set_pressed (button, (gboolean) states[i + 4]);
-
-      event_type = states[i + 4] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
-      button_event = bs_button_event_new (event_type, self, button);
-      bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
-    }
-
-  return TRUE;
-}
-
-/* noops for devices without visual feedback */
-
-static void
-set_brightness_pedal (BsDevice *self,
-                      double    brightness)
-{
-  BS_ENTRY;
-  BS_EXIT;
-}
-
-static gboolean
-set_button_texture_pedal (BsDevice    *self,
-                          BsButton    *button,
-                          GdkTexture  *texture,
-                          GError     **error)
-{
-  BS_ENTRY;
-  BS_RETURN (TRUE);
-}
-
-static void
-reset_pedal (BsDevice *self)
-{
-  BS_ENTRY;
-  BS_EXIT;
-}
-
-/* Stream Deck Plus */
-
-static inline int
-convert_dial_value (uint8_t value)
-{
-  if (value < 0x80)
-    return value;
-  else
-    return -(0x100 - (int) value);
-}
-
-static gboolean
-read_state_plus (BsDevice *self)
-{
-  const BsButtonLayout *layout;
-  const size_t states_length = 14;
-  uint8_t *states;
-  int result;
-
-  layout = &self->model_info->button_layout;
-
-  g_assert (states_length < 8192);
-  states = g_alloca (sizeof (uint8_t) * states_length);
-
-  result = hid_read (self->handle, states, states_length);
-
-  if (result == 0)
-    return TRUE;
-
-  enum {
-    BUTTON_EVENT = 0x00,
-    TOUCHSCREEN_EVENT = 0x02,
-    DIAL_EVENT = 0x03,
-  } event_type = states[1];
-
-  switch (event_type)
-    {
-    case BUTTON_EVENT:
-      for (uint8_t i = 0; i < layout->n_buttons; i++)
-        {
-          g_autoptr (BsEvent) button_event = NULL;
-          BsEventType event_type;
-          BsButton *button;
-
-          button = find_button_at_region (self, "main-button-grid", i);
-
-          if (states[i + 4] == bs_button_get_pressed (button))
-            continue;
-
-          bs_button_set_pressed (button, (gboolean) states[i + 4]);
-
-          event_type = states[i + 4] ? BS_BUTTON_PRESS : BS_BUTTON_RELEASE;
-          button_event = bs_button_event_new (event_type, self, button);
-          bs_actionable_handle_event (BS_ACTIONABLE (button), button_event);
-        }
-      break;
-
-    case TOUCHSCREEN_EVENT:
-      {
-        g_autoptr (BsTouchscreenSlot) touchscreen_slot = NULL;
-        g_autoptr (BsEvent) touchscreen_event = NULL;
-        enum {
-          SHORT_PRESS = 1,
-          LONG_PRESS = 2,
-          SWIPE = 3,
-        } touch_event_type = states[4];
-        graphene_point_t position;
-        BsTouchscreen *touchscreen;
-
-        touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
-
-        graphene_point_init (&position,
-                             (states[7] << 8) + states[6],
-                             (states[9] << 8) + states[8]);
-
-        g_debug ("Touchscreen event (%.0fx%.0f)", position.x, position.y);
-
-        touchscreen_slot = bs_touchscreen_pick_slot (touchscreen, &position);
-
-        switch (touch_event_type)
-          {
-          case SHORT_PRESS:
-            touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_SHORT_PRESS,
-                                                          self,
-                                                          touchscreen_slot,
-                                                          &position,
-                                                          &position);
-            break;
-
-          case LONG_PRESS:
-            touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_LONG_PRESS,
-                                                          self,
-                                                          touchscreen_slot,
-                                                          &position,
-                                                          &position);
-            break;
-
-          case SWIPE:
-            {
-              graphene_point_t release_position;
-
-              graphene_point_init (&release_position,
-                                   (states[11] << 8) + states[10],
-                                   (states[13] << 8) + states[12]);
-
-              touchscreen_event = bs_touchscreen_event_new (BS_TOUCHSCREEN_SWIPE,
-                                                            self,
-                                                            touchscreen_slot,
-                                                            &position,
-                                                            &release_position);
-            }
-            break;
-          }
-
-        bs_actionable_handle_event (BS_ACTIONABLE (touchscreen_slot), touchscreen_event);
-      }
-      break;
-
-    case DIAL_EVENT:
-      {
-        BsTouchscreen *touchscreen;
-        GListModel *touchscreen_slots;
-        BsDialGrid *dial_grid;
-        GListModel *dials;
-
-        dial_grid = BS_DIAL_GRID (bs_device_get_region (self, "dial-grid"));
-        dials = bs_dial_grid_get_dials (dial_grid);
-        g_assert (g_list_model_get_n_items (dials) == 4);
-
-        touchscreen = BS_TOUCHSCREEN (bs_device_get_region (self, "touchscreen"));
-        touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
-        g_assert (g_list_model_get_n_items (touchscreen_slots) == 4);
-
-        for (uint8_t i = 0; i < 4; i++)
-          {
-            g_autoptr (BsTouchscreenSlot) slot = NULL;
-            g_autoptr (BsEvent) dial_event = NULL;
-            g_autoptr (BsDial) dial = NULL;
-            BsEventType event_type;
-            int rotation = 0;
-
-            dial = g_list_model_get_item (dials, i);
-
-            if (states[4] == 0x01)
-              {
-                event_type = BS_DIAL_ROTATE;
-                rotation = convert_dial_value (states[i + 5]);
-
-                if (rotation == 0)
-                  continue;
-              }
-            else
-              {
-                if (bs_dial_get_pressed (dial) == (gboolean) states[i + 5])
-                  continue;
-
-                bs_dial_set_pressed (dial, (gboolean) states[i + 5]);
-
-                event_type = states[i + 5] ? BS_DIAL_PRESS : BS_DIAL_RELEASE;
-              }
-
-            /* Hardcode routing dial events to the touchscreen slot. In the
-             * future this may become configurable, but for now, it is not.
-             */
-            dial_event = bs_dial_event_new (event_type, self, dial, rotation);
-
-            slot = g_list_model_get_item (touchscreen_slots, i);
-            bs_actionable_handle_event (BS_ACTIONABLE (slot), dial_event);
-          }
-      }
-      break;
-    }
-
-  return TRUE;
-}
-
-static gboolean
-set_touchscreen_texture_plus (BsDevice       *self,
-                              BsTouchscreen  *touchscreen,
-                              GdkTexture     *texture,
-                              GError        **error)
-{
-  g_autofree uint8_t *payload = NULL;
-  g_autofree uint8_t *buffer = NULL;
-  BsRenderer *renderer;
-  const size_t package_size = 1024;
-  const size_t header_size = 16;
-  uint8_t x, y;
-  uint8_t page;
-  size_t bytes_remaining;
-  size_t buffer_size;
-
-  BS_ENTRY;
-
-  renderer = bs_device_region_get_renderer (BS_DEVICE_REGION (touchscreen));
-
-  if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
-    BS_RETURN (FALSE);
-
-  /* FIXME: we upload the whole texture every time */
-  x = 0;
-  y = 0;
-
-  payload = g_malloc (package_size * sizeof (uint8_t));
-  payload[0] = 0x02;
-  payload[1] = 0x0c;
-  payload[2] = x & 0xff;
-  payload[3] = x >> 8;
-  payload[4] = y & 0xff;
-  payload[5] = y >> 8;
-  payload[6] = (bs_touchscreen_get_width (touchscreen) & 0xff);
-  payload[7] = (bs_touchscreen_get_width (touchscreen) >> 8) & 0xff;
-  payload[8] = (bs_touchscreen_get_height (touchscreen) & 0xff);
-  payload[9] = (bs_touchscreen_get_height (touchscreen) >> 8) & 0xff;
-
-  page = 0;
-  bytes_remaining = buffer_size;
-  while (bytes_remaining > 0)
-    {
-      size_t padding_size;
-      size_t chunk_size;
-      size_t bytes_sent;
-
-      chunk_size = MIN (bytes_remaining, package_size - header_size);
-
-      payload[10] = chunk_size == bytes_remaining ? 1 : 0;
-      payload[11] = page & 0xff;
-      payload[12] = page >> 8;
-      payload[13] = chunk_size & 0xff;
-      payload[14] = chunk_size >> 8;
-      payload[15] = 0;
-
-      bytes_sent = page * (package_size - header_size);
-      memcpy (payload + header_size, buffer + bytes_sent, chunk_size);
-
-      padding_size = package_size - header_size - chunk_size;
-      if (padding_size > 0)
-        memset (payload + header_size + chunk_size, 0, padding_size);
-
-      hid_write (self->handle, payload, package_size * sizeof (uint8_t));
-
-      bytes_remaining -= chunk_size;
-      page++;
-    }
-
-  BS_RETURN (TRUE);
-}
-
-static const DeviceModelInfo models_vtable[] = {
-  {
-    .product_id = STREAMDECK_MINI_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck Mini"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 6,
-      .columns = 3,
-      .image_info = {
-        .width = 80,
-        .height = 80,
-        .format = BS_IMAGE_FORMAT_BMP,
-        .flags = BS_RENDERER_FLAG_FLIP_Y | BS_RENDERER_FLAG_ROTATE_90,
-      },
-    },
-    .reset = reset_mini_original,
-    .get_serial_number = get_serial_number_mini_original,
-    .get_firmware_version = get_firmware_version_mini_original,
-    .set_brightness = set_brightness_mini_original,
-    .set_button_texture = set_button_texture_mini,
-    .read_state = read_state_mini,
-  },
-  {
-    .product_id = STREAMDECK_MINI_V2_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck Mini"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 6,
-      .columns = 3,
-      .image_info = {
-        .width = 80,
-        .height = 80,
-        .format = BS_IMAGE_FORMAT_BMP,
-        .flags = BS_RENDERER_FLAG_FLIP_Y | BS_RENDERER_FLAG_ROTATE_90,
-      },
-    },
-    .reset = reset_mini_original,
-    .get_serial_number = get_serial_number_mini_original,
-    .get_firmware_version = get_firmware_version_mini_original,
-    .set_brightness = set_brightness_mini_original,
-    .set_button_texture = set_button_texture_mini,
-    .read_state = read_state_mini,
-  },
-  {
-    .product_id = STREAMDECK_ORIGINAL_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 15,
-      .columns = 5,
-      .image_info = {
-        .width = 72,
-        .height = 72,
-        .format = BS_IMAGE_FORMAT_BMP,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_mini_original,
-    .get_serial_number = get_serial_number_mini_original,
-    .get_firmware_version = get_firmware_version_mini_original,
-    .set_brightness = set_brightness_mini_original,
-    .set_button_texture = set_button_texture_original,
-    .read_state = read_state_original,
-  },
-  {
-    .product_id = STREAMDECK_ORIGINAL_V2_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 15,
-      .columns = 5,
-      .image_info = {
-        .width = 72,
-        .height = 72,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_gen2,
-    .get_serial_number = get_serial_number_gen2,
-    .get_firmware_version = get_firmware_version_gen2,
-    .set_brightness = set_brightness_gen2,
-    .set_button_texture = set_button_texture_gen2,
-    .read_state = read_state_gen2,
-  },
-  {
-    .product_id = STREAMDECK_XL_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck XL"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 32,
-      .columns = 8,
-      .image_info = {
-        .width = 96,
-        .height = 96,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_gen2,
-    .get_serial_number = get_serial_number_gen2,
-    .get_firmware_version = get_firmware_version_gen2,
-    .set_brightness = set_brightness_gen2,
-    .set_button_texture = set_button_texture_gen2,
-    .read_state = read_state_gen2,
-  },
-  {
-    .product_id = STREAMDECK_XL_V2_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck XL"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 32,
-      .columns = 8,
-      .image_info = {
-        .width = 96,
-        .height = 96,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_gen2,
-    .get_serial_number = get_serial_number_gen2,
-    .get_firmware_version = get_firmware_version_gen2,
-    .set_brightness = set_brightness_gen2,
-    .set_button_texture = set_button_texture_gen2,
-    .read_state = read_state_gen2,
-  },
-  {
-    .product_id = STREAMDECK_MK2_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck MK.2"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 15,
-      .columns = 5,
-      .image_info = {
-        .width = 72,
-        .height = 72,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_gen2,
-    .get_serial_number = get_serial_number_gen2,
-    .get_firmware_version = get_firmware_version_gen2,
-    .set_brightness = set_brightness_gen2,
-    .set_button_texture = set_button_texture_gen2,
-    .read_state = read_state_gen2,
-  },
-  {
-    .product_id = STREAMDECK_PEDAL_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck Pedal"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 3,
-      .columns = 3,
-      .image_info = {
-        .width = 96,
-        .height = 96,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_NONE,
-      },
-    },
-    .reset = reset_pedal,
-    .get_serial_number = get_serial_number_gen2,
-    .get_firmware_version = get_firmware_version_gen2,
-    .set_brightness = set_brightness_pedal,
-    .set_button_texture = set_button_texture_pedal,
-    .read_state = read_state_gen2,
-  },
-  {
-    .product_id = STREAMDECK_PLUS_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck +"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS |
-                BS_DEVICE_FEATURE_TOUCHSCREEN |
-                BS_DEVICE_FEATURE_DIALS,
-    .button_layout = {
-      .n_buttons = 8,
-      .columns = 4,
-      .image_info = {
-        .width = 120,
-        .height = 120,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_NONE,
-      },
-    },
-    .dial_layout = {
-      .n_dials = 4,
-      .columns = 4,
-    },
-    .touchscreen_layout = {
-      .n_slots = 4,
-      .image_info = {
-        .width = 800,
-        .height = 100,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_NONE,
-      },
-    },
-    .reset = reset_gen2,
-    .get_serial_number = get_serial_number_gen2,
-    .get_firmware_version = get_firmware_version_gen2,
-    .set_brightness = set_brightness_gen2,
-    .set_button_texture = set_button_texture_gen2,
-    .set_touchscreen_texture = set_touchscreen_texture_plus,
-    .read_state = read_state_plus,
-  },
-  {
-    .product_id = STREAMDECK_NEO_PRODUCT_ID,
-    /* Translators: this is a product name. In most cases, it is not translated.
-     * Please verify if Elgato translates their product names on your locale.
-     */
-    .name = N_("Stream Deck Neo"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 8,
-      .columns = 4,
-      .image_info = {
-        .width = 96,
-        .height = 96,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_gen2,
-    .get_serial_number = get_serial_number_gen2,
-    .get_firmware_version = get_firmware_version_gen2,
-    .set_brightness = set_brightness_gen2,
-    .set_button_texture = set_button_texture_gen2,
-    .read_state = read_state_gen2,
-  },
-};
-
-
-/*
- * Fake device for testing
- */
-
-static void
-reset_fake (BsDevice *self)
-{
-}
-
-static char *
-get_serial_number_fake (BsDevice *self)
-{
-  static unsigned int counter = 0;
-  return g_strdup_printf ("feaneron-hangar-xl-serial-%u", counter++);
-}
-
-static char *
-get_firmware_version_fake (BsDevice *self)
-{
-  return g_strdup ("feaneron-hangar-xl-firmware-version");
-}
-
-static void
-set_brightness_fake (BsDevice *self,
-                     double    brightness)
-{
-}
-
-static gboolean
-set_button_texture_fake (BsDevice    *self,
-                         BsButton    *button,
-                         GdkTexture  *texture,
-                         GError     **error)
-{
-  return TRUE;
-}
-
-static gboolean
-read_state_fake (BsDevice *self)
-{
-  return TRUE;
-}
-
-static const DeviceModelInfo fake_models_vtable[] = {
-  {
-    .product_id = 0x0001,
-    .name = N_("Feaneron Hangar Original"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 15,
-      .columns = 5,
-      .image_info = {
-        .width = 72,
-        .height = 72,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_fake,
-    .get_serial_number = get_serial_number_fake,
-    .get_firmware_version = get_firmware_version_fake,
-    .set_brightness = set_brightness_fake,
-    .set_button_texture = set_button_texture_fake,
-    .read_state = read_state_fake,
-  },
-  {
-    .product_id = 0x0001,
-    .name = N_("Feaneron Hangar XL"),
-    .icon_name = "input-dialpad-symbolic",
-    .features = BS_DEVICE_FEATURE_BUTTONS,
-    .button_layout = {
-      .n_buttons = 32,
-      .columns = 8,
-      .image_info = {
-        .width = 96,
-        .height = 96,
-        .format = BS_IMAGE_FORMAT_JPEG,
-        .flags = BS_RENDERER_FLAG_FLIP_X | BS_RENDERER_FLAG_FLIP_Y,
-      },
-    },
-    .reset = reset_fake,
-    .get_serial_number = get_serial_number_fake,
-    .get_firmware_version = get_firmware_version_fake,
-    .set_brightness = set_brightness_fake,
-    .set_button_texture = set_button_texture_fake,
-    .read_state = read_state_fake,
-  },
-};
-
-/*
- * GSource
- */
-
-static void
-apply_touchscreen_update (BsDevice            *self,
-                          BsTouchscreenUpdate *touchscreen_update)
-{
-  g_autoptr (GdkTexture) texture = NULL;
-  BsTouchscreenContent *content;
-  g_autoptr (GError) error = NULL;
-  BsTouchscreen *touchscreen;
-  BsRenderer *renderer;
-
-  g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (self->model_info->set_button_texture != NULL);
-
-  touchscreen = touchscreen_update->touchscreen;
-  content = bs_touchscreen_get_content (touchscreen);
-  renderer = bs_device_region_get_renderer (BS_DEVICE_REGION (touchscreen));
-  texture = bs_renderer_compose_touchscreen_content (renderer, content, &error);
-
-  if (error)
-    {
-      g_warning ("Error compositing touchscreen texture: %s", error->message);
-      return;
-    }
-
-  self->model_info->set_touchscreen_texture (self, touchscreen, texture, &error);
-
-  if (error)
-    {
-      g_warning ("Error uploading touchscreen texture: %s", error->message);
-      return;
-    }
-}
-
-static void
-apply_button_update (BsDevice       *self,
-                     BsButtonUpdate *button_update)
-{
-  g_autoptr (GdkTexture) texture = NULL;
-  g_autoptr (GError) error = NULL;
-  BsDeviceRegion *region;
-  BsRenderer *renderer;
-  BsButton *button;
-  BsIcon *icon;
-
-  BS_TRACE_MSG ("Applying button update %p", button_update);
-
-  g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (self->model_info->set_button_texture != NULL);
-
-  button = button_update->button;
-  icon = bs_button_get_icon (button);
-  region = bs_button_get_region (button);
-  renderer = bs_device_region_get_renderer (region);
-  texture = bs_renderer_compose_icon (renderer, icon, &error);
-
-  if (error)
-    {
-      g_warning ("Error compositing button texture: %s", error->message);
-      return;
-    }
-
-  self->model_info->set_button_texture (self, button, texture, &error);
-  if (error)
-    {
-      g_warning ("Error uploading button texture: %s", error->message);
-      return;
-    }
-}
-
-static gboolean
-device_source_dispatch (GSource     *source,
-                        GSourceFunc  callback,
-                        gpointer     user_data)
-{
-  DeviceSource *device_source = (DeviceSource *)source;
-  BsDevice *self = device_source->device;
-  gint64 current_time;
-  gint64 expiration;
-
-  if (self->update)
-    {
-      g_autoptr (BsDeviceUpdate) update = g_steal_pointer (&self->update);
-      BsTouchscreenUpdate **touchscreen_updates;
-      BsButtonUpdate **button_updates;
-
-      bs_device_update_seal (update);
-
-      button_updates = bs_device_update_get_button_updates (update);
-      for (size_t i = 0; button_updates && button_updates[i]; i++)
-        apply_button_update (self, button_updates[i]);
-
-      touchscreen_updates = bs_device_update_get_touchscreen_updates (update);
-      for (size_t i = 0; touchscreen_updates && touchscreen_updates[i]; i++)
-        apply_touchscreen_update (self, touchscreen_updates[i]);
-    }
-
-  self->model_info->read_state (self);
-
-  current_time = g_source_get_time (source);
-  expiration = current_time + (guint64) POLL_RATE_MS * 1000;
-  g_source_set_ready_time (source, expiration);
-
-  return TRUE;
-}
-
-GSourceFuncs device_source_funcs =
-{
-  NULL, /* prepare */
-  NULL, /* check */
-  device_source_dispatch,
-  NULL, NULL, NULL,
-};
-
-static GSource *
-device_source_new (BsDevice *self)
-{
-  DeviceSource *device_source;
-  GSource *source;
-
-  source = g_source_new (&device_source_funcs, sizeof (DeviceSource));
-  device_source = (DeviceSource *)source;
-  device_source->device = self;
-
-  g_source_set_ready_time (source, g_get_monotonic_time ());
-
-  return source;
-}
-
 
 /*
  * GInitable interface
@@ -1822,6 +514,7 @@ on_button_grid_button_changed_cb (BsButtonGrid *button_grid,
                                   BsButton     *button,
                                   BsDevice     *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
   BsAction *action;
   BsIcon *custom_icon;
   BsPage *active_page;
@@ -1830,12 +523,12 @@ on_button_grid_button_changed_cb (BsButtonGrid *button_grid,
 
   BS_ENTRY;
 
-  if (self->loading_profile)
+  if (priv->loading_profile)
     BS_RETURN ();
 
-  g_assert (g_queue_get_length (self->active_pages) > 0);
+  g_assert (g_queue_get_length (priv->active_pages) > 0);
 
-  active_page = g_queue_peek_head (self->active_pages);
+  active_page = g_queue_peek_head (priv->active_pages);
   region_id = bs_device_region_get_id (BS_DEVICE_REGION (button_grid));
   custom_icon = bs_button_get_custom_icon (button);
   position = bs_button_get_position (button);
@@ -1853,6 +546,7 @@ on_touchscreen_slot_changed_cb (BsTouchscreen     *touchscreen,
                                 BsTouchscreenSlot *slot,
                                 BsDevice          *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
   BsAction *action;
   BsPage *active_page;
   const char *region_id;
@@ -1860,12 +554,12 @@ on_touchscreen_slot_changed_cb (BsTouchscreen     *touchscreen,
 
   BS_ENTRY;
 
-  if (self->loading_profile)
+  if (priv->loading_profile)
     BS_RETURN ();
 
-  g_assert (g_queue_get_length (self->active_pages) > 0);
+  g_assert (g_queue_get_length (priv->active_pages) > 0);
 
-  active_page = g_queue_peek_head (self->active_pages);
+  active_page = g_queue_peek_head (priv->active_pages);
   region_id = bs_device_region_get_id (BS_DEVICE_REGION (touchscreen));
   position = bs_touchscreen_get_slot_position (touchscreen, slot);
   action = bs_actionable_get_action (BS_ACTIONABLE (slot));
@@ -1884,123 +578,40 @@ bs_device_initable_init (GInitable     *initable,
                          GError       **error)
 {
   BsDevice *self = BS_DEVICE (initable);
-  unsigned int row = 0;
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
   BS_ENTRY;
 
-  /* Short-circuit fake devices here */
-  if (self->fake)
-    {
-      static int fake_index = 0;
-      self->model_info = &fake_models_vtable[fake_index++ % G_N_ELEMENTS (fake_models_vtable)];
-      BS_GOTO (out);
-    }
+  priv->regions = BS_DEVICE_GET_CLASS (self)->create_layout (self);
 
-  g_assert (self->device != NULL);
-
-  if (g_usb_device_get_vid (self->device) != ELGATO_SYSTEMS_VENDOR_ID)
+  /* TODO: dynamically connect / disconnect to new regions */
+  for (size_t i = 0; i < g_list_model_get_n_items (priv->regions); i++)
     {
-      g_set_error (error,
-                   BS_DEVICE_ERROR,
-                   BS_DEVICE_ERROR_UNRECOGNIZED,
-                   "Not an Elgato device");
-      BS_RETURN (FALSE);
-    }
+      g_autoptr (BsDeviceRegion) region = g_list_model_get_item (priv->regions, i);
 
-  for (size_t i = 0; i < G_N_ELEMENTS (models_vtable); i++)
-    {
-      if (g_usb_device_get_pid (self->device) == models_vtable[i].product_id)
+      if (BS_IS_BUTTON_GRID (region))
         {
-          self->model_info = &models_vtable[i];
-          break;
+          g_signal_connect (region,
+                            "button-changed",
+                            G_CALLBACK (on_button_grid_button_changed_cb),
+                            self);
+        }
+      else if (BS_IS_DIAL_GRID (region))
+        {
+          /* TODO: implement me */
+        }
+      else if (BS_IS_TOUCHSCREEN (region))
+        {
+          g_signal_connect (region,
+                            "touchscreen-slot-changed",
+                            G_CALLBACK (on_touchscreen_slot_changed_cb),
+                            self);
         }
     }
 
-  if (!self->model_info)
-    {
-      g_set_error (error,
-                   BS_DEVICE_ERROR,
-                   BS_DEVICE_ERROR_UNRECOGNIZED,
-                   "Not a recognized Stream Deck device");
-      BS_RETURN (FALSE);
-    }
+  priv->initialized = TRUE;
 
-  self->handle = hid_open (g_usb_device_get_vid (self->device),
-                           g_usb_device_get_pid (self->device),
-                           NULL);
-
-  if (!self->handle)
-    {
-      g_set_error (error,
-                   G_IO_ERROR,
-                   G_IO_ERROR_FAILED,
-                   "Failed to open Stream Deck device");
-      BS_RETURN (FALSE);
-    }
-
-  hid_set_nonblocking (self->handle, TRUE);
-
-  self->poll_source = device_source_new (self);
-
-out:
-  self->serial_number = self->model_info->get_serial_number (self);
-  self->firmware_version = self->model_info->get_firmware_version (self);
-  self->icon = g_themed_icon_new (self->model_info->icon_name);
-
-  /* All Elgato Stream Decks have one button grid */
-  g_assert (self->model_info->features & BS_DEVICE_FEATURE_BUTTONS);
-
-  if (self->model_info->features & BS_DEVICE_FEATURE_BUTTONS)
-    {
-      g_autoptr (BsButtonGrid) button_grid = NULL;
-
-      button_grid = bs_button_grid_new ("main-button-grid",
-                                        self,
-                                        &self->model_info->button_layout.image_info,
-                                        self->model_info->button_layout.n_buttons,
-                                        self->model_info->button_layout.columns,
-                                        0, row++, 1, 1);
-
-      g_signal_connect (button_grid,
-                        "button-changed",
-                        G_CALLBACK (on_button_grid_button_changed_cb),
-                        self);
-
-      g_list_store_append (self->regions, button_grid);
-    }
-
-  if (self->model_info->features & BS_DEVICE_FEATURE_TOUCHSCREEN)
-    {
-      g_autoptr (BsTouchscreen) touchscreen = NULL;
-
-      touchscreen = bs_touchscreen_new ("touchscreen",
-                                        self,
-                                        &self->model_info->touchscreen_layout.image_info,
-                                        self->model_info->touchscreen_layout.n_slots,
-                                        0, row++, 1, 1);
-
-      g_signal_connect (touchscreen,
-                        "touchscreen-slot-changed",
-                        G_CALLBACK (on_touchscreen_slot_changed_cb),
-                        self);
-
-      g_list_store_append (self->regions, touchscreen);
-    }
-
-  if (self->model_info->features & BS_DEVICE_FEATURE_DIALS)
-    {
-      g_autoptr (BsDialGrid) dial_grid = NULL;
-
-      dial_grid = bs_dial_grid_new ("dial-grid",
-                                    self,
-                                    self->model_info->dial_layout.n_dials,
-                                    self->model_info->dial_layout.columns,
-                                    0, row++, 1, 1);
-
-      g_list_store_append (self->regions, dial_grid);
-    }
-
-  self->initialized = TRUE;
+  bs_device_load (self);
 
   BS_RETURN (TRUE);
 }
@@ -2011,6 +622,42 @@ g_initable_iface_init (GInitableIface *iface)
   iface->init = bs_device_initable_init;
 }
 
+
+/*
+ * BsDevice overrides
+ */
+
+static double
+bs_device_real_get_brightness (BsDevice *self)
+{
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
+  return priv->brightness;
+}
+
+static void
+bs_device_real_set_brightness (BsDevice *self,
+                               double    brightness)
+{
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
+  priv->brightness = brightness;
+}
+
+static void
+bs_device_real_load (BsDevice *self)
+{
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
+  g_assert (BS_IS_DEVICE (self));
+  g_assert (!priv->loaded);
+
+  load_profiles (self);
+
+  priv->loaded = TRUE;
+}
+
+
 /*
  * GObject overrides
  */
@@ -2019,30 +666,21 @@ static void
 bs_device_finalize (GObject *object)
 {
   BsDevice *self = (BsDevice *) object;
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
   BS_ENTRY;
 
-  if (self->initialized)
+  if (priv->initialized)
     {
       save_profiles (self);
       bs_device_reset (self);
     }
 
-  if (self->device)
-    g_usb_device_close (self->device, NULL);
-
-  if (self->poll_source)
-    g_source_destroy (self->poll_source);
-  g_clear_pointer (&self->poll_source, g_source_unref);
-
-  g_clear_handle_id (&self->save_timeout_id, g_source_remove);
-  g_clear_pointer (&self->serial_number, g_free);
-  g_clear_pointer (&self->handle, hid_close);
-  g_queue_free_full (self->active_pages, g_object_unref);
-  g_clear_object (&self->regions);
-  g_clear_object (&self->device);
-  g_clear_object (&self->profiles);
-  g_clear_object (&self->update);
+  g_clear_handle_id (&priv->save_timeout_id, g_source_remove);
+  g_queue_free_full (priv->active_pages, g_object_unref);
+  g_clear_object (&priv->regions);
+  g_clear_object (&priv->profiles);
+  g_clear_object (&priv->update);
 
   G_OBJECT_CLASS (bs_device_parent_class)->finalize (object);
 
@@ -2056,6 +694,7 @@ bs_device_get_property (GObject    *object,
                         GParamSpec *pspec)
 {
   BsDevice *self = BS_DEVICE (object);
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -2064,19 +703,11 @@ bs_device_get_property (GObject    *object,
       break;
 
     case PROP_ACTIVE_PROFILE:
-      g_value_set_object (value, self->active_profile);
+      g_value_set_object (value, priv->active_profile);
       break;
 
     case PROP_BRIGHTNESS:
-      g_value_set_double (value, self->brightness);
-      break;
-
-    case PROP_DEVICE:
-      g_value_set_object (value, self->device);
-      break;
-
-    case PROP_ICON:
-      g_value_set_object (value, self->icon);
+      g_value_set_double (value, priv->brightness);
       break;
 
     case PROP_NAME:
@@ -2106,15 +737,6 @@ bs_device_set_property (GObject      *object,
       bs_device_set_brightness (self, g_value_get_double (value));
       break;
 
-    case PROP_DEVICE:
-      g_assert (self->device == NULL);
-      self->device = g_value_dup_object (value);
-      break;
-
-    case PROP_FAKE:
-      self->fake = g_value_get_boolean (value);
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -2129,6 +751,10 @@ bs_device_class_init (BsDeviceClass *klass)
   object_class->get_property = bs_device_get_property;
   object_class->set_property = bs_device_set_property;
 
+  klass->get_brightness = bs_device_real_get_brightness;
+  klass->set_brightness = bs_device_real_set_brightness;
+  klass->load = bs_device_real_load;
+
   properties[PROP_ACTIVE_PAGE] = g_param_spec_object ("active-page", NULL, NULL,
                                                       BS_TYPE_PAGE,
                                                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
@@ -2140,18 +766,6 @@ bs_device_class_init (BsDeviceClass *klass)
   properties[PROP_BRIGHTNESS] = g_param_spec_double ("brightness", NULL, NULL,
                                                      0.0, 1.0, 0.5,
                                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  properties[PROP_DEVICE] = g_param_spec_object ("device", NULL, NULL,
-                                                 G_USB_TYPE_DEVICE,
-                                                 G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
-
-  properties[PROP_FAKE] = g_param_spec_boolean ("fake", NULL, NULL,
-                                                FALSE,
-                                                G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
-
-  properties[PROP_ICON] = g_param_spec_object ("icon", NULL, NULL,
-                                               G_TYPE_ICON,
-                                               G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_NAME] = g_param_spec_string ("name", NULL, NULL, NULL,
                                                G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
@@ -2165,79 +779,46 @@ bs_device_class_init (BsDeviceClass *klass)
 static void
 bs_device_init (BsDevice *self)
 {
-  self->profiles = g_list_store_new (BS_TYPE_PROFILE);
-  self->regions = g_list_store_new (BS_TYPE_DEVICE_REGION);
-  self->active_pages = g_queue_new ();
-}
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
-BsDevice *
-bs_device_new (GUsbDevice  *gusb_device,
-               GError     **error)
-{
-  return g_initable_new (BS_TYPE_DEVICE,
-                         NULL,
-                         error,
-                         "device", gusb_device,
-                         NULL);
-}
-
-BsDevice *
-bs_device_new_fake (GError **error)
-{
-  return g_initable_new (BS_TYPE_DEVICE,
-                         NULL,
-                         error,
-                         "fake", TRUE,
-                         NULL);
+  priv->profiles = g_list_store_new (BS_TYPE_PROFILE);
+  priv->active_pages = g_queue_new ();
 }
 
 void
 bs_device_reset (BsDevice *self)
 {
   g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (self->model_info->reset != NULL);
 
-  self->model_info->reset (self);
-}
-
-GUsbDevice *
-bs_device_get_device (BsDevice *self)
-{
-  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
-
-  return self->device;
+  if (BS_DEVICE_GET_CLASS (self)->reset)
+    BS_DEVICE_GET_CLASS (self)->reset (self);
 }
 
 const char *
 bs_device_get_name (BsDevice *self)
 {
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
+  g_assert (BS_DEVICE_GET_CLASS (self)->get_name != NULL);
 
-  return _(self->model_info->name);
+  return BS_DEVICE_GET_CLASS (self)->get_name (self);
 }
 
 const char *
 bs_device_get_serial_number (BsDevice *self)
 {
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
+  g_assert (BS_DEVICE_GET_CLASS (self)->get_serial_number != NULL);
 
-  return self->serial_number;
+  return BS_DEVICE_GET_CLASS (self)->get_serial_number (self);
 }
 
 const char *
 bs_device_get_firmware_version (BsDevice *self)
 {
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
+  g_assert (BS_DEVICE_GET_CLASS (self)->get_firmware_version != NULL);
 
-  return self->firmware_version;
-}
-
-GIcon *
-bs_device_get_icon (BsDevice *self)
-{
-  g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
-
-  return self->icon;
+  return BS_DEVICE_GET_CLASS (self)->get_firmware_version (self);
 }
 
 /**
@@ -2251,9 +832,11 @@ bs_device_get_icon (BsDevice *self)
 double
 bs_device_get_brightness (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_val_if_fail (BS_IS_DEVICE (self), 0.0);
 
-  return self->brightness;
+  return priv->brightness;
 }
 
 /**
@@ -2267,15 +850,17 @@ void
 bs_device_set_brightness (BsDevice *self,
                           double    brightness)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (brightness >= 0.0 && brightness <= 1.0);
-  g_return_if_fail (self->model_info->set_brightness != NULL);
+  g_return_if_fail (BS_DEVICE_GET_CLASS (self)->set_brightness != NULL);
 
-  if (G_APPROX_VALUE (self->brightness, brightness, FLT_EPSILON))
+  if (G_APPROX_VALUE (priv->brightness, brightness, FLT_EPSILON))
     return;
 
-  self->brightness = brightness;
-  self->model_info->set_brightness (self, brightness);
+  priv->brightness = brightness;
+  BS_DEVICE_GET_CLASS (self)->set_brightness (self, brightness);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_BRIGHTNESS]);
 }
@@ -2283,21 +868,25 @@ bs_device_set_brightness (BsDevice *self,
 GListModel *
 bs_device_get_regions (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
-  return G_LIST_MODEL (self->regions);
+  return G_LIST_MODEL (priv->regions);
 }
 
 BsDeviceRegion *
 bs_device_get_region (BsDevice   *self,
                       const char *region_id)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
   g_return_val_if_fail (region_id && g_utf8_validate (region_id, -1, NULL), NULL);
 
-  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->regions)); i++)
+  for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (priv->regions)); i++)
     {
-      g_autoptr (BsDeviceRegion) region = g_list_model_get_item (G_LIST_MODEL (self->regions), i);
+      g_autoptr (BsDeviceRegion) region = g_list_model_get_item (G_LIST_MODEL (priv->regions), i);
 
       if (g_strcmp0 (bs_device_region_get_id (region), region_id) == 0)
         return region;
@@ -2309,21 +898,24 @@ bs_device_get_region (BsDevice   *self,
 gboolean
 bs_device_is_initialized (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_assert (BS_IS_DEVICE (self));
 
-  return self->initialized;
+  return priv->initialized;
 }
 
 void
 bs_device_upload_button (BsDevice *self,
                          BsButton *button)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (self->model_info->set_button_texture != NULL);
 
   ensure_device_update (self);
 
-  bs_device_update_add_button (self->update, button);
+  bs_device_update_add_button (priv->update, button);
 }
 
 void
@@ -2331,55 +923,62 @@ bs_device_upload_touchscreen (BsDevice              *self,
                               BsTouchscreen         *touchscreen,
                               const graphene_rect_t *region)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (self->model_info->set_button_texture != NULL);
 
   ensure_device_update (self);
 
-  bs_device_update_add_touchscreen_region (self->update, touchscreen, region);
+  bs_device_update_add_touchscreen_region (priv->update, touchscreen, region);
 }
 
 GListModel *
 bs_device_get_profiles (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
-  return G_LIST_MODEL (self->profiles);
+  return G_LIST_MODEL (priv->profiles);
 }
 
 BsProfile *
 bs_device_get_active_profile (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
-  return self->active_profile;
+  return priv->active_profile;
 }
 
 void
 bs_device_load_profile (BsDevice  *self,
                         BsProfile *profile)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (g_list_store_find (self->profiles, profile, NULL));
+  g_return_if_fail (g_list_store_find (priv->profiles, profile, NULL));
 
   BS_ENTRY;
 
-  if (self->active_profile == profile)
+  if (priv->active_profile == profile)
     BS_RETURN ();
 
-  if (g_queue_get_length (self->active_pages) > 0)
-    update_page_items (self, g_queue_peek_head (self->active_pages));
+  if (g_queue_get_length (priv->active_pages) > 0)
+    update_page_items (self, g_queue_peek_head (priv->active_pages));
 
-  g_queue_clear_full (self->active_pages, g_object_unref);
+  g_queue_clear_full (priv->active_pages, g_object_unref);
 
-  self->active_profile = profile;
+  priv->active_profile = profile;
 
-  self->loading_profile = TRUE;
+  priv->loading_profile = TRUE;
 
   bs_device_set_brightness (self, bs_profile_get_brightness (profile));
   bs_device_push_page (self, bs_profile_get_root_page (profile));
 
-  self->loading_profile = FALSE;
+  priv->loading_profile = FALSE;
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ACTIVE_PROFILE]);
 
@@ -2389,25 +988,29 @@ bs_device_load_profile (BsDevice  *self,
 BsPage *
 bs_device_get_active_page (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_val_if_fail (BS_IS_DEVICE (self), NULL);
 
-  return g_queue_peek_head (self->active_pages);
+  return g_queue_peek_head (priv->active_pages);
 }
 
 void
 bs_device_push_page (BsDevice *self,
                      BsPage   *page)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_if_fail (BS_IS_DEVICE (self));
   g_return_if_fail (BS_IS_PAGE (page));
-  g_return_if_fail (g_queue_find (self->active_pages, page) == NULL);
+  g_return_if_fail (g_queue_find (priv->active_pages, page) == NULL);
 
   BS_ENTRY;
 
-  if (g_queue_get_length (self->active_pages) > 0)
-    update_page_items (self, g_queue_peek_head (self->active_pages));
+  if (g_queue_get_length (priv->active_pages) > 0)
+    update_page_items (self, g_queue_peek_head (priv->active_pages));
 
-  g_queue_push_head (self->active_pages, g_object_ref (page));
+  g_queue_push_head (priv->active_pages, g_object_ref (page));
 
   load_active_page (self);
 
@@ -2419,14 +1022,15 @@ bs_device_push_page (BsDevice *self,
 void
 bs_device_pop_page (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
   g_autoptr (BsPage) page = NULL;
 
   g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (g_queue_get_length (self->active_pages) > 1);
+  g_return_if_fail (g_queue_get_length (priv->active_pages) > 1);
 
   BS_ENTRY;
 
-  page = g_queue_pop_head (self->active_pages);
+  page = g_queue_pop_head (priv->active_pages);
   update_page_items (self, page);
 
   load_active_page (self);
@@ -2439,13 +1043,20 @@ bs_device_pop_page (BsDevice *self)
 void
 bs_device_load (BsDevice *self)
 {
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
   g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (!self->loaded);
+  g_return_if_fail (!priv->loaded);
 
-  if (!self->fake)
-    g_source_attach (self->poll_source, NULL);
+  BS_DEVICE_GET_CLASS (self)->load (self);
+}
 
-  load_profiles (self);
+BsDeviceUpdate *
+bs_device_steal_update (BsDevice *self)
+{
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
-  self->loaded = TRUE;
+  g_assert (BS_IS_DEVICE (self));
+
+  return g_steal_pointer (&priv->update);
 }

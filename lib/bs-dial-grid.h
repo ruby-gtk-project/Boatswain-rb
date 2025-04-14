@@ -36,7 +36,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (BsDialGrid, bs_dial_grid, BS, DIAL_GRID, BsDeviceRegion)
 
 BsDialGrid * bs_dial_grid_new (const char   *id,
-                               BsDevice *device,
+                               BsDevice     *device,
                                unsigned int  n_dials,
                                unsigned int  grid_columns,
                                unsigned int  column,
