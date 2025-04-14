@@ -43,6 +43,7 @@ libboatswain_sources = [
   'bs-context.c',
   'bs-desktop-controller.c',
   'bs-device.c',
+  'bs-device-layout-builder.c',
   'bs-device-manager.c',
   'bs-device-region.c',
   'bs-device-update.c',
