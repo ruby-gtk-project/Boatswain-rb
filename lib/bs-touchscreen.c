@@ -26,7 +26,7 @@
 #include "bs-debug.h"
 #include "bs-renderer.h"
 #include "bs-touchscreen.h"
-#include "bs-touchscreen-content.h"
+#include "bs-touchscreen-content-private.h"
 #include "bs-touchscreen-slot-private.h"
 
 #include <gio/gio.h>

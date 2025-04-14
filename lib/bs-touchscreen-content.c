@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "bs-touchscreen-content.h"
+#include "bs-touchscreen-content-private.h"
 
 #include "bs-actionable.h"
 #include "bs-action.h"

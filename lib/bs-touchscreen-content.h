@@ -34,10 +34,6 @@ G_BEGIN_DECLS
 #define BS_TYPE_TOUCHSCREEN_CONTENT (bs_touchscreen_content_get_type())
 G_DECLARE_FINAL_TYPE (BsTouchscreenContent, bs_touchscreen_content, BS, TOUCHSCREEN_CONTENT, GObject)
 
-BsTouchscreenContent * bs_touchscreen_content_new (GListModel *slots,
-                                                   uint32_t    width,
-                                                   uint32_t    height);
-
 GdkPaintable *
 bs_touchscreen_content_get_background_paintable (BsTouchscreenContent *self);
 
