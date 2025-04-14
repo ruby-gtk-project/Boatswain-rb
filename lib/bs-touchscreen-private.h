@@ -37,8 +37,6 @@ BsTouchscreen * bs_touchscreen_new (const char        *id,
                                     unsigned int       column_span,
                                     unsigned int       row_span);
 
-GListModel * bs_touchscreen_get_slots (BsTouchscreen *self);
-
 BsTouchscreenSlot * bs_touchscreen_pick_slot (BsTouchscreen          *self,
                                               const graphene_point_t *point);
 

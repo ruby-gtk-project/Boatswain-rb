@@ -42,4 +42,6 @@ uint32_t bs_touchscreen_get_height (BsTouchscreen *self);
 
 BsTouchscreenContent * bs_touchscreen_get_content (BsTouchscreen *self);
 
+GListModel * bs_touchscreen_get_slots (BsTouchscreen *self);
+
 G_END_DECLS

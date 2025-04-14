@@ -22,7 +22,6 @@
 #include "bs-touchscreen-widget.h"
 
 #include "bs-selection-controller.h"
-#include "bs-touchscreen-private.h"
 #include "bs-touchscreen-slot-widget.h"
 #include "bs-touchscreen-slot.h"
 #include "bs-debug.h"
