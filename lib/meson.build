@@ -62,6 +62,7 @@ libboatswain_sources = [
   'bs-touchscreen.c',
   'bs-touchscreen-content.c',
   'bs-touchscreen-slot.c',
+  'bs-utils.c',
 ]
 
 libboatswain_deps = [
