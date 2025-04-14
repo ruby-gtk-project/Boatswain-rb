@@ -32,6 +32,9 @@ struct _BsActionableInterface
   BsAction * (*get_action) (BsActionable *self);
   void (*set_action) (BsActionable *self,
                       BsAction     *action);
+
+  void (*handle_event) (BsActionable *self,
+                        BsEvent      *event);
 };
 
 void bs_actionable_action_changed (BsActionable *self);

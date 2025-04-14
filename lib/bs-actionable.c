@@ -38,8 +38,24 @@ enum
 static guint signals[N_SIGNALS];
 
 static void
+bs_actionable_default_handle_event (BsActionable *actionable,
+                                    BsEvent      *event)
+{
+  BsAction *action;
+
+  g_assert (BS_IS_ACTIONABLE (actionable));
+  g_assert (BS_IS_EVENT (event));
+
+  action = bs_actionable_get_action (actionable);
+  if (action)
+    bs_action_handle_event (action, event);
+}
+
+static void
 bs_actionable_default_init (BsActionableInterface *iface)
 {
+  iface->handle_event = bs_actionable_default_handle_event;
+
   g_object_interface_install_property (iface,
                                        g_param_spec_object ("action", NULL, NULL,
                                                             BS_TYPE_ACTION,
@@ -91,9 +107,8 @@ void
 bs_actionable_handle_event (BsActionable *self,
                             BsEvent      *event)
 {
-  BsAction *action;
-
   g_assert (BS_IS_ACTIONABLE (self));
+  g_assert (BS_ACTIONABLE_GET_IFACE (self)->handle_event != NULL);
   g_assert (BS_IS_EVENT (event));
 
   g_debug ("Actionable %s (%p) handling event %s",
@@ -101,9 +116,7 @@ bs_actionable_handle_event (BsActionable *self,
            self,
            G_OBJECT_TYPE_NAME (event));
 
-  action = bs_actionable_get_action (self);
-  if (action)
-    bs_action_handle_event (action, event);
+  BS_ACTIONABLE_GET_IFACE (self)->handle_event (self, event);
 }
 
 void
