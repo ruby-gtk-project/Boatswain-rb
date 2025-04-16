@@ -22,6 +22,7 @@
 #pragma once
 
 #include <gusb.h>
+#include <hidapi.h>
 
 #include "bs-device-private.h"
 
@@ -50,6 +51,8 @@ struct _ElgatoStreamDeckClass
 
   char * (*get_serial_number) (ElgatoStreamDeck *self);
   char * (*get_firmware_version) (ElgatoStreamDeck *self);
+  void (*set_brightness) (ElgatoStreamDeck *self,
+                          double            brightness);
   gboolean (*set_button_texture) (ElgatoStreamDeck  *self,
                                   BsButton          *button,
                                   GdkTexture        *texture,
@@ -65,5 +68,6 @@ BsDevice * elgato_stream_deck_new (GUsbDevice  *gusb_device,
                                    GError     **out_error);
 
 GUsbDevice * elgato_stream_deck_get_gusb_device (ElgatoStreamDeck *self);
+hid_device * elgato_stream_deck_get_hid_device  (ElgatoStreamDeck *self);
 
 G_END_DECLS

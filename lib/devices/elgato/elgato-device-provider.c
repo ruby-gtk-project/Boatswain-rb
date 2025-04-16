@@ -25,8 +25,18 @@
 #include "bs-device-provider-private.h"
 #include "elgato-device-provider.h"
 #include "elgato-stream-deck.h"
+#include "elgato-stream-deck-mini.h"
+#include "elgato-stream-deck-mk2.h"
+#include "elgato-stream-deck-neo.h"
+#include "elgato-stream-deck-original.h"
+#include "elgato-stream-deck-original-v2.h"
+#include "elgato-stream-deck-pedal.h"
+#include "elgato-stream-deck-plus.h"
+#include "elgato-stream-deck-xl.h"
 
 #include <gusb.h>
+
+#define ELGATO_SYSTEMS_VENDOR_ID (0x0fd9)
 
 struct _ElgatoDeviceProvider
 {
@@ -47,6 +57,37 @@ G_DEFINE_FINAL_TYPE_WITH_CODE (ElgatoDeviceProvider, elgato_device_provider, PEA
  * Auxiliary methods
  */
 
+/* Gen 1 */
+#define STREAMDECK_ORIGINAL_PRODUCT_ID 0x0060
+
+static GType
+find_elgato_device_gtype (uint16_t product_id)
+{
+  const struct {
+    uint16_t product_id;
+    GType gtype;
+  } device_vtable[] = {
+    { 0x0060, ELGATO_TYPE_STREAM_DECK_ORIGINAL },
+    { 0x0063, ELGATO_TYPE_STREAM_DECK_MINI },
+    { 0x006c, ELGATO_TYPE_STREAM_DECK_XL },
+    { 0x006d, ELGATO_TYPE_STREAM_DECK_ORIGINAL_V2 },
+    { 0x0080, ELGATO_TYPE_STREAM_DECK_MK2 },
+    { 0x0084, ELGATO_TYPE_STREAM_DECK_PLUS },
+    { 0x0086, ELGATO_TYPE_STREAM_DECK_PEDAL },
+    { 0x008f, ELGATO_TYPE_STREAM_DECK_XL },
+    { 0x0090, ELGATO_TYPE_STREAM_DECK_MINI },
+    { 0x009a, ELGATO_TYPE_STREAM_DECK_NEO },
+  };
+
+  for (size_t i = 0; i < G_N_ELEMENTS (device_vtable); i++)
+    {
+      if (device_vtable[i].product_id == product_id)
+        return device_vtable[i].gtype;
+    }
+
+  return G_TYPE_NONE;
+}
+
 static void
 enumerate_devices (ElgatoDeviceProvider *self)
 {
@@ -60,16 +101,22 @@ enumerate_devices (ElgatoDeviceProvider *self)
       g_autoptr (BsDevice) device = NULL;
       g_autoptr (GError) error = NULL;
       GUsbDevice *usb_device;
+      GType device_type;
 
       usb_device = g_ptr_array_index (devices, i);
-      device = elgato_stream_deck_new (usb_device, &error);
 
-      if (error)
-        {
-          if (!g_error_matches (error, ELGATO_STREAM_DECK_ERROR, ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED))
-            g_warning ("Error opening device: %s", error->message);
-          continue;
-        }
+      if (g_usb_device_get_vid (usb_device) != ELGATO_SYSTEMS_VENDOR_ID)
+        continue;
+
+      device_type = find_elgato_device_gtype (g_usb_device_get_pid (usb_device));
+      if (device_type == G_TYPE_NONE)
+        continue;
+
+      device = g_initable_new (device_type,
+                               NULL,
+                               &error,
+                               "gusb-device", usb_device,
+                               NULL);
 
       g_debug ("Found %s (%s) at bus %hu, port %hu",
                bs_device_get_name (device),
@@ -93,17 +140,22 @@ on_gusb_context_device_added_cb (GUsbContext          *gusb_context,
 {
   g_autoptr (BsDevice) device = NULL;
   g_autoptr (GError) error = NULL;
+  GType device_type;
 
   BS_ENTRY;
 
-  device = elgato_stream_deck_new (usb_device, &error);
+  if (g_usb_device_get_vid (usb_device) != ELGATO_SYSTEMS_VENDOR_ID)
+    BS_RETURN ();
 
-  if (error)
-    {
-      if (!g_error_matches (error, ELGATO_STREAM_DECK_ERROR, ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED))
-        g_warning ("Error opening device: %s", error->message);
-      BS_RETURN ();
-    }
+  device_type = find_elgato_device_gtype (g_usb_device_get_pid (usb_device));
+  if (device_type == G_TYPE_NONE)
+    BS_RETURN ();
+
+  device = g_initable_new (device_type,
+                           NULL,
+                           &error,
+                           "gusb-device", usb_device,
+                           NULL);
 
   g_list_store_append (self->devices, g_object_ref (device));
 

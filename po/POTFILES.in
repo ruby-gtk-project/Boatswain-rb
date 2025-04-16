@@ -3,6 +3,15 @@
 data/com.feaneron.Boatswain.desktop.in.in
 data/com.feaneron.Boatswain.gschema.xml
 data/com.feaneron.Boatswain.metainfo.xml.in.in
+lib/devices/elgato/elgato-stream-deck-mini.c
+lib/devices/elgato/elgato-stream-deck-mk2.c
+lib/devices/elgato/elgato-stream-deck-neo.c
+lib/devices/elgato/elgato-stream-deck-original.c
+lib/devices/elgato/elgato-stream-deck-original-v2.c
+lib/devices/elgato/elgato-stream-deck-pedal.c
+lib/devices/elgato/elgato-stream-deck-plus.c
+lib/devices/elgato/elgato-stream-deck-xl.c
+lib/devices/mock/mock-device.c
 lib/bs-device.c
 lib/bs-profile.c
 src/bs-application.c
