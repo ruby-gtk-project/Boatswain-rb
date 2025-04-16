@@ -138,7 +138,7 @@ bs_action_factory_set_property (GObject      *object,
     {
     case PROP_CONTEXT:
       g_assert (priv->context == NULL);
-      priv->context = g_value_dup_object (value);
+      priv->context = g_value_get_object (value);
       g_assert (priv->context != NULL);
       break;
 
