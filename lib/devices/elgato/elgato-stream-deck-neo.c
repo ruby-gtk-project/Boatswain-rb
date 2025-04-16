@@ -22,7 +22,7 @@
 #define G_LOG_DOMAIN "Elgato Stream Deck Neo"
 
 #include "bs-device-layout-builder-private.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "elgato-stream-deck-neo.h"
 
 #include <glib/gi18n.h>

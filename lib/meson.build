@@ -26,7 +26,6 @@ libboatswain_headers = [
   'bs-page.h',
   'bs-page-item.h',
   'bs-profile.h',
-  'bs-renderer.h',
   'bs-touchscreen.h',
   'bs-touchscreen-content.h',
   'bs-touchscreen-slot.h',

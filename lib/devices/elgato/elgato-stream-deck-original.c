@@ -27,7 +27,7 @@
 #include "bs-debug.h"
 #include "bs-device-layout-builder-private.h"
 #include "bs-events-private.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "elgato-stream-deck-original.h"
 
 #include <glib/gi18n.h>

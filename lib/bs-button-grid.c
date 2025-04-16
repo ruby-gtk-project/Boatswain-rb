@@ -24,7 +24,7 @@
 #include "bs-button-private.h"
 #include "bs-device.h"
 #include "bs-device-region.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "bs-device.h"
 
 struct _BsButtonGrid

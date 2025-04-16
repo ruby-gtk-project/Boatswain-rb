@@ -22,7 +22,7 @@
 #define G_LOG_DOMAIN "Elgato Stream Deck MK.2"
 
 #include "bs-device-layout-builder-private.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "elgato-stream-deck-mk2.h"
 
 #include <glib/gi18n.h>

@@ -29,7 +29,7 @@
 #include "bs-dial-private.h"
 #include "bs-dial-grid.h"
 #include "bs-events-private.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "bs-touchscreen-private.h"
 #include "bs-touchscreen-slot-private.h"
 #include "elgato-stream-deck-plus.h"

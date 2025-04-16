@@ -46,7 +46,6 @@
 #include "bs-page.h"
 #include "bs-page-item.h"
 #include "bs-profile.h"
-#include "bs-renderer.h"
 #include "bs-touchscreen.h"
 #include "bs-touchscreen-content.h"
 #include "bs-touchscreen-slot.h"

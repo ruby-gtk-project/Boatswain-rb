@@ -25,7 +25,7 @@
 #include "bs-button.h"
 #include "bs-button-grid.h"
 #include "bs-debug.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "bs-events-private.h"
 #include "elgato-stream-deck-gen2.h"
 

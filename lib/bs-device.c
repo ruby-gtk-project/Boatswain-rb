@@ -35,7 +35,7 @@
 #include "bs-icon.h"
 #include "bs-page-private.h"
 #include "bs-profile.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "bs-touchscreen-private.h"
 #include "bs-touchscreen-slot.h"
 

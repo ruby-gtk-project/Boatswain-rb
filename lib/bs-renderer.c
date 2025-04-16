@@ -19,7 +19,7 @@
  */
 
 #include "bs-icon.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 
 struct _BsRenderer
 {

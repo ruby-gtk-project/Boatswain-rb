@@ -24,7 +24,7 @@
 #include "bs-device-private.h"
 #include "bs-device-region.h"
 #include "bs-debug.h"
-#include "bs-renderer.h"
+#include "bs-renderer-private.h"
 #include "bs-touchscreen.h"
 #include "bs-touchscreen-content-private.h"
 #include "bs-touchscreen-slot-private.h"

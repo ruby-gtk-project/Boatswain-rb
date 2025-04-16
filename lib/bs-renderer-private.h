@@ -1,4 +1,4 @@
-/* bs-renderer.h
+/* bs-renderer-private.h
  *
  * Copyright 2022 Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
  *
