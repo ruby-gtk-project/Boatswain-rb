@@ -202,6 +202,8 @@ bs_application_shutdown (GApplication *application)
   g_clear_pointer (&self->window, gtk_window_destroy);
   g_clear_object (&self->portal);
 
+  bs_shutdown ();
+
   G_APPLICATION_CLASS (bs_application_parent_class)->shutdown (application);
 }
 

@@ -26,5 +26,6 @@
 G_BEGIN_DECLS
 
 void bs_context_init_default (GError **out_error);
+void bs_context_shutdown (void);
 
 G_END_DECLS

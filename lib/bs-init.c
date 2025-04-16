@@ -32,3 +32,9 @@ bs_init (void)
   /* FIXME: propagate error */
   bs_context_init_default (NULL);
 }
+
+void
+bs_shutdown (void)
+{
+  bs_context_shutdown ();
+}

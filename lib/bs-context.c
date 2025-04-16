@@ -77,13 +77,15 @@ load_plugin (PeasEngine     *engine,
  */
 
 static void
-bs_context_finalize (GObject *object)
+bs_context_dispose (GObject *object)
 {
   BsContext *self = (BsContext *)object;
 
   g_clear_object (&self->desktop_controller);
+  g_clear_object (&self->action_factories_set);
+  g_clear_object (&self->device_manager);
 
-  G_OBJECT_CLASS (bs_context_parent_class)->finalize (object);
+  G_OBJECT_CLASS (bs_context_parent_class)->dispose (object);
 }
 
 static void
@@ -154,7 +156,7 @@ bs_context_class_init (BsContextClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = bs_context_finalize;
+  object_class->dispose = bs_context_dispose;
   object_class->constructed = bs_context_constructed;
   object_class->get_property = bs_context_get_property;
   object_class->set_property = bs_context_set_property;
@@ -184,6 +186,18 @@ bs_context_init_default (GError **out_error)
 
       bs_device_manager_load (default_context->device_manager, out_error);
     }
+}
+
+void
+bs_context_shutdown (void)
+{
+  g_assert (default_context_initialized);
+
+  g_message ("BsContext refcount: %u", G_OBJECT (default_context)->ref_count);
+
+  g_object_run_dispose (G_OBJECT (default_context));
+  g_clear_object (&default_context);
+  default_context_initialized = FALSE;
 }
 
 /**

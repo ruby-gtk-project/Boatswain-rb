@@ -26,5 +26,6 @@
 G_BEGIN_DECLS
 
 void bs_init (void);
+void bs_shutdown (void);
 
 G_END_DECLS
