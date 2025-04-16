@@ -1246,7 +1246,6 @@ static void
 apply_button_update (ElgatoStreamDeck *self,
                      BsButtonUpdate   *button_update)
 {
-  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
   g_autoptr (GdkTexture) texture = NULL;
   g_autoptr (GError) error = NULL;
   BsDeviceRegion *region;
@@ -1256,8 +1255,8 @@ apply_button_update (ElgatoStreamDeck *self,
 
   BS_TRACE_MSG ("Applying button update %p", button_update);
 
-  g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (priv->model_info->set_button_texture != NULL);
+  g_assert (BS_IS_DEVICE (self));
+  g_assert (ELGATO_STREAM_DECK_GET_CLASS (self)->set_button_texture != NULL);
 
   button = button_update->button;
   icon = bs_button_get_icon (button);
@@ -1271,7 +1270,7 @@ apply_button_update (ElgatoStreamDeck *self,
       return;
     }
 
-  priv->model_info->set_button_texture (self, button, texture, &error);
+  ELGATO_STREAM_DECK_GET_CLASS (self)->set_button_texture (self, button, texture, &error);
   if (error)
     {
       g_warning ("Error uploading button texture: %s", error->message);
@@ -1283,15 +1282,14 @@ static void
 apply_touchscreen_update (ElgatoStreamDeck    *self,
                           BsTouchscreenUpdate *touchscreen_update)
 {
-  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
   g_autoptr (GdkTexture) texture = NULL;
   BsTouchscreenContent *content;
   g_autoptr (GError) error = NULL;
   BsTouchscreen *touchscreen;
   BsRenderer *renderer;
 
-  g_return_if_fail (BS_IS_DEVICE (self));
-  g_return_if_fail (priv->model_info->set_button_texture != NULL);
+  g_assert (BS_IS_DEVICE (self));
+  g_assert (ELGATO_STREAM_DECK_GET_CLASS (self)->set_button_texture != NULL);
 
   touchscreen = touchscreen_update->touchscreen;
   content = bs_touchscreen_get_content (touchscreen);
@@ -1304,7 +1302,7 @@ apply_touchscreen_update (ElgatoStreamDeck    *self,
       return;
     }
 
-  priv->model_info->set_touchscreen_texture (self, touchscreen, texture, &error);
+  ELGATO_STREAM_DECK_GET_CLASS (self)->set_touchscreen_texture (self, touchscreen, texture, &error);
 
   if (error)
     {
@@ -1319,7 +1317,6 @@ stream_deck_source_dispatch (GSource     *source,
                              gpointer     user_data)
 {
   g_autoptr (BsDeviceUpdate) update = NULL;
-  ElgatoStreamDeckPrivate *priv;
   StreamDeckSource *stream_deck_source;
   ElgatoStreamDeck *self;
   gint64 current_time;
@@ -1327,7 +1324,6 @@ stream_deck_source_dispatch (GSource     *source,
 
   stream_deck_source = (StreamDeckSource *)source;
   self = stream_deck_source->stream_deck;
-  priv = elgato_stream_deck_get_instance_private (self);
 
   if ((update = bs_device_steal_update (BS_DEVICE (self))))
     {
@@ -1345,7 +1341,7 @@ stream_deck_source_dispatch (GSource     *source,
         apply_touchscreen_update (self, touchscreen_updates[i]);
     }
 
-  priv->model_info->read_state (self);
+  ELGATO_STREAM_DECK_GET_CLASS (self)->read_state (self);
 
   current_time = g_source_get_time (source);
   expiration = current_time + (guint64) POLL_RATE_MS * 1000;
@@ -1441,8 +1437,8 @@ elgato_stream_deck_initable_init (GInitable     *initable,
 
   priv->poll_source = stream_deck_source_new (self);
 
-  priv->serial_number = priv->model_info->get_serial_number (self);
-  priv->firmware_version = priv->model_info->get_firmware_version (self);
+  priv->serial_number = ELGATO_STREAM_DECK_GET_CLASS (self)->get_serial_number (self);
+  priv->firmware_version = ELGATO_STREAM_DECK_GET_CLASS (self)->get_firmware_version (self);
 
   BS_RETURN (parent_initable_iface->init (initable, cancellable, error));
 }
@@ -1642,6 +1638,52 @@ elgato_stream_deck_set_property (GObject      *object,
     }
 }
 
+static char *
+elgato_stream_deck_real_get_firmware_version (ElgatoStreamDeck *self)
+{
+  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
+
+  return priv->model_info->get_firmware_version (self);
+}
+
+static char *
+elgato_stream_deck_real_get_serial_number (ElgatoStreamDeck *self)
+{
+  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
+
+  return priv->model_info->get_serial_number (self);
+}
+
+static gboolean
+elgato_stream_deck_real_read_state (ElgatoStreamDeck *self)
+{
+  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
+
+  return priv->model_info->read_state (self);
+}
+
+static gboolean
+elgato_stream_deck_real_set_button_texture (ElgatoStreamDeck  *self,
+                                            BsButton          *button,
+                                            GdkTexture        *texture,
+                                            GError           **error)
+{
+  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
+
+  return priv->model_info->set_button_texture (self, button, texture, error);
+}
+
+static gboolean
+elgato_stream_deck_real_set_touchscreen_texture (ElgatoStreamDeck  *self,
+                                                 BsTouchscreen     *touchscreen,
+                                                 GdkTexture        *texture,
+                                                 GError           **error)
+{
+  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
+
+  return priv->model_info->set_touchscreen_texture (self, touchscreen, texture, error);
+}
+
 static void
 elgato_stream_deck_class_init (ElgatoStreamDeckClass *klass)
 {
@@ -1659,6 +1701,12 @@ elgato_stream_deck_class_init (ElgatoStreamDeckClass *klass)
   device_class->load = elgato_stream_deck_load;
   device_class->reset = elgato_stream_deck_reset;
   device_class->set_brightness = elgato_stream_deck_set_brightness;
+
+  klass->get_firmware_version = elgato_stream_deck_real_get_firmware_version;
+  klass->get_serial_number = elgato_stream_deck_real_get_serial_number;
+  klass->read_state = elgato_stream_deck_real_read_state;
+  klass->set_button_texture = elgato_stream_deck_real_set_button_texture;
+  klass->set_touchscreen_texture = elgato_stream_deck_real_set_touchscreen_texture;
 
   properties[PROP_GUSB_DEVICE] = g_param_spec_object ("gusb-device", NULL, NULL,
                                                       G_USB_TYPE_DEVICE,

@@ -47,6 +47,18 @@ G_DECLARE_DERIVABLE_TYPE (ElgatoStreamDeck, elgato_stream_deck, ELGATO, STREAM_D
 struct _ElgatoStreamDeckClass
 {
   BsDeviceClass parent_class;
+
+  char * (*get_serial_number) (ElgatoStreamDeck *self);
+  char * (*get_firmware_version) (ElgatoStreamDeck *self);
+  gboolean (*set_button_texture) (ElgatoStreamDeck  *self,
+                                  BsButton          *button,
+                                  GdkTexture        *texture,
+                                  GError           **error);
+  gboolean (*set_touchscreen_texture) (ElgatoStreamDeck  *self,
+                                       BsTouchscreen     *touchscreen,
+                                       GdkTexture        *texture,
+                                       GError           **error);
+  gboolean (*read_state) (ElgatoStreamDeck *self);
 };
 
 BsDevice * elgato_stream_deck_new (GUsbDevice  *gusb_device,
