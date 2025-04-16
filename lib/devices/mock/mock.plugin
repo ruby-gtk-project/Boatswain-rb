@@ -1,0 +1,12 @@
+[Plugin]
+Name = Mock Devices
+Module = mock
+Description = Add mock devices for testing
+Icon=dialpad-symbolic
+Authors = Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
+Copyright = Copyleft © The Boatswain maintainers
+Builtin = true
+License = GPL
+Loader = C
+Embedded = mock_plugin_register_types
+Depends =

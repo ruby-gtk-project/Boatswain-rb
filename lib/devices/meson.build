@@ -10,6 +10,7 @@ libboatswain_devices_libs = []
 libboatswain_devices_confs = []
 
 subdir('elgato')
+subdir('mock')
 
 libboatswain_devices_lib = static_library(
   'boatswain-devices',
