@@ -25,6 +25,7 @@
 #include "bs-device-region.h"
 
 #include <glib-object.h>
+#include <stdint.h>
 
 G_BEGIN_DECLS
 
