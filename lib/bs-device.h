@@ -32,7 +32,7 @@
 G_BEGIN_DECLS
 
 #define BS_TYPE_DEVICE (bs_device_get_type())
-G_DECLARE_DERIVABLE_TYPE (BsDevice, bs_device, BS, DEVICE, GObject)
+BS_DECLARE_INTERNAL_TYPE (BsDevice, bs_device, BS, DEVICE, GObject)
 
 void bs_device_reset (BsDevice *self);
 

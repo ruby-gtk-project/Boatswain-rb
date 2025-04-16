@@ -27,6 +27,11 @@
 
 G_BEGIN_DECLS
 
+struct _BsDevice
+{
+  GObject parent;
+};
+
 struct _BsDeviceClass
 {
   GObjectClass parent_class;
