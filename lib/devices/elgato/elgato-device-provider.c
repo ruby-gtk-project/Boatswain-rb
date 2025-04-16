@@ -66,7 +66,7 @@ enumerate_devices (ElgatoDeviceProvider *self)
 
       if (error)
         {
-          if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
+          if (!g_error_matches (error, ELGATO_STREAM_DECK_ERROR, ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED))
             g_warning ("Error opening device: %s", error->message);
           continue;
         }
@@ -100,7 +100,7 @@ on_gusb_context_device_added_cb (GUsbContext          *gusb_context,
 
   if (error)
     {
-      if (!g_error_matches (error, BS_DEVICE_ERROR, BS_DEVICE_ERROR_UNRECOGNIZED))
+      if (!g_error_matches (error, ELGATO_STREAM_DECK_ERROR, ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED))
         g_warning ("Error opening device: %s", error->message);
       BS_RETURN ();
     }

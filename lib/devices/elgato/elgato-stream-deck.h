@@ -27,6 +27,20 @@
 
 G_BEGIN_DECLS
 
+/**
+ * ElgatoStreamDeckError:
+ * @ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED: not a recognized Stream Deck device
+ *
+ * Errors that #ElgatoStreamDeckError can generate.
+ */
+typedef enum
+{
+  ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED,
+} ElgatoStreamDeckError;
+
+#define ELGATO_STREAM_DECK_ERROR (elgato_stream_deck_error_quark ())
+GQuark  elgato_stream_deck_error_quark (void);
+
 #define ELGATO_TYPE_STREAM_DECK (elgato_stream_deck_get_type())
 G_DECLARE_DERIVABLE_TYPE (ElgatoStreamDeck, elgato_stream_deck, ELGATO, STREAM_DECK, BsDevice)
 

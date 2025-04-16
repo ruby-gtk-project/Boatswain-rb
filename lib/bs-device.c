@@ -67,8 +67,6 @@ G_DEFINE_ABSTRACT_TYPE_WITH_CODE (BsDevice, bs_device, G_TYPE_OBJECT,
                                   G_ADD_PRIVATE (BsDevice)
                                   G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, g_initable_iface_init))
 
-G_DEFINE_QUARK (BsDevice, bs_device_error);
-
 enum
 {
   PROP_0,

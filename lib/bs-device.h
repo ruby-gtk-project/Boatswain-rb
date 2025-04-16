@@ -31,20 +31,6 @@
 
 G_BEGIN_DECLS
 
-/**
- * BsDeviceError:
- * @BS_DEVICE_ERROR_UNRECOGNIZED: not a recognized Stream Deck device
- *
- * Errors that #BsDevice can generate.
- */
-typedef enum
-{
-  BS_DEVICE_ERROR_UNRECOGNIZED,
-} BsDeviceError;
-
-#define BS_DEVICE_ERROR (bs_device_error_quark ())
-GQuark  bs_device_error_quark (void);
-
 #define BS_TYPE_DEVICE (bs_device_get_type())
 G_DECLARE_DERIVABLE_TYPE (BsDevice, bs_device, BS, DEVICE, GObject)
 

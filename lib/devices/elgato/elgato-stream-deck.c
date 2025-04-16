@@ -131,6 +131,8 @@ G_DEFINE_TYPE_WITH_CODE (ElgatoStreamDeck, elgato_stream_deck, BS_TYPE_DEVICE,
                          G_ADD_PRIVATE (ElgatoStreamDeck)
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, g_initable_iface_init))
 
+G_DEFINE_QUARK (ElgatoStreamDeck, elgato_stream_deck_error);
+
 enum {
   PROP_0,
   PROP_GUSB_DEVICE,
@@ -1398,8 +1400,8 @@ elgato_stream_deck_initable_init (GInitable     *initable,
   if (g_usb_device_get_vid (priv->gusb_device) != ELGATO_SYSTEMS_VENDOR_ID)
     {
       g_set_error (error,
-                   BS_DEVICE_ERROR,
-                   BS_DEVICE_ERROR_UNRECOGNIZED,
+                   ELGATO_STREAM_DECK_ERROR,
+                   ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED,
                    "Not an Elgato device");
       BS_RETURN (FALSE);
     }
@@ -1416,8 +1418,8 @@ elgato_stream_deck_initable_init (GInitable     *initable,
   if (!priv->model_info)
     {
       g_set_error (error,
-                   BS_DEVICE_ERROR,
-                   BS_DEVICE_ERROR_UNRECOGNIZED,
+                   ELGATO_STREAM_DECK_ERROR,
+                   ELGATO_STREAM_DECK_ERROR_UNRECOGNIZED,
                    "Not a recognized Stream Deck device");
       BS_RETURN (FALSE);
     }
