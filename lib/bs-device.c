@@ -661,7 +661,7 @@ bs_device_real_load (BsDevice *self)
  */
 
 static void
-bs_device_finalize (GObject *object)
+bs_device_dispose (GObject *object)
 {
   BsDevice *self = (BsDevice *) object;
   BsDevicePrivate *priv = bs_device_get_instance_private (self);
@@ -675,6 +675,20 @@ bs_device_finalize (GObject *object)
     }
 
   g_clear_handle_id (&priv->save_timeout_id, g_source_remove);
+
+  G_OBJECT_CLASS (bs_device_parent_class)->dispose (object);
+
+  BS_EXIT;
+}
+
+static void
+bs_device_finalize (GObject *object)
+{
+  BsDevice *self = (BsDevice *) object;
+  BsDevicePrivate *priv = bs_device_get_instance_private (self);
+
+  BS_ENTRY;
+
   g_queue_free_full (priv->active_pages, g_object_unref);
   g_clear_object (&priv->regions);
   g_clear_object (&priv->profiles);
@@ -745,6 +759,7 @@ bs_device_class_init (BsDeviceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  object_class->dispose = bs_device_dispose;
   object_class->finalize = bs_device_finalize;
   object_class->get_property = bs_device_get_property;
   object_class->set_property = bs_device_set_property;
