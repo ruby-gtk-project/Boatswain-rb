@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-03-20 16:48+0000\n"
-"PO-Revision-Date: 2025-03-20 21:51+0300\n"
+"POT-Creation-Date: 2025-04-17 13:00+0000\n"
+"PO-Revision-Date: 2025-04-17 20:27+0300\n"
 "Last-Translator: Artur So <arturios2005@mail.ru>\n"
 "Language-Team: \n"
 "Language: ru_RU\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.6\n"
 
 #: data/com.feaneron.Boatswain.desktop.in.in:3
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
@@ -81,11 +81,77 @@ msgstr "Следить за своими игровыми результатам
 msgid "Open files and launch applications"
 msgstr "Открывать файлы и запускать приложения"
 
-#: src/bs-application.c:55
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mini.c:222
+msgid "Elgato Stream Deck Mini"
+msgstr "Elgato Stream Deck Mini"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mk2.c:73
+msgid "Elgato Stream Deck MK.2"
+msgstr "Elgato Stream Deck MK.2"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-neo.c:72
+msgid "Elgato Stream Deck Neo"
+msgstr "Elgato Stream Deck Neo"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-original.c:247
+#: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
+msgid "Elgato Stream Deck"
+msgstr "Elgato Stream Deck"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-pedal.c:92
+msgid "Elgato Stream Deck Pedal"
+msgstr "Elgato Stream Deck Pedal"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-plus.c:383
+msgid "Elgato Stream Deck Plus"
+msgstr "Elgato Stream Deck Plus"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-xl.c:73
+msgid "Elgato Stream Deck XL"
+msgstr "Elgato Stream Deck XL"
+
+#: lib/devices/mock/mock-device.c:108
+msgid "Feaneron Hangar Mild"
+msgstr "Feaneron Hangar Mild"
+
+#: lib/devices/mock/mock-device.c:125
+msgid "Feaneron Hangar XL"
+msgstr "Feaneron Hangar XL"
+
+#: lib/bs-device.c:360
+msgid "Default"
+msgstr "По умолчанию"
+
+#: lib/bs-profile.c:185
+msgid "Unnamed profile"
+msgstr "Безымянный профиль"
+
+#: src/bs-application.c:48
 msgid "Enable debug messages"
 msgstr "Включить отладочные сообщения"
 
-#: src/bs-application.c:118
+#: src/bs-application.c:85
 #, c-format
 msgid "Connected to %d device"
 msgid_plural "Connected to %d devices"
@@ -93,7 +159,7 @@ msgstr[0] "Подключено к %d устройству"
 msgstr[1] "Подключено к %d устройствам"
 msgstr[2] "Подключено к %d устройствам"
 
-#: src/bs-application.c:170
+#: src/bs-application.c:137
 msgid ""
 "Boatswain needs to run in background to detect and execute Stream Deck "
 "actions."
@@ -101,15 +167,15 @@ msgstr ""
 "Boatswain должен работать в фоновом режиме для обнаружения и выполнения "
 "действий Stream Deck."
 
-#: src/bs-button-editor.c:343
+#: src/bs-button-editor.c:327
 msgid "All supported formats"
 msgstr "Все поддерживаемые форматы"
 
-#: src/bs-button-editor.c:352
+#: src/bs-button-editor.c:336
 msgid "Select icon"
 msgstr "Выбрать значок"
 
-#: src/bs-button-editor.c:353
+#: src/bs-button-editor.c:337
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Открыть"
@@ -143,10 +209,6 @@ msgstr "Действия"
 msgid "Select a button"
 msgstr "Выбрать кнопку"
 
-#: src/bs-profile.c:185
-msgid "Unnamed profile"
-msgstr "Безымянный профиль"
-
 #: src/bs-profile-row.ui:8 src/bs-profile-row.ui:87
 msgid "Rename"
 msgstr "Переименовать"
@@ -163,88 +225,25 @@ msgstr "Переместить вниз"
 msgid "Delete"
 msgstr "Удалить"
 
-#: src/bs-stream-deck.c:434
-msgid "Default"
-msgstr "По умолчанию"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1329 src/bs-stream-deck.c:1354
-msgid "Stream Deck Mini"
-msgstr "Stream Deck Mini"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1379 src/bs-stream-deck.c:1404
-#: src/plugins/default/default-switch-profile-action.c:278
-#: src/plugins/default/default.plugin.desktop.in:3
-msgid "Stream Deck"
-msgstr "Stream Deck"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1429 src/bs-stream-deck.c:1454
-msgid "Stream Deck XL"
-msgstr "Stream Deck XL"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1479
-msgid "Stream Deck MK.2"
-msgstr "Stream Deck MK.2"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1504
-msgid "Stream Deck Pedal"
-msgstr "Stream Deck Pedal"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1529
-msgid "Stream Deck +"
-msgstr "Stream Deck +"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1570
-msgid "Stream Deck Neo"
-msgstr "Stream Deck Neo"
-
-#: src/bs-stream-deck.c:1639
-msgid "Feaneron Hangar Original"
-msgstr "Feaneron Hangar Original"
-
-#: src/bs-stream-deck.c:1661
-msgid "Feaneron Hangar XL"
-msgstr "Feaneron Hangar XL"
-
 #. Adwaita
-#: src/bs-touchscreen-background-dialog.c:66
+#: src/bs-touchscreen-background-dialog.c:63
 #: src/bs-touchscreen-background-dialog.ui:44
 msgid "Adwaita"
 msgstr "Adwaita"
 
-#: src/bs-touchscreen-background-dialog.c:67
+#: src/bs-touchscreen-background-dialog.c:64
 msgid "Glass"
 msgstr "Glass"
 
-#: src/bs-touchscreen-background-dialog.c:68
+#: src/bs-touchscreen-background-dialog.c:65
 msgid "Oh Sheet!"
 msgstr "Oh Sheet!"
 
-#: src/bs-touchscreen-background-dialog.c:69
+#: src/bs-touchscreen-background-dialog.c:66
 msgid "Pills"
 msgstr "Pills"
 
-#: src/bs-touchscreen-background-dialog.c:70
+#: src/bs-touchscreen-background-dialog.c:67
 msgid "Swoosh"
 msgstr "Swoosh"
 
@@ -277,7 +276,7 @@ msgstr "Подключите устройство Stream Deck, чтобы исп
 msgid "New profile…"
 msgstr "Новый профиль…"
 
-#: src/bs-window.ui:180 src/plugins/default/default-action-factory.c:55
+#: src/bs-window.ui:180 src/plugins/default/default-action-factory.c:53
 msgid "Brightness"
 msgstr "Яркость"
 
@@ -312,45 +311,45 @@ msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Закрыть"
 
-#: src/plugins/default/default-action-factory.c:43
+#: src/plugins/default/default-action-factory.c:41
 msgid "Folder"
 msgstr "Папка"
 
-#: src/plugins/default/default-action-factory.c:49
+#: src/plugins/default/default-action-factory.c:47
 msgid "Switch Profile"
 msgstr "Переключить профиль"
 
-#: src/plugins/default/default-action-factory.c:61
+#: src/plugins/default/default-action-factory.c:59
 msgid "Multiple Actions"
 msgstr "Множественные действия"
 
-#: src/plugins/default/default-action-factory.c:67
+#: src/plugins/default/default-action-factory.c:65
 msgid "Go Up"
 msgstr "Вверх"
 
 #. Translators: "Constant" as in "Constant value of brightness"
-#: src/plugins/default/default-brightness-action.c:144
+#: src/plugins/default/default-brightness-action.c:141
 msgid "Constant"
 msgstr "Константа"
 
-#: src/plugins/default/default-brightness-action.c:145
+#: src/plugins/default/default-brightness-action.c:142
 msgid "Increase"
 msgstr "Увеличить"
 
-#: src/plugins/default/default-brightness-action.c:146
+#: src/plugins/default/default-brightness-action.c:143
 msgid "Decrease"
 msgstr "Уменьшить"
 
-#: src/plugins/default/default-brightness-action.c:149
+#: src/plugins/default/default-brightness-action.c:146
 msgid "Mode"
 msgstr "Режим"
 
-#: src/plugins/default/default-brightness-action.c:156
+#: src/plugins/default/default-brightness-action.c:153
 msgid "Value"
 msgstr "Значение"
 
-#: src/plugins/default/default-multi-action-editor.c:307
-#: src/plugins/default/default-multi-action-row.c:143
+#: src/plugins/default/default-multi-action-editor.c:303
+#: src/plugins/default/default-multi-action-row.c:141
 msgid "Delay"
 msgstr "Задержка"
 
@@ -370,16 +369,21 @@ msgstr "Другие"
 msgid "Settings"
 msgstr "Настройки"
 
-#: src/plugins/default/default-switch-profile-action.c:301
+#: src/plugins/default/default-switch-profile-action.c:264
+#: src/plugins/default/default.plugin.desktop.in:3
+msgid "Stream Deck"
+msgstr "Stream Deck"
+
+#: src/plugins/default/default-switch-profile-action.c:287
 msgid "Profile"
 msgstr "Профиль"
 
-#: src/plugins/desktop/desktop-action-factory.c:41
+#: src/plugins/desktop/desktop-action-factory.c:38
 #: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Комбинация клавиш"
 
-#: src/plugins/desktop/desktop-action-factory.c:42
+#: src/plugins/desktop/desktop-action-factory.c:39
 msgid "Trigger a keyboard shortcut"
 msgstr "Запуск комбинации клавиш"
 
@@ -440,7 +444,7 @@ msgstr ""
 "Studio, смогут прочитать его."
 
 #: src/plugins/gaming/score.js:394
-#: src/plugins/launcher/launcher-open-file-action.c:214
+#: src/plugins/launcher/launcher-open-file-action.c:213
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
@@ -450,15 +454,15 @@ msgstr "Файл"
 msgid "Text File (.txt)"
 msgstr "Текстовый файл (.txt)"
 
-#: src/plugins/launcher/launcher-action-factory.c:41
+#: src/plugins/launcher/launcher-action-factory.c:39
 msgid "Launch Application"
 msgstr "Запуск приложения"
 
-#: src/plugins/launcher/launcher-action-factory.c:47
+#: src/plugins/launcher/launcher-action-factory.c:45
 msgid "Open File"
 msgstr "Открыть файл"
 
-#: src/plugins/launcher/launcher-action-factory.c:53
+#: src/plugins/launcher/launcher-action-factory.c:51
 msgid "Open URL"
 msgstr "Открыть URL"
 
@@ -466,15 +470,15 @@ msgstr "Открыть URL"
 msgid "Choose Application"
 msgstr "Выбрать приложение"
 
-#: src/plugins/launcher/launcher-open-file-action.c:69
+#: src/plugins/launcher/launcher-open-file-action.c:68
 msgid "No file selected"
 msgstr "Файл не выбран"
 
-#: src/plugins/launcher/launcher-open-file-action.c:157
+#: src/plugins/launcher/launcher-open-file-action.c:156
 msgid "Select File"
 msgstr "Выбрать файл"
 
-#: src/plugins/launcher/launcher-open-url-action.c:109
+#: src/plugins/launcher/launcher-open-url-action.c:108
 msgid "URL"
 msgstr "URL"
 
@@ -482,11 +486,11 @@ msgstr "URL"
 msgid "Launcher"
 msgstr "Средство запуска"
 
-#: src/plugins/network/network-action-factory.c:41
+#: src/plugins/network/network-action-factory.c:39
 msgid "HTTP Request"
 msgstr "HTTP-запрос"
 
-#: src/plugins/network/network-action-factory.c:42
+#: src/plugins/network/network-action-factory.c:40
 msgid "Send GET and POST requests to a webserver"
 msgstr "Отправить GET и POST запросы на веб-сервер"
 
@@ -518,29 +522,29 @@ msgstr "Полезная нагрузка HTTP-запроса"
 msgid "Network"
 msgstr "Сеть"
 
-#: src/plugins/obs-studio/obs-action-factory.c:46
+#: src/plugins/obs-studio/obs-action-factory.c:44
 msgid "Switch Scene"
 msgstr "Переключить сцену"
 
 #. Translators: "Record" is a verb here
-#: src/plugins/obs-studio/obs-action-factory.c:53
+#: src/plugins/obs-studio/obs-action-factory.c:51
 msgid "Record"
 msgstr "Запись"
 
 #. Translators: "Stream" is a verb here
-#: src/plugins/obs-studio/obs-action-factory.c:60
+#: src/plugins/obs-studio/obs-action-factory.c:58
 msgid "Stream"
 msgstr "Трансляция"
 
-#: src/plugins/obs-studio/obs-action-factory.c:66
+#: src/plugins/obs-studio/obs-action-factory.c:64
 msgid "Virtual Camera"
 msgstr "Виртуальная камера"
 
-#: src/plugins/obs-studio/obs-action-factory.c:72
+#: src/plugins/obs-studio/obs-action-factory.c:70
 msgid "Toggle Mute"
 msgstr "Включить / Выключить звук"
 
-#: src/plugins/obs-studio/obs-action-factory.c:78
+#: src/plugins/obs-studio/obs-action-factory.c:76
 msgid "Show / Hide Source"
 msgstr "Показать / Скрыть источник"
 
@@ -564,44 +568,44 @@ msgstr "Порт"
 msgid "Password"
 msgstr "Пароль"
 
-#: src/plugins/obs-studio/obs-switch-scene-action.c:288
+#: src/plugins/obs-studio/obs-switch-scene-action.c:286
 msgid "Scene"
 msgstr "Сцена"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+#: src/plugins/obs-studio/obs-toggle-source-action.c:123
 msgid "Toggle mute"
 msgstr "Включить / Выключить звук"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+#: src/plugins/obs-studio/obs-toggle-source-action.c:124
 msgid "Mute"
 msgstr "Отключить звук"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:127
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
 msgid "Unmute"
 msgstr "Включить звук"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+#: src/plugins/obs-studio/obs-toggle-source-action.c:129
 msgid "Toggle visibility"
 msgstr "Переключить видимость"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+#: src/plugins/obs-studio/obs-toggle-source-action.c:130
 msgid "Hide"
 msgstr "Скрыть"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:133
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
 msgid "Show"
 msgstr "Показать"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:484
+#: src/plugins/obs-studio/obs-toggle-source-action.c:482
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
 msgid "Behavior"
 msgstr "Поведение"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:495
+#: src/plugins/obs-studio/obs-toggle-source-action.c:493
 msgid "Audio Source"
 msgstr "Аудиоисточник"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:497
+#: src/plugins/obs-studio/obs-toggle-source-action.c:495
 msgid "Source"
 msgstr "Источник"
 
@@ -609,43 +613,43 @@ msgstr "Источник"
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:42
+#: src/plugins/soundboard/soundboard-action-factory.c:40
 msgid "Music Player"
 msgstr "Музыкальный проигрыватель"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:43
+#: src/plugins/soundboard/soundboard-action-factory.c:41
 msgid "Control the active music player"
 msgstr "Управление активным музыкальным проигрывателем"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:48
+#: src/plugins/soundboard/soundboard-action-factory.c:46
 msgid "Play Audio"
 msgstr "Воспроизвести звук"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:202
+#: src/plugins/soundboard/soundboard-mpris-action.c:201
 msgid "Next"
 msgstr "Следующее"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:203
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
 msgid "Pause"
 msgstr "Пауза"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:204
+#: src/plugins/soundboard/soundboard-mpris-action.c:203
 msgid "Play"
 msgstr "Воспроизвести"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:205
+#: src/plugins/soundboard/soundboard-mpris-action.c:204
 msgid "Previous"
 msgstr "Предыдущее"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:206
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
 msgid "Stop"
 msgstr "Остановить"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:207
+#: src/plugins/soundboard/soundboard-mpris-action.c:206
 msgid "Play / Pause"
 msgstr "Воспроизведение / Пауза"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:210
+#: src/plugins/soundboard/soundboard-mpris-action.c:209
 msgid "Playback Action"
 msgstr "Действие при воспроизведении"
 
@@ -684,6 +688,12 @@ msgstr "Громкость"
 #: src/plugins/soundboard/soundboard.plugin.desktop.in:3
 msgid "Soundboard"
 msgstr "Звуковая плата"
+
+#~ msgid "Stream Deck +"
+#~ msgstr "Stream Deck +"
+
+#~ msgid "Feaneron Hangar Original"
+#~ msgstr "Feaneron Hangar Original"
 
 #~ msgid "Repository"
 #~ msgstr "Репозиторий"
