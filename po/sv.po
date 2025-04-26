@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-01-27 21:39+0000\n"
-"PO-Revision-Date: 2025-01-27 23:58+0100\n"
+"POT-Creation-Date: 2025-04-17 13:00+0000\n"
+"PO-Revision-Date: 2025-04-17 16:28+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -79,18 +79,92 @@ msgstr "Håll koll på din spelpoäng"
 msgid "Open files and launch applications"
 msgstr "Öppna filer och starta program"
 
-#: src/bs-application.c:55
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mini.c:222
+#| msgid "Stream Deck Mini"
+msgid "Elgato Stream Deck Mini"
+msgstr "Elgato Stream Deck Mini"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mk2.c:73
+#| msgid "Stream Deck MK.2"
+msgid "Elgato Stream Deck MK.2"
+msgstr "Elgato Stream Deck MK.2"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-neo.c:72
+#| msgid "Stream Deck Neo"
+msgid "Elgato Stream Deck Neo"
+msgstr "Elgato Stream Deck Neo"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-original.c:247
+#: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
+#| msgid "Stream Deck"
+msgid "Elgato Stream Deck"
+msgstr "Elgato Stream Deck"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-pedal.c:92
+#| msgid "Stream Deck Pedal"
+msgid "Elgato Stream Deck Pedal"
+msgstr "Elgato Stream Deck Pedal"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-plus.c:383
+#| msgid "Stream Deck Pedal"
+msgid "Elgato Stream Deck Plus"
+msgstr "Elgato Stream Deck Plus"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-xl.c:73
+#| msgid "Stream Deck XL"
+msgid "Elgato Stream Deck XL"
+msgstr "Elgato Stream Deck XL"
+
+#: lib/devices/mock/mock-device.c:108
+#| msgid "Feaneron Hangar XL"
+msgid "Feaneron Hangar Mild"
+msgstr "Feaneron Hangar Mild"
+
+#: lib/devices/mock/mock-device.c:125
+msgid "Feaneron Hangar XL"
+msgstr "Feaneron Hangar XL"
+
+#: lib/bs-device.c:360
+msgid "Default"
+msgstr "Standard"
+
+#: lib/bs-profile.c:185
+msgid "Unnamed profile"
+msgstr "Namnlös profil"
+
+#: src/bs-application.c:48
 msgid "Enable debug messages"
 msgstr "Aktivera felsökningsmeddelanden"
 
-#: src/bs-application.c:118
+#: src/bs-application.c:85
 #, c-format
 msgid "Connected to %d device"
 msgid_plural "Connected to %d devices"
 msgstr[0] "Ansluten till %d enhet"
 msgstr[1] "Ansluten till %d enheter"
 
-#: src/bs-application.c:170
+#: src/bs-application.c:137
 msgid ""
 "Boatswain needs to run in background to detect and execute Stream Deck "
 "actions."
@@ -98,15 +172,15 @@ msgstr ""
 "Boatswain behöver köras i bakgrunden för att upptäcka och köra Stream Deck-"
 "åtgärder."
 
-#: src/bs-button-editor.c:333
+#: src/bs-button-editor.c:327
 msgid "All supported formats"
 msgstr "Alla format som stöds"
 
-#: src/bs-button-editor.c:342
+#: src/bs-button-editor.c:336
 msgid "Select icon"
 msgstr "Välj ikon"
 
-#: src/bs-button-editor.c:343
+#: src/bs-button-editor.c:337
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Öppna"
@@ -140,10 +214,6 @@ msgstr "Åtgärder"
 msgid "Select a button"
 msgstr "Välj en knapp"
 
-#: src/bs-profile.c:185
-msgid "Unnamed profile"
-msgstr "Namnlös profil"
-
 #: src/bs-profile-row.ui:8 src/bs-profile-row.ui:87
 msgid "Rename"
 msgstr "Byt namn"
@@ -160,90 +230,32 @@ msgstr "Flytta nedåt"
 msgid "Delete"
 msgstr "Ta bort"
 
-#: src/bs-stream-deck.c:422
-msgid "Default"
-msgstr "Standard"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1304 src/bs-stream-deck.c:1329
-msgid "Stream Deck Mini"
-msgstr "Stream Deck Mini"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1354 src/bs-stream-deck.c:1379
-#: src/plugins/default/default-switch-profile-action.c:278
-#: src/plugins/default/default.plugin.desktop.in:3
-msgid "Stream Deck"
-msgstr "Stream Deck"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1404 src/bs-stream-deck.c:1429
-msgid "Stream Deck XL"
-msgstr "Stream Deck XL"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1454
-msgid "Stream Deck MK.2"
-msgstr "Stream Deck MK.2"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1479
-msgid "Stream Deck Pedal"
-msgstr "Stream Deck Pedal"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1504
-msgid "Stream Deck +"
-msgstr "Stream Deck +"
-
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1545
-msgid "Stream Deck Neo"
-msgstr "Stream Deck Neo"
-
-#: src/bs-stream-deck.c:1614
-msgid "Feaneron Hangar Original"
-msgstr "Feaneron Hangar Original"
-
-#: src/bs-stream-deck.c:1636
-msgid "Feaneron Hangar XL"
-msgstr "Feaneron Hangar XL"
-
 #. Adwaita
-#: src/bs-touchscreen-background-dialog.c:66
-#: src/bs-touchscreen-background-dialog.ui:24
+#: src/bs-touchscreen-background-dialog.c:63
+#: src/bs-touchscreen-background-dialog.ui:44
 msgid "Adwaita"
 msgstr "Adwaita"
 
-#: src/bs-touchscreen-background-dialog.c:67
+#: src/bs-touchscreen-background-dialog.c:64
 msgid "Glass"
 msgstr "Glas"
 
-#: src/bs-touchscreen-background-dialog.c:68
+#: src/bs-touchscreen-background-dialog.c:65
 msgid "Oh Sheet!"
 msgstr "Neon också!"
 
-#: src/bs-touchscreen-background-dialog.c:69
+#: src/bs-touchscreen-background-dialog.c:66
 msgid "Pills"
 msgstr "Piller"
 
-#: src/bs-touchscreen-background-dialog.c:70
+#: src/bs-touchscreen-background-dialog.c:67
 msgid "Swoosh"
 msgstr "Våg"
+
+#: src/bs-touchscreen-background-dialog.ui:28
+#: src/bs-touchscreen-background-dialog.ui:29
+msgid "No Background"
+msgstr "Ingen bakgrund"
 
 #: src/bs-touchscreen-slot-editor.ui:14
 msgid "Touchscreen Properties"
@@ -257,35 +269,35 @@ msgstr "Pekskärm"
 msgid "Action"
 msgstr "Åtgärd"
 
-#: src/bs-window.ui:114
-msgid "New profile…"
-msgstr "Ny profil…"
-
-#: src/bs-window.ui:139 src/plugins/default/default-action-factory.c:55
-msgid "Brightness"
-msgstr "Ljusstyrka"
-
-#: src/bs-window.ui:175
-msgid "Firmware"
-msgstr "Fast programvara"
-
-#: src/bs-window.ui:236
+#: src/bs-window.ui:38
 msgid "No Stream Deck Found"
 msgstr "Ingen Stream Deck-enhet hittades"
 
-#: src/bs-window.ui:237
-msgid "Plug in a Stream Deck device to use it."
-msgstr "Anslut en Stream Deck-enhet för att använda den."
+#: src/bs-window.ui:39
+msgid "Plug in a Stream Deck device to use it"
+msgstr "Anslut en Stream Deck-enhet för att använda den"
 
-#: src/bs-window.ui:260
+#: src/bs-window.ui:155
+msgid "New profile…"
+msgstr "Ny profil…"
+
+#: src/bs-window.ui:180 src/plugins/default/default-action-factory.c:53
+msgid "Brightness"
+msgstr "Ljusstyrka"
+
+#: src/bs-window.ui:216
+msgid "Firmware"
+msgstr "Fast programvara"
+
+#: src/bs-window.ui:275
 msgid "_Keyboard Shortcuts"
 msgstr "_Tangentbordsgenvägar"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:279
 msgid "_About Boatswain"
 msgstr "_Om Boatswain"
 
-#: src/bs-window.ui:268
+#: src/bs-window.ui:283
 msgid "_Quit"
 msgstr "_Avsluta"
 
@@ -304,45 +316,45 @@ msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Avsluta"
 
-#: src/plugins/default/default-action-factory.c:43
+#: src/plugins/default/default-action-factory.c:41
 msgid "Folder"
 msgstr "Mapp"
 
-#: src/plugins/default/default-action-factory.c:49
+#: src/plugins/default/default-action-factory.c:47
 msgid "Switch Profile"
 msgstr "Växla profil"
 
-#: src/plugins/default/default-action-factory.c:61
+#: src/plugins/default/default-action-factory.c:59
 msgid "Multiple Actions"
 msgstr "Flera åtgärder"
 
-#: src/plugins/default/default-action-factory.c:67
+#: src/plugins/default/default-action-factory.c:65
 msgid "Go Up"
 msgstr "Gå uppåt"
 
 #. Translators: "Constant" as in "Constant value of brightness"
-#: src/plugins/default/default-brightness-action.c:144
+#: src/plugins/default/default-brightness-action.c:141
 msgid "Constant"
 msgstr "Konstant"
 
-#: src/plugins/default/default-brightness-action.c:145
+#: src/plugins/default/default-brightness-action.c:142
 msgid "Increase"
 msgstr "Öka"
 
-#: src/plugins/default/default-brightness-action.c:146
+#: src/plugins/default/default-brightness-action.c:143
 msgid "Decrease"
 msgstr "Minska"
 
-#: src/plugins/default/default-brightness-action.c:149
+#: src/plugins/default/default-brightness-action.c:146
 msgid "Mode"
 msgstr "Läge"
 
-#: src/plugins/default/default-brightness-action.c:156
+#: src/plugins/default/default-brightness-action.c:153
 msgid "Value"
 msgstr "Värde"
 
-#: src/plugins/default/default-multi-action-editor.c:307
-#: src/plugins/default/default-multi-action-row.c:143
+#: src/plugins/default/default-multi-action-editor.c:303
+#: src/plugins/default/default-multi-action-row.c:141
 msgid "Delay"
 msgstr "Fördröjning"
 
@@ -362,16 +374,21 @@ msgstr "Övriga"
 msgid "Settings"
 msgstr "Inställningar"
 
-#: src/plugins/default/default-switch-profile-action.c:301
+#: src/plugins/default/default-switch-profile-action.c:264
+#: src/plugins/default/default.plugin.desktop.in:3
+msgid "Stream Deck"
+msgstr "Stream Deck"
+
+#: src/plugins/default/default-switch-profile-action.c:287
 msgid "Profile"
 msgstr "Profil"
 
-#: src/plugins/desktop/desktop-action-factory.c:41
+#: src/plugins/desktop/desktop-action-factory.c:38
 #: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Tangentbordsgenväg"
 
-#: src/plugins/desktop/desktop-action-factory.c:42
+#: src/plugins/desktop/desktop-action-factory.c:39
 msgid "Trigger a keyboard shortcut"
 msgstr "Utlös en tangentbordsgenväg"
 
@@ -432,7 +449,7 @@ msgstr ""
 "läsa från den."
 
 #: src/plugins/gaming/score.js:394
-#: src/plugins/launcher/launcher-open-file-action.c:214
+#: src/plugins/launcher/launcher-open-file-action.c:213
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
@@ -442,15 +459,15 @@ msgstr "Fil"
 msgid "Text File (.txt)"
 msgstr "Textfil (.txt)"
 
-#: src/plugins/launcher/launcher-action-factory.c:41
+#: src/plugins/launcher/launcher-action-factory.c:39
 msgid "Launch Application"
 msgstr "Starta program"
 
-#: src/plugins/launcher/launcher-action-factory.c:47
+#: src/plugins/launcher/launcher-action-factory.c:45
 msgid "Open File"
 msgstr "Öppna fil"
 
-#: src/plugins/launcher/launcher-action-factory.c:53
+#: src/plugins/launcher/launcher-action-factory.c:51
 msgid "Open URL"
 msgstr "Öppna URL"
 
@@ -458,15 +475,15 @@ msgstr "Öppna URL"
 msgid "Choose Application"
 msgstr "Välj program"
 
-#: src/plugins/launcher/launcher-open-file-action.c:69
+#: src/plugins/launcher/launcher-open-file-action.c:68
 msgid "No file selected"
 msgstr "Ingen fil är vald"
 
-#: src/plugins/launcher/launcher-open-file-action.c:157
+#: src/plugins/launcher/launcher-open-file-action.c:156
 msgid "Select File"
 msgstr "Välj fil"
 
-#: src/plugins/launcher/launcher-open-url-action.c:109
+#: src/plugins/launcher/launcher-open-url-action.c:108
 msgid "URL"
 msgstr "URL"
 
@@ -474,11 +491,11 @@ msgstr "URL"
 msgid "Launcher"
 msgstr "Programstartare"
 
-#: src/plugins/network/network-action-factory.c:41
+#: src/plugins/network/network-action-factory.c:39
 msgid "HTTP Request"
 msgstr "HTTP-begäran"
 
-#: src/plugins/network/network-action-factory.c:42
+#: src/plugins/network/network-action-factory.c:40
 msgid "Send GET and POST requests to a webserver"
 msgstr "Skicka GET- och POST-begäran till en webbserver"
 
@@ -510,29 +527,29 @@ msgstr "HTTP-begäransnyttolast"
 msgid "Network"
 msgstr "Nätverk"
 
-#: src/plugins/obs-studio/obs-action-factory.c:46
+#: src/plugins/obs-studio/obs-action-factory.c:44
 msgid "Switch Scene"
 msgstr "Växla scen"
 
 #. Translators: "Record" is a verb here
-#: src/plugins/obs-studio/obs-action-factory.c:53
+#: src/plugins/obs-studio/obs-action-factory.c:51
 msgid "Record"
 msgstr "Spela in"
 
 #. Translators: "Stream" is a verb here
-#: src/plugins/obs-studio/obs-action-factory.c:60
+#: src/plugins/obs-studio/obs-action-factory.c:58
 msgid "Stream"
 msgstr "Strömma"
 
-#: src/plugins/obs-studio/obs-action-factory.c:66
+#: src/plugins/obs-studio/obs-action-factory.c:64
 msgid "Virtual Camera"
 msgstr "Virtuell kamera"
 
-#: src/plugins/obs-studio/obs-action-factory.c:72
+#: src/plugins/obs-studio/obs-action-factory.c:70
 msgid "Toggle Mute"
 msgstr "Tysta / Aktivera ljud"
 
-#: src/plugins/obs-studio/obs-action-factory.c:78
+#: src/plugins/obs-studio/obs-action-factory.c:76
 msgid "Show / Hide Source"
 msgstr "Visa / Dölj källa"
 
@@ -556,44 +573,44 @@ msgstr "Port"
 msgid "Password"
 msgstr "Lösenord"
 
-#: src/plugins/obs-studio/obs-switch-scene-action.c:288
+#: src/plugins/obs-studio/obs-switch-scene-action.c:286
 msgid "Scene"
 msgstr "Scen"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+#: src/plugins/obs-studio/obs-toggle-source-action.c:123
 msgid "Toggle mute"
 msgstr "Tysta / Aktivera ljud"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+#: src/plugins/obs-studio/obs-toggle-source-action.c:124
 msgid "Mute"
 msgstr "Tysta"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:127
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
 msgid "Unmute"
 msgstr "Aktivera ljud"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+#: src/plugins/obs-studio/obs-toggle-source-action.c:129
 msgid "Toggle visibility"
 msgstr "Växla synlighet"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+#: src/plugins/obs-studio/obs-toggle-source-action.c:130
 msgid "Hide"
 msgstr "Dölj"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:133
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
 msgid "Show"
 msgstr "Visa"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:484
+#: src/plugins/obs-studio/obs-toggle-source-action.c:482
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
 msgid "Behavior"
 msgstr "Beteende"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:495
+#: src/plugins/obs-studio/obs-toggle-source-action.c:493
 msgid "Audio Source"
 msgstr "Ljudkälla"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:497
+#: src/plugins/obs-studio/obs-toggle-source-action.c:495
 msgid "Source"
 msgstr "Källa"
 
@@ -601,43 +618,43 @@ msgstr "Källa"
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:42
+#: src/plugins/soundboard/soundboard-action-factory.c:40
 msgid "Music Player"
 msgstr "Musikspelare"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:43
+#: src/plugins/soundboard/soundboard-action-factory.c:41
 msgid "Control the active music player"
 msgstr "Styr den aktiva musikspelaren"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:48
+#: src/plugins/soundboard/soundboard-action-factory.c:46
 msgid "Play Audio"
 msgstr "Spela upp ljud"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:202
+#: src/plugins/soundboard/soundboard-mpris-action.c:201
 msgid "Next"
 msgstr "Nästa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:203
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
 msgid "Pause"
 msgstr "Pausa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:204
+#: src/plugins/soundboard/soundboard-mpris-action.c:203
 msgid "Play"
 msgstr "Spela upp"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:205
+#: src/plugins/soundboard/soundboard-mpris-action.c:204
 msgid "Previous"
 msgstr "Föregående"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:206
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
 msgid "Stop"
 msgstr "Stoppa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:207
+#: src/plugins/soundboard/soundboard-mpris-action.c:206
 msgid "Play / Pause"
 msgstr "Spela / Pausa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:210
+#: src/plugins/soundboard/soundboard-mpris-action.c:209
 msgid "Playback Action"
 msgstr "Uppspelningsåtgärd"
 
@@ -676,6 +693,12 @@ msgstr "Volym"
 #: src/plugins/soundboard/soundboard.plugin.desktop.in:3
 msgid "Soundboard"
 msgstr "Mixerbord"
+
+#~ msgid "Stream Deck +"
+#~ msgstr "Stream Deck +"
+
+#~ msgid "Feaneron Hangar Original"
+#~ msgstr "Feaneron Hangar Original"
 
 #~ msgid "Repository"
 #~ msgstr "Arkiv"
