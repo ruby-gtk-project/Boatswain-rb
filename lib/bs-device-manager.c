@@ -184,7 +184,8 @@ bs_device_manager_load (BsDeviceManager  *self,
                                                    BS_TYPE_DEVICE_PROVIDER,
                                                    NULL);
 
-  self->devices = G_LIST_MODEL (gtk_flatten_list_model_new (G_LIST_MODEL (self->device_providers)));
+  self->devices =
+    G_LIST_MODEL (gtk_flatten_list_model_new (G_LIST_MODEL (g_object_ref (self->device_providers))));
   g_signal_connect (self->devices,
                     "items-changed",
                     G_CALLBACK (on_devices_items_changed_cb),
