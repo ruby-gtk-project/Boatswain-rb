@@ -320,7 +320,9 @@ mock_device_init (MockDevice *self)
 BsDevice *
 mock_device_new (MockDeviceModel model)
 {
-  return g_object_new (MOCK_TYPE_DEVICE,
-                       "model", model,
-                       NULL);
+  return g_initable_new (MOCK_TYPE_DEVICE,
+                         NULL,
+                         NULL,
+                         "model", model,
+                         NULL);
 }
