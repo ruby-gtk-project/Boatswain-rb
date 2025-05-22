@@ -44,6 +44,8 @@ struct _BsWindow
 
   GBinding *brightness_binding;
   BsDevice *current_device;
+
+  GListStore *editor_liststore;
 };
 
 static GtkWidget * create_profile_row_cb (gpointer item,
@@ -212,36 +214,60 @@ create_device_row_cb (gpointer item,
 }
 
 static void
-on_device_manager_device_added_cb (BsDeviceManager *device_manager,
-                                   BsDevice        *device,
-                                   BsWindow        *self)
+on_device_manager_items_changed_cb (GListModel   *model,
+                                    unsigned int  position,
+                                    unsigned int  removed,
+                                    unsigned int  added,
+                                    BsWindow     *self)
 {
-  g_autofree char *page_name = NULL;
-  GtkWidget *editor;
+  BsContext *context;
+  GListModel *devices;
 
-  editor = bs_device_editor_new (device);
-  page_name = g_strdup_printf ("%p", device);
-  gtk_stack_add_named (self->devices_stack, editor, page_name);
+  context = bs_context_get_default ();
+  devices = bs_context_get_devices (context);
 
-  if (g_list_model_get_n_items (G_LIST_MODEL (device_manager)) == 1)
-    select_device (self, device);
-}
+  while (removed--)
+    {
+      g_autoptr (GtkWidget) editor =
+        g_list_model_get_item (G_LIST_MODEL (self->editor_liststore), position);
 
-static void
-on_device_manager_device_removed_cb (BsDeviceManager *device_manager,
-                                     BsDevice        *device,
-                                     BsWindow        *self)
-{
-  g_autofree char *page_name = NULL;
-  GtkWidget *child;
+      gtk_stack_remove (self->devices_stack, editor);
+      g_list_store_remove (self->editor_liststore, position);
+    }
 
-  page_name = g_strdup_printf ("%p", device);
-  child = gtk_stack_get_child_by_name (self->devices_stack, page_name);
+  for (size_t i = 0; i < added; i++)
+    {
+      g_autoptr (BsDevice) device = NULL;
+      g_autofree char *page_name = NULL;
+      GtkWidget *editor;
 
-  gtk_stack_remove (self->devices_stack, child);
+      device = g_list_model_get_item (devices, position + i);
+      page_name = g_strdup_printf ("%p", device);
 
-  if (g_list_model_get_n_items (G_LIST_MODEL (device_manager)) == 0)
-    gtk_stack_set_visible_child_name (self->main_stack, "empty");
+      editor = bs_device_editor_new (device);
+      g_list_store_insert (self->editor_liststore, position + i, editor);
+      gtk_stack_add_named (self->devices_stack, editor, page_name);
+    }
+
+  if (g_list_model_get_n_items (devices) > 0)
+    {
+      GtkListBoxRow *row;
+
+      row = gtk_list_box_get_selected_row (self->devices_listbox);
+      if (!row)
+        {
+          g_autoptr (BsDevice) device = NULL;
+
+          device = g_list_model_get_item (devices, 0);
+          select_device (self, device);
+        }
+
+      gtk_stack_set_visible_child_name (self->main_stack, "devices");
+    }
+  else
+    {
+      gtk_stack_set_visible_child_name (self->main_stack, "empty");
+    }
 }
 
 static void
@@ -323,33 +349,12 @@ bs_window_constructed (GObject *object)
   GListModel *devices;
   BsContext *context;
   BsWindow *self;
-  gboolean first;
-  size_t i;
 
   G_OBJECT_CLASS (bs_window_parent_class)->constructed (object);
 
   self = BS_WINDOW (object);
-  first = TRUE;
   context = bs_context_get_default ();
   devices = bs_context_get_devices (context);
-
-  for (i = 0; i < g_list_model_get_n_items (devices); i++)
-    {
-      g_autoptr (BsDevice) device = NULL;
-      g_autofree char *page_name = NULL;
-      GtkWidget *editor;
-
-      device = g_list_model_get_item (devices, i);
-      editor = bs_device_editor_new (device);
-      page_name = g_strdup_printf ("%p", device);
-      gtk_stack_add_named (self->devices_stack, editor, page_name);
-
-      if (first)
-        {
-          select_device (self, device);
-          first = FALSE;
-        }
-    }
 
   gtk_list_box_bind_model (self->devices_listbox,
                            devices,
@@ -357,18 +362,26 @@ bs_window_constructed (GObject *object)
                            self,
                            NULL);
 
-  /* FIXME */
   g_signal_connect_object (devices,
-                           "device-added",
-                           G_CALLBACK (on_device_manager_device_added_cb),
+                           "items-changed",
+                           G_CALLBACK (on_device_manager_items_changed_cb),
                            self,
                            0);
+  on_device_manager_items_changed_cb (devices,
+                                      0,
+                                      0,
+                                      g_list_model_get_n_items (devices),
+                                      self);
+}
 
-  g_signal_connect_object (devices,
-                           "device-removed",
-                           G_CALLBACK (on_device_manager_device_removed_cb),
-                           self,
-                           0);
+static void
+bs_window_finalize (GObject *object)
+{
+  BsWindow *self = BS_WINDOW (object);
+
+  g_clear_object (&self->editor_liststore);
+
+  G_OBJECT_CLASS (bs_window_parent_class)->finalize (object);
 }
 
 static void
@@ -416,6 +429,7 @@ bs_window_class_init (BsWindowClass *klass)
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   object_class->constructed = bs_window_constructed;
+  object_class->finalize = bs_window_finalize;
   object_class->get_property = bs_window_get_property;
   object_class->set_property = bs_window_set_property;
 
@@ -455,6 +469,8 @@ bs_window_init (BsWindow *self)
   gtk_widget_init_template (GTK_WIDGET (self));
 
   g_action_map_add_action_entries (G_ACTION_MAP (self), actions, G_N_ELEMENTS (actions), self);
+
+  self->editor_liststore = g_list_store_new (GTK_TYPE_WIDGET);
 
   if (g_strcmp0 (PROFILE, "development") == 0)
     {
