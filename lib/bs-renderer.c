@@ -75,6 +75,89 @@ convert_texture (GdkTexture  *texture,
 
 
 /*
+ * R8G8B8 conversion
+ */
+
+static uint8_t unpremultiply_color_byte (uint8_t color, uint8_t alpha)
+{
+  uint32_t result;
+
+  if (!alpha)
+    return 0;
+
+  if (alpha == 0xFF)
+    return color;
+
+  result = color;
+  result = (result * 0xFF + alpha / 2) / alpha;
+
+  g_assert (result <= G_MAXUINT8);
+
+  return (uint8_t) result;
+}
+
+static GBytes *
+download_default_format_texture_to_R8G8B8 (GdkTexture  *texture,
+                                           GError     **error)
+{
+  GdkMemoryFormat format;
+  g_autofree uint8_t *buffer = NULL;
+  size_t buffer_len;
+  g_autoptr (GdkTextureDownloader) downloader = NULL;
+  g_autoptr (GBytes) bytes = NULL;
+  size_t rowstride = 0;
+  g_autoptr (GByteArray) byte_array = NULL;
+  unsigned int n_elem, i = 0;
+  uint8_t *rgba_elem, *rgb_elem;
+
+  g_return_val_if_fail (GDK_IS_TEXTURE (texture), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  format = gdk_texture_get_format (texture);
+  if (format != GDK_MEMORY_DEFAULT)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Conversion from '%s' to R8G8B8 is not supported",
+                   g_enum_to_string (GDK_TYPE_MEMORY_FORMAT, format));
+      return NULL;
+    }
+
+  g_debug ("Converting from '%s' to R8G8B8", g_enum_to_string (GDK_TYPE_MEMORY_FORMAT, format));
+
+  downloader = gdk_texture_downloader_new (texture);
+  bytes = gdk_texture_downloader_download_bytes (downloader, &rowstride);
+
+  g_return_val_if_fail (g_bytes_get_size (bytes) <= G_MAXUINT, NULL);
+
+  byte_array = g_bytes_unref_to_array (g_steal_pointer (&bytes));
+  n_elem = byte_array->len / 4;
+  buffer_len = n_elem * 3;
+  buffer = g_malloc0 (buffer_len);
+
+  rgba_elem = byte_array->data;
+  rgb_elem = buffer;
+  while (i < n_elem)
+    {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN // GDK_MEMORY_B8G8R8A8_PREMULTIPLIED
+      rgb_elem[0] = unpremultiply_color_byte (rgba_elem[2], rgba_elem[3]);
+      rgb_elem[1] = unpremultiply_color_byte (rgba_elem[1], rgba_elem[3]);
+      rgb_elem[2] = unpremultiply_color_byte (rgba_elem[0], rgba_elem[3]);
+#elif G_BYTE_ORDER == G_BIG_ENDIAN // GDK_MEMORY_A8R8G8B8_PREMULTIPLIED
+      rgb_elem[0] = unpremultiply_color_byte (rgba_elem[1], rgba_elem[0]);
+      rgb_elem[1] = unpremultiply_color_byte (rgba_elem[2], rgba_elem[0]);
+      rgb_elem[2] = unpremultiply_color_byte (rgba_elem[3], rgba_elem[0]);
+#endif
+
+      rgba_elem += 4;
+      rgb_elem += 3;
+      i++;
+    }
+
+  return g_bytes_new_take (g_steal_pointer (&buffer), buffer_len);
+}
+
+
+/*
  * GObject overrides
  */
 
@@ -247,6 +330,10 @@ bs_renderer_convert_texture (BsRenderer  *self,
 
     case BS_IMAGE_FORMAT_JPEG:
       return convert_texture (texture, "image/jpeg", error);
+
+    case BS_IMAGE_FORMAT_R8G8B8:
+      return download_default_format_texture_to_R8G8B8 (texture,
+                                                        error);
 
     default:
       g_assert_not_reached ();

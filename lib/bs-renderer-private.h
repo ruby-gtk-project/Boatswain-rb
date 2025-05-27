@@ -43,6 +43,7 @@ enum _BsImageFormat
 {
   BS_IMAGE_FORMAT_BMP,
   BS_IMAGE_FORMAT_JPEG,
+  BS_IMAGE_FORMAT_R8G8B8,
 };
 
 struct _BsImageInfo
