@@ -47,6 +47,9 @@ struct _BsDeviceClass
 
   void (*load) (BsDevice *self);
   void (*reset) (BsDevice *self);
+
+  guint32 push_update_timeout;
+  void (*push_update) (BsDevice *self, BsDeviceUpdate *update);
 };
 
 BsDevice * bs_device_new_fake (GError **error);
