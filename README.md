@@ -26,9 +26,10 @@ communications in project spaces, such as the issue tracker or
 ## udev rules
 
 Most Elgato Stream Deck devices should be compatible starting from udev v250. 
-Stream Deck Pedal is not yet in any udev release. Stream Deck XL v2 is only
-available with udev v252. If your version of udev is older than that, add the
-following content to `/etc/udev/rules.d/50-elgato.rules`:
+Stream Deck XL v2 is only available with udev v252, Stream Deck Pedal with v253
+and Razer Stream Controller X with v257.7.
+If your version of udev is older than that, add the
+following content to `/etc/udev/rules.d/50-boatswain.rules`:
 
 ```
 # Elgato Stream Deck Mini
@@ -60,6 +61,9 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="0086", TAG+="uacce
 
 # Elgato Stream Deck Neo
 SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="009a", TAG+="uaccess"
+
+# Razer Stream Controller X
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1532", ATTRS{idProduct}=="0d09", TAG+="uaccess"
 ```
 
 Then reload with:
