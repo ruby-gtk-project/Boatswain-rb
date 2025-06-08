@@ -93,10 +93,12 @@ append_new_profile (BsWindow *self)
 }
 
 static void
-select_device (BsWindow     *self,
-                    BsDevice *device)
+select_device (BsWindow *self,
+               BsDevice *device)
 {
   g_autofree char *page_name = NULL;
+
+  g_assert (BS_IS_MAIN_THREAD ());
 
   if (self->current_device == device)
     return;
@@ -119,6 +121,8 @@ select_device (BsWindow     *self,
                                                          self->brightness_adjustment,
                                                          "value",
                                                          G_BINDING_BIDIRECTIONAL | G_BINDING_SYNC_CREATE);
+      g_object_add_weak_pointer (G_OBJECT (self->brightness_binding),
+                                 (gpointer *)&self->brightness_binding);
     }
 
   gtk_list_box_bind_model (self->profiles_listbox,
@@ -222,6 +226,8 @@ on_device_manager_items_changed_cb (GListModel   *model,
 {
   BsContext *context;
   GListModel *devices;
+
+  g_assert (BS_IS_MAIN_THREAD ());
 
   context = bs_context_get_default ();
   devices = bs_context_get_devices (context);
@@ -378,6 +384,10 @@ static void
 bs_window_finalize (GObject *object)
 {
   BsWindow *self = BS_WINDOW (object);
+
+  if (self->brightness_binding)
+    g_object_remove_weak_pointer (G_OBJECT (self->brightness_binding),
+                                  (gpointer *)&self->brightness_binding);
 
   g_clear_object (&self->editor_liststore);
 
