@@ -42,8 +42,24 @@ struct _ElgatoDeviceProvider
 {
   PeasExtensionBase parent_instance;
 
+  guint device_added_idle_id;
+  guint device_removed_idle_id;
+
   GListStore *devices;
   GUsbContext *gusb_context;
+
+  struct {
+    GMutex mutex;
+    guint idle_id;
+    GType device_type;
+    GUsbDevice *usb_device;
+  } added;
+
+  struct {
+    GMutex mutex;
+    guint idle_id;
+    guint position;
+  } removed;
 };
 
 static void g_list_model_interface_init (GListModelInterface *iface);
@@ -133,13 +149,37 @@ enumerate_devices (ElgatoDeviceProvider *self)
  * Callbacks
  */
 
+static gboolean
+device_added_in_idle_cb (gpointer user_data)
+{
+  ElgatoDeviceProvider *self = user_data;
+  g_autoptr (BsDevice) device = NULL;
+  g_autoptr (GError) error = NULL;
+
+  BS_ENTRY;
+
+  G_MUTEX_AUTO_LOCK (&self->added.mutex, locker);
+
+  device = g_initable_new (self->added.device_type,
+                           NULL,
+                           &error,
+                           "gusb-device", self->added.usb_device,
+                           NULL);
+
+  g_list_store_append (self->devices, g_object_ref (device));
+
+  self->added.idle_id = 0;
+  self->added.device_type = G_TYPE_NONE;
+  g_clear_object (&self->added.usb_device);
+
+  BS_RETURN (G_SOURCE_REMOVE);
+}
+
 static void
 on_gusb_context_device_added_cb (GUsbContext          *gusb_context,
                                  GUsbDevice           *usb_device,
                                  ElgatoDeviceProvider *self)
 {
-  g_autoptr (BsDevice) device = NULL;
-  g_autoptr (GError) error = NULL;
   GType device_type;
 
   BS_ENTRY;
@@ -151,15 +191,36 @@ on_gusb_context_device_added_cb (GUsbContext          *gusb_context,
   if (device_type == G_TYPE_NONE)
     BS_RETURN ();
 
-  device = g_initable_new (device_type,
-                           NULL,
-                           &error,
-                           "gusb-device", usb_device,
-                           NULL);
+  g_mutex_lock (&self->added.mutex);
+  self->added.device_type = device_type;
+  self->added.usb_device = g_object_ref (usb_device);
 
-  g_list_store_append (self->devices, g_object_ref (device));
+  self->added.idle_id = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
+                                         device_added_in_idle_cb,
+                                         g_object_ref (self),
+                                         g_object_unref);
+  g_mutex_unlock (&self->added.mutex);
 
   BS_EXIT;
+}
+
+static gboolean
+device_removed_in_idle_cb (gpointer user_data)
+{
+  ElgatoDeviceProvider *self = user_data;
+  g_autoptr (BsDevice) device = NULL;
+  g_autoptr (GError) error = NULL;
+
+  BS_ENTRY;
+
+  G_MUTEX_AUTO_LOCK (&self->removed.mutex, locker);
+
+  g_list_store_remove (self->devices, self->removed.position);
+
+  self->removed.idle_id = 0;
+  self->removed.position = 0;
+
+  BS_RETURN (G_SOURCE_REMOVE);
 }
 
 static void
@@ -182,7 +243,14 @@ on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
       if (d == gusb_device)
         {
           g_message ("Removing device %p", stream_deck);
-          g_list_store_remove (self->devices, i);
+          g_mutex_lock (&self->removed.mutex);
+          self->removed.position = i;
+
+          self->removed.idle_id = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
+                                                   device_removed_in_idle_cb,
+                                                   g_object_ref (self),
+                                                   g_object_unref);
+          g_mutex_unlock (&self->removed.mutex);
           continue;
         }
 
@@ -246,8 +314,19 @@ elgato_device_provider_finalize (GObject *object)
 {
   ElgatoDeviceProvider *self = (ElgatoDeviceProvider *)object;
 
+  g_mutex_lock (&self->added.mutex);
+  g_clear_handle_id (&self->added.idle_id, g_source_remove);
+  g_mutex_unlock (&self->added.mutex);
+
+  g_mutex_lock (&self->removed.mutex);
+  g_clear_handle_id (&self->removed.idle_id, g_source_remove);
+  g_mutex_unlock (&self->removed.mutex);
+
   g_clear_object (&self->devices);
   g_clear_object (&self->gusb_context);
+
+  g_mutex_clear (&self->added.mutex);
+  g_mutex_clear (&self->removed.mutex);
 
   G_OBJECT_CLASS (elgato_device_provider_parent_class)->finalize (object);
 }
@@ -264,6 +343,9 @@ static void
 elgato_device_provider_init (ElgatoDeviceProvider *self)
 {
   self->devices = g_list_store_new (BS_TYPE_DEVICE);
+
+  g_mutex_init (&self->added.mutex);
+  g_mutex_init (&self->removed.mutex);
 
   self->gusb_context = g_usb_context_new (NULL);
   if (self->gusb_context)
