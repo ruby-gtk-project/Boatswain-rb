@@ -51,6 +51,7 @@ libboatswain_sources = [
   'bs-dial-grid.c',
   'bs-empty-action.c',
   'bs-events.c',
+  'bs-global.c',
   'bs-icon.c',
   'bs-init.c',
   'bs-log.c',

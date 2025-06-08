@@ -23,6 +23,7 @@
 
 #include "bs-debug.h"
 #include "bs-device-provider-private.h"
+#include "bs-macros.h"
 #include "elgato-device-provider.h"
 #include "elgato-stream-deck.h"
 #include "elgato-stream-deck-mini.h"
@@ -158,6 +159,8 @@ device_added_in_idle_cb (gpointer user_data)
 
   BS_ENTRY;
 
+  g_assert(BS_IS_MAIN_THREAD ());
+
   G_MUTEX_AUTO_LOCK (&self->added.mutex, locker);
 
   device = g_initable_new (self->added.device_type,
@@ -213,6 +216,8 @@ device_removed_in_idle_cb (gpointer user_data)
 
   BS_ENTRY;
 
+  g_assert(BS_IS_MAIN_THREAD ());
+
   G_MUTEX_AUTO_LOCK (&self->removed.mutex, locker);
 
   g_list_store_remove (self->devices, self->removed.position);
@@ -267,6 +272,8 @@ on_devices_items_changed_cb (GListModel      *model,
                              unsigned int     added,
                              ElgatoDeviceProvider *self)
 {
+  g_assert (BS_IS_MAIN_THREAD ());
+
   g_list_model_items_changed (G_LIST_MODEL (self), position, removed, added);
 }
 

@@ -1,5 +1,5 @@
 /*
- * boatswain.h
+ * bs-macros.h
  *
  * Copyright 2025 Georges Basile Stavracas Neto <georges.stavracas@gmail.com>
  *
@@ -21,33 +21,11 @@
 
 #pragma once
 
-#include <gtk/gtk.h>
-#include <libpeas.h>
+#include "bs-global.h"
 
-#define BOATSWAIN_INSIDE
-#include "bs-actionable.h"
-#include "bs-action.h"
-#include "bs-action-factory.h"
-#include "bs-action-info.h"
-#include "bs-button.h"
-#include "bs-button-grid.h"
-#include "bs-context.h"
-#include "bs-debug.h"
-#include "bs-desktop-controller.h"
-#include "bs-device.h"
-#include "bs-device-manager.h"
-#include "bs-device-region.h"
-#include "bs-dial.h"
-#include "bs-dial-grid.h"
-#include "bs-empty-action.h"
-#include "bs-events.h"
-#include "bs-icon.h"
-#include "bs-init.h"
-#include "bs-macros.h"
-#include "bs-page.h"
-#include "bs-page-item.h"
-#include "bs-profile.h"
-#include "bs-touchscreen.h"
-#include "bs-touchscreen-content.h"
-#include "bs-touchscreen-slot.h"
-#undef BOATSWAIN_INSIDE
+G_BEGIN_DECLS
+
+#define BS_IS_THREAD(thread_) (g_thread_self () == (thread_))
+#define BS_IS_MAIN_THREAD() (g_thread_self () == bs_get_main_thread ())
+
+G_END_DECLS

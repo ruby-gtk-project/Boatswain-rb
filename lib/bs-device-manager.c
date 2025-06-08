@@ -28,6 +28,7 @@
 #include "bs-device-manager-private.h"
 #include "bs-device-private.h"
 #include "bs-device-provider-private.h"
+#include "bs-macros.h"
 
 struct _BsDeviceManager
 {
@@ -66,6 +67,8 @@ on_devices_items_changed_cb (GListModel      *model,
                              unsigned int     added,
                              BsDeviceManager *self)
 {
+  g_assert (BS_IS_MAIN_THREAD ());
+
   g_list_model_items_changed (G_LIST_MODEL (self), position, removed, added);
 }
 

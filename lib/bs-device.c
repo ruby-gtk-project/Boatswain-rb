@@ -33,6 +33,7 @@
 #include "bs-dial-grid.h"
 #include "bs-events-private.h"
 #include "bs-icon.h"
+#include "bs-macros.h"
 #include "bs-page-private.h"
 #include "bs-profile.h"
 #include "bs-renderer-private.h"
@@ -668,6 +669,8 @@ bs_device_dispose (GObject *object)
 
   BS_ENTRY;
 
+  g_assert (BS_IS_MAIN_THREAD ());
+
   if (priv->initialized)
     {
       save_profiles (self);
@@ -688,6 +691,8 @@ bs_device_finalize (GObject *object)
   BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
   BS_ENTRY;
+
+  g_assert (BS_IS_MAIN_THREAD ());
 
   g_queue_free_full (priv->active_pages, g_object_unref);
   g_clear_object (&priv->regions);
