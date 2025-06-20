@@ -115,22 +115,23 @@ elgato_stream_deck_mini_set_button_texture (ElgatoStreamDeck  *stream_deck,
                                             GError           **error)
 {
   g_autofree uint8_t *payload = NULL;
-  g_autofree uint8_t *buffer = NULL;
+  g_autoptr (GBytes) bytes = NULL;
   BsDeviceRegion *region;
   BsRenderer *renderer;
   hid_device *hid_device;
+  gconstpointer buffer;
   const size_t package_size = 1024;
   const size_t header_size = 16;
   uint8_t page;
   size_t bytes_remaining;
-  size_t buffer_size;
 
   BS_ENTRY;
 
   region = bs_button_get_region (button);
   renderer = bs_device_region_get_renderer (region);
 
-  if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
+  bytes = bs_renderer_convert_texture (renderer, texture, error);
+  if (!bytes)
     BS_RETURN (FALSE);
 
   payload = g_malloc (sizeof (uint8_t) * package_size);
@@ -154,7 +155,7 @@ elgato_stream_deck_mini_set_button_texture (ElgatoStreamDeck  *stream_deck,
   hid_device = elgato_stream_deck_get_hid_device (stream_deck);
 
   page = 0;
-  bytes_remaining = buffer_size;
+  buffer = g_bytes_get_data (bytes, &bytes_remaining);
   while (bytes_remaining > 0)
     {
       size_t padding_size;

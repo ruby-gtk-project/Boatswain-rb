@@ -128,10 +128,11 @@ elgato_stream_deck_original_set_button_texture (ElgatoStreamDeck  *stream_deck,
                                                 GError           **error)
 {
   g_autofree uint8_t *payload = NULL;
-  g_autofree uint8_t *buffer = NULL;
+  g_autoptr (GBytes) bytes = NULL;
   BsDeviceRegion *region;
   BsRenderer *renderer;
   hid_device *hid_device;
+  gconstpointer buffer;
   const size_t package_size = 8191;
   const size_t header_size = 16;
   uint8_t button_index;
@@ -145,9 +146,11 @@ elgato_stream_deck_original_set_button_texture (ElgatoStreamDeck  *stream_deck,
   region = bs_button_get_region (button);
   renderer = bs_device_region_get_renderer (region);
 
-  if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
+  bytes = bs_renderer_convert_texture (renderer, texture, error);
+  if (!bytes)
     BS_RETURN (FALSE);
 
+  buffer = g_bytes_get_data (bytes, &buffer_size);
   report_size = buffer_size / 2;
 
   /*

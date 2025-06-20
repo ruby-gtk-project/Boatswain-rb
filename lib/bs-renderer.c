@@ -185,19 +185,17 @@ bs_renderer_compose_touchscreen_content (BsRenderer            *self,
   return g_steal_pointer (&texture);
 }
 
-gboolean
+GBytes *
 bs_renderer_convert_texture (BsRenderer  *self,
                              GdkTexture  *texture,
-                             char       **buffer,
-                             size_t      *buffer_len,
                              GError     **error)
 {
   g_autoptr (GdkPixbuf) pixbuf = NULL;
+  g_autofree char *buffer = NULL;
+  size_t buffer_len;
 
   g_return_val_if_fail (BS_IS_RENDERER (self), FALSE);
   g_return_val_if_fail (GDK_IS_TEXTURE (texture), FALSE);
-  g_return_val_if_fail (buffer != NULL, FALSE);
-  g_return_val_if_fail (buffer_len != NULL, FALSE);
 
 G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   pixbuf = gdk_pixbuf_get_from_texture (texture);
@@ -206,23 +204,27 @@ G_GNUC_END_IGNORE_DEPRECATIONS
   switch (self->image_info.format)
     {
     case BS_IMAGE_FORMAT_BMP:
-      return gdk_pixbuf_save_to_buffer (pixbuf,
-                                        buffer,
-                                        buffer_len,
-                                        "bmp",
-                                        error,
-                                        NULL);
+      if (!gdk_pixbuf_save_to_buffer (pixbuf,
+                                      &buffer,
+                                      &buffer_len,
+                                      "bmp",
+                                      error,
+                                      NULL))
+        return NULL;
 
     case BS_IMAGE_FORMAT_JPEG:
-      return gdk_pixbuf_save_to_buffer (pixbuf,
-                                        buffer,
-                                        buffer_len,
-                                        "jpeg",
-                                        error,
-                                        "quality", "96",
-                                        NULL);
+      if (!gdk_pixbuf_save_to_buffer (pixbuf,
+                                      &buffer,
+                                      &buffer_len,
+                                      "jpeg",
+                                      error,
+                                      "quality", "96",
+                                      NULL))
+        return NULL;
 
     default:
       g_assert_not_reached ();
     }
+
+  return g_bytes_new_take (g_steal_pointer (&buffer), buffer_len);
 }

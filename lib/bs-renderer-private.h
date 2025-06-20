@@ -66,10 +66,8 @@ GdkTexture * bs_renderer_compose_touchscreen_content (BsRenderer            *sel
                                                       BsTouchscreenContent  *content,
                                                       GError               **error);
 
-gboolean bs_renderer_convert_texture (BsRenderer  *self,
+GBytes * bs_renderer_convert_texture (BsRenderer  *self,
                                       GdkTexture  *texture,
-                                      char       **buffer,
-                                      size_t      *buffer_len,
                                       GError     **error);
 
 G_END_DECLS

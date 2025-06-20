@@ -258,22 +258,23 @@ elgato_stream_deck_plus_set_touchscreen_texture (ElgatoStreamDeck  *stream_deck,
                                                  GError           **error)
 {
   g_autofree uint8_t *payload = NULL;
-  g_autofree uint8_t *buffer = NULL;
+  g_autoptr (GBytes) bytes = NULL;
   BsRenderer *renderer;
   hid_device *hid_device;
+  gconstpointer buffer;
   const size_t package_size = 1024;
   const size_t header_size = 16;
   uint8_t x, y;
   uint8_t page;
   size_t bytes_remaining;
-  size_t buffer_size;
 
   BS_ENTRY;
 
   hid_device = elgato_stream_deck_get_hid_device (stream_deck);
   renderer = bs_device_region_get_renderer (BS_DEVICE_REGION (touchscreen));
 
-  if (!bs_renderer_convert_texture (renderer, texture, (char **) &buffer, &buffer_size, error))
+  bytes = bs_renderer_convert_texture (renderer, texture, error);
+  if (!bytes)
     BS_RETURN (FALSE);
 
   /* FIXME: we upload the whole texture every time */
@@ -293,7 +294,7 @@ elgato_stream_deck_plus_set_touchscreen_texture (ElgatoStreamDeck  *stream_deck,
   payload[9] = (bs_touchscreen_get_height (touchscreen) >> 8) & 0xff;
 
   page = 0;
-  bytes_remaining = buffer_size;
+  buffer = g_bytes_get_data (bytes, &bytes_remaining);
   while (bytes_remaining > 0)
     {
       size_t padding_size;
