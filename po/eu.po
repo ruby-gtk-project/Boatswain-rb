@@ -1,14 +1,14 @@
 # Basque translation for boatswain.
 # Copyright (C) 2022 boatswain's COPYRIGHT HOLDER
 # This file is distributed under the same license as the boatswain package.
-# Asier Sarasua Garmendia <asiersarasua@ni.eus>, 2022, 2023, 2024.
+# Asier Saratsua Garmendia <asiersarasua@ni.eus>, 2022, 2023, 2024, 2025.
 #
 msgid ""
 msgstr "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2024-08-10 01:14+0000\n"
-"PO-Revision-Date: 2024-09-14 18:20+0000\n"
-"Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
+"POT-Creation-Date: 2025-06-20 14:22+0000\n"
+"PO-Revision-Date: 2025-06-29 18:20+0000\n"
+"Last-Translator: Asier Saratsua Garmendia <asiersarasua@ni.eus>\n"
 "Language-Team: Basque <libre-ale@librezale.eus>-\n"
 "Language: eu\n"
 "MIME-Version: 1.0\n"
@@ -76,64 +76,130 @@ msgstr "Gogoratu jokoetako puntuazioak"
 msgid "Open files and launch applications"
 msgstr "Ireki fitxategiak eta abiarazi aplikazioak"
 
-#: src/bs-application.c:54
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mini.c:223
+msgid "Elgato Stream Deck Mini"
+msgstr "Elgato Stream Deck Mini"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mk2.c:73
+msgid "Elgato Stream Deck MK.2"
+msgstr "Elgato Stream Deck MK.2"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-neo.c:72
+msgid "Elgato Stream Deck Neo"
+msgstr "Elgato Stream Deck Neo"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-original.c:250
+#: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
+msgid "Elgato Stream Deck"
+msgstr "Elgato Stream Deck"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-pedal.c:92
+msgid "Elgato Stream Deck Pedal"
+msgstr "Elgato Stream Deck Pedal"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-plus.c:384
+msgid "Elgato Stream Deck Plus"
+msgstr "Elgato Stream Deck Plus"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-xl.c:73
+msgid "Elgato Stream Deck XL"
+msgstr "Elgato Stream Deck XL"
+
+#: lib/devices/mock/mock-device.c:108
+msgid "Feaneron Hangar Mild"
+msgstr "Feaneron Hangar Mild"
+
+#: lib/devices/mock/mock-device.c:125
+msgid "Feaneron Hangar XL"
+msgstr "Feaneron Hangar XL"
+
+#: lib/bs-device.c:360
+msgid "Default"
+msgstr "Lehenetsia"
+
+#: lib/bs-profile.c:185
+msgid "Unnamed profile"
+msgstr "Izenik gabeko profila"
+
+#: src/bs-application.c:48
 msgid "Enable debug messages"
 msgstr "Gaitu mezuak araztea"
 
-#: src/bs-application.c:117
+#: src/bs-application.c:85
 #, c-format
 msgid "Connected to %d device"
 msgid_plural "Connected to %d devices"
 msgstr[0] "Gailu %dekin konektatuta"
 msgstr[1] "%d gailurekin konektatuta"
 
-#: src/bs-application.c:169
+#: src/bs-application.c:137
 msgid ""
 "Boatswain needs to run in background to detect and execute Stream Deck "
 "actions."
 msgstr "Boatswain atzeko planoa exekutatu behar da Stream Deck ekintzak detektatu eta exekutatzeko."
 
-#: src/bs-button-editor.c:388
+#: src/bs-button-editor.c:327
 msgid "All supported formats"
 msgstr "Onartutako formatu guztiak"
 
-#: src/bs-button-editor.c:397
+#: src/bs-button-editor.c:336
 msgid "Select icon"
 msgstr "Hautatu ikonoa"
 
-#: src/bs-button-editor.c:398
+#: src/bs-button-editor.c:337
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Ireki"
 
-#: src/bs-button-editor.ui:14
+#: src/bs-button-editor.ui:13
 msgid "Button Properties"
 msgstr "Botoi-propietateak"
 
-#: src/bs-button-editor.ui:190
+#: src/bs-button-editor.ui:189
 msgid "Name"
 msgstr "Izena"
 
-#: src/bs-button-editor.ui:197
+#: src/bs-button-editor.ui:196
 msgid "Background Color"
 msgstr "Atzeko planoaren kolorea"
 
-#: src/bs-button-editor.ui:233
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
 msgid "Select Action"
 msgstr "Hautatu ekintza"
 
-#: src/bs-button-editor.ui:250
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
 msgid "Remove Action"
 msgstr "Kendu ekintza"
 
-#: src/bs-button-editor.ui:272
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
 #: src/plugins/default/default-multi-action-editor.ui:67
 msgid "Actions"
 msgstr "Ekintzak"
 
-#: src/bs-profile.c:184
-msgid "Unnamed profile"
-msgstr "Izenik gabeko profila"
+#: src/bs-device-editor.ui:65
+msgid "Select a button"
+msgstr "Hautatu botoi bat"
 
 #: src/bs-profile-row.ui:8 src/bs-profile-row.ui:87
 msgid "Rename"
@@ -151,95 +217,74 @@ msgstr "Eraman behera"
 msgid "Delete"
 msgstr "Ezabatu"
 
-#: src/bs-stream-deck.c:326
-msgid "Default"
-msgstr "Lehenetsia"
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:63
+#: src/bs-touchscreen-background-dialog.ui:44
+msgid "Adwaita"
+msgstr "Adwaita"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:996 src/bs-stream-deck.c:1021
-msgid "Stream Deck Mini"
-msgstr "Stream Deck Mini"
+#: src/bs-touchscreen-background-dialog.c:64
+msgid "Glass"
+msgstr "Glass"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1046 src/bs-stream-deck.c:1071
-#: src/plugins/default/default-switch-profile-action.c:283
-#: src/plugins/default/default.plugin.desktop.in:3
-msgid "Stream Deck"
-msgstr "Stream Deck"
+#: src/bs-touchscreen-background-dialog.c:65
+msgid "Oh Sheet!"
+msgstr "Oh Sheet!"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1096 src/bs-stream-deck.c:1121
-msgid "Stream Deck XL"
-msgstr "Stream Deck XL"
+#: src/bs-touchscreen-background-dialog.c:66
+msgid "Pills"
+msgstr "Pills"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1146
-msgid "Stream Deck MK.2"
-msgstr "Stream Deck MK.2"
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Swoosh"
+msgstr "Swoosh"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1171
-msgid "Stream Deck Pedal"
-msgstr "Stream Deck Pedal"
+#: src/bs-touchscreen-background-dialog.ui:28
+#: src/bs-touchscreen-background-dialog.ui:29
+msgid "No Background"
+msgstr "Atzeko planorik ez"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:1196
-msgid "Stream Deck +"
-msgstr "Stream Deck +"
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Ukipen-pantailaren propietateak"
 
-#: src/bs-stream-deck.c:1275
-msgid "Feaneron Hangar Original"
-msgstr "Feaneron Hangar Original"
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Ukipen-pantaila"
 
-#: src/bs-stream-deck.c:1297
-msgid "Feaneron Hangar XL"
-msgstr "Feaneron Hangar XL"
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Ekintza"
 
-#: src/bs-stream-deck-editor.ui:61
-msgid "Select a button"
-msgstr "Hautatu botoi bat"
-
-#: src/bs-window.ui:113
-msgid "New profile…"
-msgstr "Profil berria…"
-
-#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:54
-msgid "Brightness"
-msgstr "Distira"
-
-#: src/bs-window.ui:174
-msgid "Firmware"
-msgstr "Firmwarea"
-
-#: src/bs-window.ui:232
+#: src/bs-window.ui:38
 msgid "No Stream Deck Found"
 msgstr "Ez da Stream Deck gailurik aurkitu"
 
-#: src/bs-window.ui:233
-msgid "Plug in a Stream Deck device to use it."
-msgstr "Konektatu Stream Deck gailu bat hura erabili ahal izateko."
+#: src/bs-window.ui:39
+msgid "Plug in a Stream Deck device to use it"
+msgstr "Konektatu Stream Deck gailu bat hura erabili ahal izateko"
 
-#: src/bs-window.ui:256
+#: src/bs-window.ui:155
+msgid "New profile…"
+msgstr "Profil berria…"
+
+#: src/bs-window.ui:180 src/plugins/default/default-action-factory.c:53
+msgid "Brightness"
+msgstr "Distira"
+
+#: src/bs-window.ui:216
+msgid "Firmware"
+msgstr "Firmwarea"
+
+#: src/bs-window.ui:275
 msgid "_Keyboard Shortcuts"
 msgstr "Las_ter-teklak"
 
-#: src/bs-window.ui:260
+#: src/bs-window.ui:279
 msgid "_About Boatswain"
 msgstr "Boatswain aplikazioari _buruz"
 
-#: src/bs-window.ui:264
+#: src/bs-window.ui:283
 msgid "_Quit"
 msgstr "I_rten"
 
@@ -258,17 +303,21 @@ msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Irten"
 
-#: src/plugins/default/default-action-factory.c:42
+#: src/plugins/default/default-action-factory.c:41
 msgid "Folder"
 msgstr "Karpeta"
 
-#: src/plugins/default/default-action-factory.c:48
+#: src/plugins/default/default-action-factory.c:47
 msgid "Switch Profile"
 msgstr "Aldatu profila"
 
-#: src/plugins/default/default-action-factory.c:60
+#: src/plugins/default/default-action-factory.c:59
 msgid "Multiple Actions"
 msgstr "Ekintza anitz"
+
+#: src/plugins/default/default-action-factory.c:65
+msgid "Go Up"
+msgstr "Joan gora"
 
 #. Translators: "Constant" as in "Constant value of brightness"
 #: src/plugins/default/default-brightness-action.c:141
@@ -291,8 +340,8 @@ msgstr "Modua"
 msgid "Value"
 msgstr "Balioa"
 
-#: src/plugins/default/default-multi-action-editor.c:310
-#: src/plugins/default/default-multi-action-row.c:143
+#: src/plugins/default/default-multi-action-editor.c:303
+#: src/plugins/default/default-multi-action-row.c:141
 msgid "Delay"
 msgstr "Atzerapena"
 
@@ -312,16 +361,21 @@ msgstr "Bestelakoak"
 msgid "Settings"
 msgstr "Ezarpenak"
 
-#: src/plugins/default/default-switch-profile-action.c:306
+#: src/plugins/default/default-switch-profile-action.c:264
+#: src/plugins/default/default.plugin.desktop.in:3
+msgid "Stream Deck"
+msgstr "Stream Deck"
+
+#: src/plugins/default/default-switch-profile-action.c:287
 msgid "Profile"
 msgstr "Profila"
 
-#: src/plugins/desktop/desktop-action-factory.c:41
-#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:257
+#: src/plugins/desktop/desktop-action-factory.c:38
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
 msgid "Keyboard Shortcut"
 msgstr "Laster-tekla"
 
-#: src/plugins/desktop/desktop-action-factory.c:42
+#: src/plugins/desktop/desktop-action-factory.c:39
 msgid "Trigger a keyboard shortcut"
 msgstr "Abiarazi laster-tekla bat"
 
@@ -362,43 +416,43 @@ msgid "score.txt"
 msgstr "puntuazioa.txt"
 
 #. Restore score
-#: src/plugins/gaming/score.js:322
+#: src/plugins/gaming/score.js:352
 msgid "Restore Score"
 msgstr "Berrezarri puntuazioa"
 
-#: src/plugins/gaming/score.js:341
+#: src/plugins/gaming/score.js:371
 msgid "Text Color"
 msgstr "Testuaren kolorea"
 
-#: src/plugins/gaming/score.js:354
+#: src/plugins/gaming/score.js:384
 msgid "Save to File"
 msgstr "Gorde fitxategian"
 
-#: src/plugins/gaming/score.js:355
+#: src/plugins/gaming/score.js:385
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr "Gorde puntuazioa testu-fitxategi batean. Beste aplikazio batzuek, adibidez OBS Studio, handik irakurri dezakete."
 
-#: src/plugins/gaming/score.js:364
-#: src/plugins/launcher/launcher-open-file-action.c:209
+#: src/plugins/gaming/score.js:394
+#: src/plugins/launcher/launcher-open-file-action.c:213
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
 msgstr "Fitxategia"
 
-#: src/plugins/gaming/score.js:383
+#: src/plugins/gaming/score.js:413
 msgid "Text File (.txt)"
 msgstr "Testu-fitxategia (.txt)"
 
-#: src/plugins/launcher/launcher-action-factory.c:41
+#: src/plugins/launcher/launcher-action-factory.c:39
 msgid "Launch Application"
 msgstr "Abiarazi aplikazioa"
 
-#: src/plugins/launcher/launcher-action-factory.c:47
+#: src/plugins/launcher/launcher-action-factory.c:45
 msgid "Open File"
 msgstr "Ireki fitxategia"
 
-#: src/plugins/launcher/launcher-action-factory.c:53
+#: src/plugins/launcher/launcher-action-factory.c:51
 msgid "Open URL"
 msgstr "Ireki URLa"
 
@@ -414,7 +468,7 @@ msgstr "Ez da fitxategirik hautatu"
 msgid "Select File"
 msgstr "Hautatu fitxategia"
 
-#: src/plugins/launcher/launcher-open-url-action.c:104
+#: src/plugins/launcher/launcher-open-url-action.c:108
 msgid "URL"
 msgstr "URLa"
 
@@ -422,11 +476,11 @@ msgstr "URLa"
 msgid "Launcher"
 msgstr "Abiarazlea"
 
-#: src/plugins/network/network-action-factory.c:41
+#: src/plugins/network/network-action-factory.c:39
 msgid "HTTP Request"
 msgstr "HTTP eskaria"
 
-#: src/plugins/network/network-action-factory.c:42
+#: src/plugins/network/network-action-factory.c:40
 msgid "Send GET and POST requests to a webserver"
 msgstr "Bidali GET eta POST eskariak web-zerbitzari bati"
 
@@ -458,29 +512,29 @@ msgstr "HTTP eskariaren karga erabilgarria"
 msgid "Network"
 msgstr "Sarea"
 
-#: src/plugins/obs-studio/obs-action-factory.c:46
+#: src/plugins/obs-studio/obs-action-factory.c:44
 msgid "Switch Scene"
 msgstr "Aldatu eszena"
 
 #. Translators: "Record" is a verb here
-#: src/plugins/obs-studio/obs-action-factory.c:53
+#: src/plugins/obs-studio/obs-action-factory.c:51
 msgid "Record"
 msgstr "Grabatu"
 
 #. Translators: "Stream" is a verb here
-#: src/plugins/obs-studio/obs-action-factory.c:60
+#: src/plugins/obs-studio/obs-action-factory.c:58
 msgid "Stream"
 msgstr "Transmititu"
 
-#: src/plugins/obs-studio/obs-action-factory.c:66
+#: src/plugins/obs-studio/obs-action-factory.c:64
 msgid "Virtual Camera"
 msgstr "Kamera birtuala"
 
-#: src/plugins/obs-studio/obs-action-factory.c:72
+#: src/plugins/obs-studio/obs-action-factory.c:70
 msgid "Toggle Mute"
 msgstr "Aktibatu/desaktibatu mututzea"
 
-#: src/plugins/obs-studio/obs-action-factory.c:78
+#: src/plugins/obs-studio/obs-action-factory.c:76
 msgid "Show / Hide Source"
 msgstr "Erakutsi/ezkutatu iturburua"
 
@@ -504,44 +558,44 @@ msgstr "Ataka"
 msgid "Password"
 msgstr "Pasahitza"
 
-#: src/plugins/obs-studio/obs-switch-scene-action.c:283
+#: src/plugins/obs-studio/obs-switch-scene-action.c:286
 msgid "Scene"
 msgstr "Eszena"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:124
+#: src/plugins/obs-studio/obs-toggle-source-action.c:123
 msgid "Toggle mute"
 msgstr "Aktibatu/desaktibatu mututzea"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+#: src/plugins/obs-studio/obs-toggle-source-action.c:124
 msgid "Mute"
 msgstr "Mututu"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
 msgid "Unmute"
 msgstr "Eten mututasuna"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:130
+#: src/plugins/obs-studio/obs-toggle-source-action.c:129
 msgid "Toggle visibility"
 msgstr "Aktibatu/desaktibatu ikusgaitasuna"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+#: src/plugins/obs-studio/obs-toggle-source-action.c:130
 msgid "Hide"
 msgstr "Ezkutatu"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
 msgid "Show"
 msgstr "Erakutsi"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:479
+#: src/plugins/obs-studio/obs-toggle-source-action.c:482
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
 msgid "Behavior"
 msgstr "Portaera"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:490
+#: src/plugins/obs-studio/obs-toggle-source-action.c:493
 msgid "Audio Source"
 msgstr "Audio-iturburua"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:492
+#: src/plugins/obs-studio/obs-toggle-source-action.c:495
 msgid "Source"
 msgstr "Iturburua"
 
@@ -549,43 +603,43 @@ msgstr "Iturburua"
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:42
+#: src/plugins/soundboard/soundboard-action-factory.c:40
 msgid "Music Player"
 msgstr "Musika-erreproduzitzailea"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:43
+#: src/plugins/soundboard/soundboard-action-factory.c:41
 msgid "Control the active music player"
 msgstr "Kontrolatu musika-erreproduzigailu aktiboa"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:48
+#: src/plugins/soundboard/soundboard-action-factory.c:46
 msgid "Play Audio"
 msgstr "Erreproduzitu audioa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:197
+#: src/plugins/soundboard/soundboard-mpris-action.c:201
 msgid "Next"
 msgstr "Hurrengoa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:198
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
 msgid "Pause"
 msgstr "Pausatu"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:199
+#: src/plugins/soundboard/soundboard-mpris-action.c:203
 msgid "Play"
 msgstr "Erreproduzitu"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:200
+#: src/plugins/soundboard/soundboard-mpris-action.c:204
 msgid "Previous"
 msgstr "Aurrekoa"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:201
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
 msgid "Stop"
 msgstr "Gelditu"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:202
+#: src/plugins/soundboard/soundboard-mpris-action.c:206
 msgid "Play / Pause"
 msgstr "Erreproduzitu / pausarazi"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:205
+#: src/plugins/soundboard/soundboard-mpris-action.c:209
 msgid "Playback Action"
 msgstr "Erreprodukzio-ekintza"
 
@@ -624,6 +678,12 @@ msgstr "Bolumena"
 #: src/plugins/soundboard/soundboard.plugin.desktop.in:3
 msgid "Soundboard"
 msgstr "Soinu-panela"
+
+#~ msgid "Stream Deck +"
+#~ msgstr "Stream Deck +"
+
+#~ msgid "Feaneron Hangar Original"
+#~ msgstr "Feaneron Hangar Original"
 
 #~ msgid "Repository"
 #~ msgstr "Biltegia"
