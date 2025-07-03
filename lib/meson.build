@@ -67,6 +67,7 @@ libboatswain_sources = [
 libboatswain_deps = [
   dependency('libpeas-2'),
   dependency('libportal-gtk4'),
+  dependency('glycin-2', version: '>= 2.0.alpha.4'),
   dependency('graphene-gobject-1.0'),
   dependency('gtk4'),
   dependency('gusb', version: '>= 0.3.0'),
