@@ -169,7 +169,7 @@ device_added_in_idle_cb (gpointer user_data)
                            "gusb-device", self->added.usb_device,
                            NULL);
 
-  g_list_store_append (self->devices, g_object_ref (device));
+  g_list_store_append (self->devices, device);
 
   self->added.idle_id = 0;
   self->added.device_type = G_TYPE_NONE;
