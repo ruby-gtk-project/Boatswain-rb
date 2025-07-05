@@ -100,29 +100,6 @@
             ]
         },
         {
-            "name" : "gdk-pixbuf",
-            "buildsystem" : "meson",
-            "config-opts" : [
-                "-Dgtk_doc=false",
-                "-Dman=false",
-                "-Dothers=enabled"
-            ],
-            "cleanup" : [
-                "/bin/*"
-            ],
-            "post-install" : [
-                "rm /app/lib/libgdk_pixbuf-2.0.so*",
-                "rm /app/lib/pkgconfig/gdk-pixbuf-2.0.pc"
-            ],
-            "sources" : [
-                {
-                    "type" : "git",
-                    "url" : "https://gitlab.gnome.org/GNOME/gdk-pixbuf.git",
-                    "branch" : "master"
-                }
-            ]
-        },
-        {
             "name" : "boatswain",
             "builddir" : true,
             "buildsystem" : "meson",
