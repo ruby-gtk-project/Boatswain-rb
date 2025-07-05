@@ -73,7 +73,6 @@ libboatswain_deps = [
   dependency('gusb', version: '>= 0.3.0'),
   dependency('hidapi-libusb'),
   dependency('json-glib-1.0'),
-  dependency('libjpeg'),
   meson.get_compiler('c').find_library('m'),
 ]
 
