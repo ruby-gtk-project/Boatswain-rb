@@ -72,6 +72,7 @@ libboatswain_deps = [
   dependency('graphene-gobject-1.0'),
   dependency('gtk4'),
   dependency('json-glib-1.0'),
+  dependency('libdex-1'),
   meson.get_compiler('c').find_library('m'),
 ]
 
