@@ -71,8 +71,6 @@ libboatswain_deps = [
   dependency('glycin-2', version: '>= 2.0.alpha.4'),
   dependency('graphene-gobject-1.0'),
   dependency('gtk4'),
-  dependency('gusb', version: '>= 0.3.0'),
-  dependency('hidapi-libusb'),
   dependency('json-glib-1.0'),
   meson.get_compiler('c').find_library('m'),
 ]

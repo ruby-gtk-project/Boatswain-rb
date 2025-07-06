@@ -23,5 +23,7 @@ libboatswain_devices_lib = static_library(
 )
 
 libboatswain_devices_dep = declare_dependency(
+  dependencies: libboatswain_devices_deps,
+  include_directories: libboatswain_devices_incs,
   link_whole: libboatswain_devices_lib,
 )
