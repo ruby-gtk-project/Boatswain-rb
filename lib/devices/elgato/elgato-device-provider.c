@@ -156,7 +156,7 @@ device_added_in_idle_cb (gpointer user_data)
 
   BS_ENTRY;
 
-  g_assert(BS_IS_MAIN_THREAD ());
+  g_assert (BS_IS_MAIN_THREAD ());
 
   G_MUTEX_AUTO_LOCK (&self->added.mutex, locker);
 
@@ -213,7 +213,7 @@ device_removed_in_idle_cb (gpointer user_data)
 
   BS_ENTRY;
 
-  g_assert(BS_IS_MAIN_THREAD ());
+  g_assert (BS_IS_MAIN_THREAD ());
 
   G_MUTEX_AUTO_LOCK (&self->removed.mutex, locker);
 
