@@ -74,9 +74,6 @@ G_DEFINE_FINAL_TYPE_WITH_CODE (ElgatoDeviceProvider, elgato_device_provider, PEA
  * Auxiliary methods
  */
 
-/* Gen 1 */
-#define STREAMDECK_ORIGINAL_PRODUCT_ID 0x0060
-
 static GType
 find_elgato_device_gtype (uint16_t product_id)
 {
