@@ -23,8 +23,6 @@
 #include "bs-device.h"
 #include "bs-device-update-private.h"
 
-#include <gusb.h>
-
 G_BEGIN_DECLS
 
 struct _BsDevice
