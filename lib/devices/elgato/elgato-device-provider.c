@@ -36,6 +36,7 @@
 #include "elgato-stream-deck-xl.h"
 
 #include <gusb.h>
+#include <libdex.h>
 
 #define ELGATO_SYSTEMS_VENDOR_ID (0x0fd9)
 
@@ -49,18 +50,9 @@ struct _ElgatoDeviceProvider
   GListStore *devices;
   GUsbContext *gusb_context;
 
-  struct {
-    GMutex mutex;
-    guint idle_id;
-    GType device_type;
-    GUsbDevice *usb_device;
-  } added;
-
-  struct {
-    GMutex mutex;
-    guint idle_id;
-    guint position;
-  } removed;
+  DexChannel *added_devices;
+  DexChannel *removed_devices;
+  DexPromise *quit_fiber;
 };
 
 static void g_list_model_interface_init (GListModelInterface *iface);
@@ -147,32 +139,86 @@ enumerate_devices (ElgatoDeviceProvider *self)
  * Callbacks
  */
 
-static gboolean
-device_added_in_idle_cb (gpointer user_data)
+
+static DexFuture *
+devices_changed_fiber (gpointer data)
 {
-  ElgatoDeviceProvider *self = user_data;
-  g_autoptr (BsDevice) device = NULL;
-  g_autoptr (GError) error = NULL;
+  ElgatoDeviceProvider *self = (ElgatoDeviceProvider *) data;
+  DexFuture *removed_device_future = NULL;
+  DexFuture *added_device_future = NULL;
 
-  BS_ENTRY;
-
+  g_assert (ELGATO_IS_DEVICE_PROVIDER (self));
   g_assert (BS_IS_MAIN_THREAD ());
 
-  G_MUTEX_AUTO_LOCK (&self->added.mutex, locker);
+  while (TRUE)
+    {
+      if (!added_device_future)
+        added_device_future = dex_channel_receive (self->added_devices);
 
-  device = g_initable_new (self->added.device_type,
-                           NULL,
-                           &error,
-                           "gusb-device", self->added.usb_device,
-                           NULL);
+      if (!removed_device_future)
+        removed_device_future = dex_channel_receive (self->removed_devices);
 
-  g_list_store_append (self->devices, device);
+      if (dex_await (dex_future_any (dex_ref (self->quit_fiber),
+                                     dex_ref (added_device_future),
+                                     dex_ref (removed_device_future),
+                                     NULL),
+                     NULL))
+        {
+          if (dex_future_is_resolved (added_device_future))
+            {
+              g_autoptr (ElgatoStreamDeck) stream_deck = NULL;
+              g_autoptr (GUsbDevice) gusb_device = NULL;
+              g_autoptr (GError) error = NULL;
+              GType device_type;
 
-  self->added.idle_id = 0;
-  self->added.device_type = G_TYPE_NONE;
-  g_clear_object (&self->added.usb_device);
+              gusb_device = dex_await_object (g_steal_pointer (&added_device_future), &error);
+              if (error)
+                return dex_future_new_for_error (g_steal_pointer (&error));
 
-  BS_RETURN (G_SOURCE_REMOVE);
+              g_assert (g_usb_device_get_vid (gusb_device) == ELGATO_SYSTEMS_VENDOR_ID);
+
+              device_type = find_elgato_device_gtype (g_usb_device_get_pid (gusb_device));
+              g_assert (device_type != G_TYPE_NONE);
+
+              stream_deck = g_initable_new (device_type,
+                                       NULL,
+                                       &error,
+                                       "gusb-device", gusb_device,
+                                       NULL);
+
+              g_list_store_append (self->devices, stream_deck);
+            }
+
+          if (dex_future_is_resolved (removed_device_future))
+            {
+              g_autoptr (GUsbDevice) gusb_device = NULL;
+              g_autoptr (GError) error = NULL;
+
+              gusb_device = dex_await_object (g_steal_pointer (&removed_device_future), &error);
+              if (error)
+                return dex_future_new_for_error (g_steal_pointer (&error));
+
+              g_assert (g_usb_device_get_vid (gusb_device) == ELGATO_SYSTEMS_VENDOR_ID);
+
+              for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->devices)); i++)
+                {
+                  g_autoptr (ElgatoStreamDeck) stream_deck = g_list_model_get_item (G_LIST_MODEL (self->devices), i);
+
+                  if (elgato_stream_deck_get_gusb_device (stream_deck) == gusb_device)
+                    {
+                      g_debug ("Removing device %p", stream_deck);
+                      g_list_store_remove (self->devices, i);
+                      break;
+                    }
+                }
+            }
+
+          if (dex_future_is_resolved (DEX_FUTURE (self->quit_fiber)))
+            return NULL;
+        }
+    }
+
+  return NULL;
 }
 
 static void
@@ -191,38 +237,12 @@ on_gusb_context_device_added_cb (GUsbContext          *gusb_context,
   if (device_type == G_TYPE_NONE)
     BS_RETURN ();
 
-  g_mutex_lock (&self->added.mutex);
-  self->added.device_type = device_type;
-  self->added.usb_device = g_object_ref (usb_device);
-
-  self->added.idle_id = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
-                                         device_added_in_idle_cb,
-                                         g_object_ref (self),
-                                         g_object_unref);
-  g_mutex_unlock (&self->added.mutex);
+  if (!dex_await (dex_channel_send (self->added_devices,
+                                    dex_future_new_for_object (usb_device)),
+                  NULL))
+    g_assert_not_reached ();
 
   BS_EXIT;
-}
-
-static gboolean
-device_removed_in_idle_cb (gpointer user_data)
-{
-  ElgatoDeviceProvider *self = user_data;
-  g_autoptr (BsDevice) device = NULL;
-  g_autoptr (GError) error = NULL;
-
-  BS_ENTRY;
-
-  g_assert (BS_IS_MAIN_THREAD ());
-
-  G_MUTEX_AUTO_LOCK (&self->removed.mutex, locker);
-
-  g_list_store_remove (self->devices, self->removed.position);
-
-  self->removed.idle_id = 0;
-  self->removed.position = 0;
-
-  BS_RETURN (G_SOURCE_REMOVE);
 }
 
 static void
@@ -230,34 +250,15 @@ on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
                                    GUsbDevice      *gusb_device,
                                    ElgatoDeviceProvider *self)
 {
-  unsigned int i = 0;
-
   BS_ENTRY;
 
-  while (i < g_list_model_get_n_items (G_LIST_MODEL (self->devices)))
-    {
-      g_autoptr (ElgatoStreamDeck) stream_deck = NULL;
-      GUsbDevice *d;
+  if (g_usb_device_get_vid (gusb_device) != ELGATO_SYSTEMS_VENDOR_ID)
+    BS_RETURN ();
 
-      stream_deck = g_list_model_get_item (G_LIST_MODEL (self->devices), i);
-      d = elgato_stream_deck_get_gusb_device (stream_deck);
-
-      if (d == gusb_device)
-        {
-          g_message ("Removing device %p", stream_deck);
-          g_mutex_lock (&self->removed.mutex);
-          self->removed.position = i;
-
-          self->removed.idle_id = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
-                                                   device_removed_in_idle_cb,
-                                                   g_object_ref (self),
-                                                   g_object_unref);
-          g_mutex_unlock (&self->removed.mutex);
-          continue;
-        }
-
-      i++;
-    }
+  if (!dex_await (dex_channel_send (self->removed_devices,
+                                    dex_future_new_for_object (gusb_device)),
+                  NULL))
+    g_assert_not_reached ();
 
   BS_EXIT;
 }
@@ -318,19 +319,17 @@ elgato_device_provider_finalize (GObject *object)
 {
   ElgatoDeviceProvider *self = (ElgatoDeviceProvider *)object;
 
-  g_mutex_lock (&self->added.mutex);
-  g_clear_handle_id (&self->added.idle_id, g_source_remove);
-  g_mutex_unlock (&self->added.mutex);
+  if (self->quit_fiber)
+    {
+      dex_promise_resolve_boolean (self->quit_fiber, TRUE);
+      g_clear_pointer (&self->quit_fiber, dex_unref);
+    }
 
-  g_mutex_lock (&self->removed.mutex);
-  g_clear_handle_id (&self->removed.idle_id, g_source_remove);
-  g_mutex_unlock (&self->removed.mutex);
+  g_clear_pointer (&self->added_devices, dex_unref);
+  g_clear_pointer (&self->removed_devices, dex_unref);
 
   g_clear_object (&self->devices);
   g_clear_object (&self->gusb_context);
-
-  g_mutex_clear (&self->added.mutex);
-  g_mutex_clear (&self->removed.mutex);
 
   G_OBJECT_CLASS (elgato_device_provider_parent_class)->finalize (object);
 }
@@ -348,15 +347,18 @@ elgato_device_provider_init (ElgatoDeviceProvider *self)
 {
   self->devices = g_list_store_new (BS_TYPE_DEVICE);
 
-  g_mutex_init (&self->added.mutex);
-  g_mutex_init (&self->removed.mutex);
-
   self->gusb_context = g_usb_context_new (NULL);
   if (self->gusb_context)
     {
+      self->quit_fiber = dex_promise_new ();
+      self->added_devices = dex_channel_new (0);
+      self->removed_devices = dex_channel_new (0);
+
       enumerate_devices (self);
       g_signal_connect (self->gusb_context, "device-added", G_CALLBACK (on_gusb_context_device_added_cb), self);
       g_signal_connect (self->gusb_context, "device-removed", G_CALLBACK (on_gusb_context_device_removed_cb), self);
+
+      dex_future_disown (dex_scheduler_spawn (NULL, 0, devices_changed_fiber, self, NULL));
     }
 
   g_signal_connect (self->devices, "items-changed", G_CALLBACK (on_devices_items_changed_cb), self);
