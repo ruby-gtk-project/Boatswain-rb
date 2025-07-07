@@ -24,9 +24,13 @@
 #include "bs-init.h"
 #include "bs-log-private.h"
 
+#include <libdex.h>
+
 void
 bs_init (void)
 {
+  dex_init ();
+
   bs_log_init ();
   bs_event_init_types_once ();
   /* FIXME: propagate error */
