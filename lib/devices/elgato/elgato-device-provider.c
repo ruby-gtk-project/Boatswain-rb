@@ -237,10 +237,8 @@ on_gusb_context_device_added_cb (GUsbContext          *gusb_context,
   if (device_type == G_TYPE_NONE)
     BS_RETURN ();
 
-  if (!dex_await (dex_channel_send (self->added_devices,
-                                    dex_future_new_for_object (usb_device)),
-                  NULL))
-    g_assert_not_reached ();
+  dex_future_disown (dex_channel_send (self->added_devices,
+                                       dex_future_new_for_object (usb_device)));
 
   BS_EXIT;
 }
@@ -255,10 +253,8 @@ on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
   if (g_usb_device_get_vid (gusb_device) != ELGATO_SYSTEMS_VENDOR_ID)
     BS_RETURN ();
 
-  if (!dex_await (dex_channel_send (self->removed_devices,
-                                    dex_future_new_for_object (gusb_device)),
-                  NULL))
-    g_assert_not_reached ();
+  dex_future_disown (dex_channel_send (self->removed_devices,
+                                       dex_future_new_for_object (gusb_device)));
 
   BS_EXIT;
 }
