@@ -36,7 +36,8 @@
 #include "elgato-stream-deck.h"
 
 #include <glib/gi18n.h>
-#include <hidapi.h>
+#include <glib-unix.h>
+#include <hidapi_libusb.h>
 
 #define POLL_RATE_MS 16
 
@@ -52,7 +53,7 @@ typedef struct
 
 typedef struct
 {
-  GUsbDevice *gusb_device;
+  int usb_device_fd;
   hid_device *handle;
 
   GSource *poll_source;
@@ -71,7 +72,7 @@ G_DEFINE_QUARK (ElgatoStreamDeck, elgato_stream_deck_error);
 
 enum {
   PROP_0,
-  PROP_GUSB_DEVICE,
+  PROP_USB_DEVICE_FD,
   N_PROPS,
 };
 
@@ -231,12 +232,9 @@ elgato_stream_deck_initable_init (GInitable     *initable,
 
   BS_ENTRY;
 
-  g_assert (priv->gusb_device != NULL);
-  g_assert (g_usb_device_get_vid (priv->gusb_device) == ELGATO_SYSTEMS_VENDOR_ID);
+  g_assert (priv->usb_device_fd != -1);
 
-  priv->handle = hid_open (g_usb_device_get_vid (priv->gusb_device),
-                           g_usb_device_get_pid (priv->gusb_device),
-                           NULL);
+  priv->handle = hid_libusb_wrap_sys_device (priv->usb_device_fd, -1);
 
   if (!priv->handle)
     {
@@ -330,34 +328,11 @@ elgato_stream_deck_finalize (GObject *object)
   if (priv->poll_source)
     g_source_destroy (priv->poll_source);
 
-  if (priv->gusb_device)
-    g_usb_device_close (priv->gusb_device, NULL);
-
   g_clear_pointer (&priv->poll_source, g_source_unref);
   g_clear_pointer (&priv->handle, hid_close);
-  g_clear_object (&priv->gusb_device);
+  g_clear_fd (&priv->usb_device_fd, NULL);
 
   G_OBJECT_CLASS (elgato_stream_deck_parent_class)->finalize (object);
-}
-
-static void
-elgato_stream_deck_get_property (GObject    *object,
-                                 guint       prop_id,
-                                 GValue     *value,
-                                 GParamSpec *pspec)
-{
-  ElgatoStreamDeck *self = ELGATO_STREAM_DECK (object);
-  ElgatoStreamDeckPrivate *priv = elgato_stream_deck_get_instance_private (self);
-
-  switch (prop_id)
-    {
-    case PROP_GUSB_DEVICE:
-      g_value_set_object (value, priv->gusb_device);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
 }
 
 static void
@@ -371,10 +346,8 @@ elgato_stream_deck_set_property (GObject      *object,
 
   switch (prop_id)
     {
-    case PROP_GUSB_DEVICE:
-      g_assert (priv->gusb_device == NULL);
-      priv->gusb_device = g_value_dup_object (value);
-      g_assert (priv->gusb_device != NULL);
+    case PROP_USB_DEVICE_FD:
+      priv->usb_device_fd = g_value_get_int (value);
       break;
 
     default:
@@ -389,7 +362,6 @@ elgato_stream_deck_class_init (ElgatoStreamDeckClass *klass)
   BsDeviceClass *device_class = BS_DEVICE_CLASS (klass);
 
   object_class->finalize = elgato_stream_deck_finalize;
-  object_class->get_property = elgato_stream_deck_get_property;
   object_class->set_property = elgato_stream_deck_set_property;
 
   device_class->get_firmware_version = elgato_stream_deck_get_firmware_version;
@@ -397,9 +369,11 @@ elgato_stream_deck_class_init (ElgatoStreamDeckClass *klass)
   device_class->load = elgato_stream_deck_load;
   device_class->set_brightness = elgato_stream_deck_set_brightness;
 
-  properties[PROP_GUSB_DEVICE] = g_param_spec_object ("gusb-device", NULL, NULL,
-                                                      G_USB_TYPE_DEVICE,
-                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+  properties[PROP_USB_DEVICE_FD] = g_param_spec_int ("usb-device-fd", NULL, NULL,
+                                                     -1,
+                                                     G_MAXINT,
+                                                     -1,
+                                                     G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
@@ -407,28 +381,6 @@ elgato_stream_deck_class_init (ElgatoStreamDeckClass *klass)
 static void
 elgato_stream_deck_init (ElgatoStreamDeck *self)
 {
-}
-
-BsDevice *
-elgato_stream_deck_new (GUsbDevice  *gusb_device,
-                        GError     **out_error)
-{
-  return g_initable_new (ELGATO_TYPE_STREAM_DECK,
-                         NULL,
-                         out_error,
-                         "gusb-device", gusb_device,
-                         NULL);
-}
-
-GUsbDevice *
-elgato_stream_deck_get_gusb_device (ElgatoStreamDeck *self)
-{
-  ElgatoStreamDeckPrivate *priv;
-
-  g_assert (ELGATO_IS_STREAM_DECK (self));
-
-  priv = elgato_stream_deck_get_instance_private (self);
-  return priv->gusb_device;
 }
 
 hid_device *

@@ -35,7 +35,8 @@
 #include "elgato-stream-deck-plus.h"
 #include "elgato-stream-deck-xl.h"
 
-#include <gusb.h>
+#include <glib-unix.h>
+#include <gudev/gudev.h>
 #include <libdex.h>
 
 #define ELGATO_SYSTEMS_VENDOR_ID (0x0fd9)
@@ -44,11 +45,11 @@ struct _ElgatoDeviceProvider
 {
   PeasExtensionBase parent_instance;
 
-  guint device_added_idle_id;
-  guint device_removed_idle_id;
+  GUdevClient *gudev_client;
+  gulong gudev_client_uevent_handler;
 
   GListStore *devices;
-  GUsbContext *gusb_context;
+  GHashTable *syspaths_to_devices;
 
   DexChannel *added_devices;
   DexChannel *removed_devices;
@@ -65,6 +66,25 @@ G_DEFINE_FINAL_TYPE_WITH_CODE (ElgatoDeviceProvider, elgato_device_provider, PEA
 /*
  * Auxiliary methods
  */
+
+static gboolean
+is_gudev_device_suitable (GUdevDevice *device)
+{
+  const char *devtype = NULL;
+
+  g_assert (G_UDEV_IS_DEVICE (device));
+  g_return_val_if_fail (g_str_equal (g_udev_device_get_subsystem (device), "usb"), FALSE);
+  g_return_val_if_fail (g_udev_device_get_sysfs_path (device) != NULL, FALSE);
+
+  devtype = g_udev_device_get_property (device, "DEVTYPE");
+  if (!devtype || g_strcmp0 (devtype, "usb_device"))
+    return FALSE;
+
+  if (!g_udev_device_get_device_file (device))
+    return FALSE;
+
+  return TRUE;
+}
 
 static GType
 find_elgato_device_gtype (uint16_t product_id)
@@ -94,44 +114,94 @@ find_elgato_device_gtype (uint16_t product_id)
   return G_TYPE_NONE;
 }
 
+static uint16_t
+usb_id_str_to_hex (const char *id)
+{
+  char *end;
+  guint64 ret;
+  g_return_val_if_fail (strlen (id) == 4, 0);
+  ret = g_ascii_strtoull (id, &end, 16);
+  g_return_val_if_fail (end - id == 4, 0);
+  g_return_val_if_fail (ret <= UINT16_MAX, 0);
+  return (uint16_t) ret;
+}
+
+static void
+add_device (GUdevDevice          *gudev_device,
+            ElgatoDeviceProvider *self)
+{
+  const char *vendor_id;
+  const char *product_id;
+  const char *device_file;
+  const char *syspath;
+  GType device_type;
+  g_autoptr (BsDevice) device = NULL;
+  g_autofd int fd = -1;
+  g_autoptr (GError) error = NULL;
+
+  BS_ENTRY;
+
+  g_assert (BS_IS_MAIN_THREAD ());
+
+  if (!is_gudev_device_suitable (gudev_device))
+    BS_RETURN ();
+
+  // NOTE: ID_VENDOR_ID, ID_USB_VENDOR_ID, ID_MODEL_ID, ID_USB_MODEL_ID properties return NULL
+  vendor_id = g_udev_device_get_sysfs_attr (gudev_device, "idVendor");
+  product_id = g_udev_device_get_sysfs_attr (gudev_device, "idProduct");
+  device_file = g_udev_device_get_device_file (gudev_device);
+  syspath = g_udev_device_get_sysfs_path (gudev_device);
+
+  g_assert (vendor_id != NULL);
+  g_assert (product_id != NULL);
+
+  if (usb_id_str_to_hex (vendor_id) != ELGATO_SYSTEMS_VENDOR_ID)
+    BS_RETURN ();
+
+  device_type = find_elgato_device_gtype (usb_id_str_to_hex (product_id));
+
+  if (device_type == G_TYPE_NONE)
+    BS_RETURN ();
+
+  fd = open (device_file, O_RDWR);
+
+  if (fd == -1)
+    {
+      g_warning ("Failed to open device file, %s", g_strerror (errno));
+      BS_RETURN ();
+    }
+
+  device = g_initable_new (device_type,
+                           NULL,
+                           &error,
+                           "usb-device-fd", g_steal_fd (&fd),
+                           NULL);
+
+  g_debug ("Found %s (%s) at %s",
+           bs_device_get_name (device),
+           bs_device_get_serial_number (device),
+           syspath);
+
+  g_list_store_append (self->devices, device);
+  g_hash_table_insert (self->syspaths_to_devices, g_strdup (syspath), device);
+
+  BS_EXIT;
+}
+
 static void
 enumerate_devices (ElgatoDeviceProvider *self)
 {
-  g_autoptr (GPtrArray) devices = NULL;
+  g_autoptr (GUdevEnumerator) gudev_enumerator = NULL;
+  g_autolist (GUdevDevice) gudev_devices = NULL;
 
-  g_usb_context_enumerate (self->gusb_context);
+  BS_ENTRY;
 
-  devices = g_usb_context_get_devices (self->gusb_context);
-  for (unsigned int i = 0; devices && i < devices->len; i++)
-    {
-      g_autoptr (BsDevice) device = NULL;
-      g_autoptr (GError) error = NULL;
-      GUsbDevice *usb_device;
-      GType device_type;
+  gudev_enumerator = g_udev_enumerator_new (self->gudev_client);
+  g_udev_enumerator_add_match_property (gudev_enumerator, "DEVTYPE", "usb_device");
+  gudev_devices = g_udev_enumerator_execute (gudev_enumerator);
+  g_list_foreach (gudev_devices, (GFunc) add_device, self);
 
-      usb_device = g_ptr_array_index (devices, i);
-
-      if (g_usb_device_get_vid (usb_device) != ELGATO_SYSTEMS_VENDOR_ID)
-        continue;
-
-      device_type = find_elgato_device_gtype (g_usb_device_get_pid (usb_device));
-      if (device_type == G_TYPE_NONE)
-        continue;
-
-      device = g_initable_new (device_type,
-                               NULL,
-                               &error,
-                               "gusb-device", usb_device,
-                               NULL);
-
-      g_debug ("Found %s (%s) at bus %hu, port %hu",
-               bs_device_get_name (device),
-               bs_device_get_serial_number (device),
-               g_usb_device_get_bus (usb_device),
-               g_usb_device_get_port_number (usb_device));
-
-      g_list_store_append (self->devices, device);
-    }
+  BS_EXIT;
 }
 
 
@@ -166,47 +236,40 @@ devices_changed_fiber (gpointer data)
         {
           if (dex_future_is_resolved (added_device_future))
             {
-              g_autoptr (ElgatoStreamDeck) stream_deck = NULL;
-              g_autoptr (GUsbDevice) gusb_device = NULL;
+              g_autoptr (GUdevDevice) gudev_device = NULL;
               g_autoptr (GError) error = NULL;
-              GType device_type;
 
-              gusb_device = dex_await_object (g_steal_pointer (&added_device_future), &error);
+              gudev_device = dex_await_object (g_steal_pointer (&added_device_future), &error);
               if (error)
                 return dex_future_new_for_error (g_steal_pointer (&error));
 
-              g_assert (g_usb_device_get_vid (gusb_device) == ELGATO_SYSTEMS_VENDOR_ID);
-
-              device_type = find_elgato_device_gtype (g_usb_device_get_pid (gusb_device));
-              g_assert (device_type != G_TYPE_NONE);
-
-              stream_deck = g_initable_new (device_type,
-                                       NULL,
-                                       &error,
-                                       "gusb-device", gusb_device,
-                                       NULL);
-
-              g_list_store_append (self->devices, stream_deck);
+              add_device (gudev_device, self);
             }
 
           if (dex_future_is_resolved (removed_device_future))
             {
-              g_autoptr (GUsbDevice) gusb_device = NULL;
+              g_autoptr (GUdevDevice) gudev_device = NULL;
+              const char *syspath;
+              BsDevice *device = NULL;
               g_autoptr (GError) error = NULL;
 
-              gusb_device = dex_await_object (g_steal_pointer (&removed_device_future), &error);
+              gudev_device = dex_await_object (g_steal_pointer (&removed_device_future), &error);
               if (error)
                 return dex_future_new_for_error (g_steal_pointer (&error));
 
-              g_assert (g_usb_device_get_vid (gusb_device) == ELGATO_SYSTEMS_VENDOR_ID);
+              syspath = g_udev_device_get_sysfs_path (gudev_device);
+              device = g_hash_table_lookup (self->syspaths_to_devices, syspath);
+
+              g_assert (device != NULL);
 
               for (unsigned int i = 0; i < g_list_model_get_n_items (G_LIST_MODEL (self->devices)); i++)
                 {
-                  g_autoptr (ElgatoStreamDeck) stream_deck = g_list_model_get_item (G_LIST_MODEL (self->devices), i);
+                  g_autoptr (BsDevice) stream_deck = g_list_model_get_item (G_LIST_MODEL (self->devices), i);
 
-                  if (elgato_stream_deck_get_gusb_device (stream_deck) == gusb_device)
+                  if (stream_deck == device)
                     {
-                      g_debug ("Removing device %p", stream_deck);
+                      g_message ("Removing device %s", syspath);
+                      g_hash_table_remove (self->syspaths_to_devices, syspath);
                       g_list_store_remove (self->devices, i);
                       break;
                     }
@@ -222,39 +285,64 @@ devices_changed_fiber (gpointer data)
 }
 
 static void
-on_gusb_context_device_added_cb (GUsbContext          *gusb_context,
-                                 GUsbDevice           *usb_device,
-                                 ElgatoDeviceProvider *self)
+on_gudev_client_uevent_cb (GUdevClient          *gudev_client,
+                           const char           *uevent_action,
+                           GUdevDevice          *gudev_device,
+                           ElgatoDeviceProvider *self)
 {
-  GType device_type;
+  static const char *supported_uevent_actions[] = {
+    "add",
+    "remove",
+    NULL
+  };
 
   BS_ENTRY;
 
-  if (g_usb_device_get_vid (usb_device) != ELGATO_SYSTEMS_VENDOR_ID)
+  if (!g_strv_contains (supported_uevent_actions, uevent_action))
     BS_RETURN ();
 
-  device_type = find_elgato_device_gtype (g_usb_device_get_pid (usb_device));
-  if (device_type == G_TYPE_NONE)
+  if (!is_gudev_device_suitable (gudev_device))
     BS_RETURN ();
 
-  dex_future_disown (dex_channel_send (self->added_devices,
-                                       dex_future_new_for_object (usb_device)));
+  if (g_str_equal (uevent_action, "add"))
+    {
+      const char *vendor_id;
+      const char *product_id;
+      GType device_type;
 
-  BS_EXIT;
-}
+      // NOTE: ID_VENDOR_ID, ID_USB_VENDOR_ID, ID_MODEL_ID, ID_USB_MODEL_ID properties return NULL
+      vendor_id = g_udev_device_get_sysfs_attr (gudev_device, "idVendor");
+      product_id = g_udev_device_get_sysfs_attr (gudev_device, "idProduct");
 
-static void
-on_gusb_context_device_removed_cb (GUsbContext     *gusb_context,
-                                   GUsbDevice      *gusb_device,
-                                   ElgatoDeviceProvider *self)
-{
-  BS_ENTRY;
+      g_assert (vendor_id != NULL);
+      g_assert (product_id != NULL);
 
-  if (g_usb_device_get_vid (gusb_device) != ELGATO_SYSTEMS_VENDOR_ID)
-    BS_RETURN ();
+      if (usb_id_str_to_hex (vendor_id) != ELGATO_SYSTEMS_VENDOR_ID)
+        BS_RETURN ();
 
-  dex_future_disown (dex_channel_send (self->removed_devices,
-                                       dex_future_new_for_object (gusb_device)));
+      device_type = find_elgato_device_gtype (usb_id_str_to_hex (product_id));
+      if (device_type == G_TYPE_NONE)
+        BS_RETURN ();
+
+      dex_future_disown (dex_channel_send (self->added_devices,
+                                           dex_future_new_for_object (gudev_device)));
+      BS_RETURN ();
+    }
+
+  if (g_str_equal (uevent_action, "remove"))
+    {
+      const char *syspath;
+
+      syspath = g_udev_device_get_sysfs_path (gudev_device);
+
+      if (g_hash_table_contains (self->syspaths_to_devices, syspath))
+        dex_future_disown (dex_channel_send (self->removed_devices,
+                                             dex_future_new_for_object (gudev_device)));
+
+      BS_RETURN ();
+    }
+
+  g_assert_not_reached ();
 
   BS_EXIT;
 }
@@ -315,6 +403,9 @@ elgato_device_provider_finalize (GObject *object)
 {
   ElgatoDeviceProvider *self = (ElgatoDeviceProvider *)object;
 
+  if (self->gudev_client_uevent_handler)
+    g_signal_handler_disconnect (self->gudev_client, self->gudev_client_uevent_handler);
+
   if (self->quit_fiber)
     {
       dex_promise_resolve_boolean (self->quit_fiber, TRUE);
@@ -325,7 +416,9 @@ elgato_device_provider_finalize (GObject *object)
   g_clear_pointer (&self->removed_devices, dex_unref);
 
   g_clear_object (&self->devices);
-  g_clear_object (&self->gusb_context);
+  g_clear_object (&self->gudev_client);
+
+  g_hash_table_unref (self->syspaths_to_devices);
 
   G_OBJECT_CLASS (elgato_device_provider_parent_class)->finalize (object);
 }
@@ -341,18 +434,23 @@ elgato_device_provider_class_init (ElgatoDeviceProviderClass *klass)
 static void
 elgato_device_provider_init (ElgatoDeviceProvider *self)
 {
-  self->devices = g_list_store_new (BS_TYPE_DEVICE);
+  static const char * const gudev_subsystems[] = { "usb", NULL };
 
-  self->gusb_context = g_usb_context_new (NULL);
-  if (self->gusb_context)
+  self->devices = g_list_store_new (BS_TYPE_DEVICE);
+  self->syspaths_to_devices = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  self->gudev_client = g_udev_client_new (gudev_subsystems);
+  if (self->gudev_client)
     {
       self->quit_fiber = dex_promise_new ();
       self->added_devices = dex_channel_new (0);
       self->removed_devices = dex_channel_new (0);
 
       enumerate_devices (self);
-      g_signal_connect (self->gusb_context, "device-added", G_CALLBACK (on_gusb_context_device_added_cb), self);
-      g_signal_connect (self->gusb_context, "device-removed", G_CALLBACK (on_gusb_context_device_removed_cb), self);
+      self->gudev_client_uevent_handler = g_signal_connect (self->gudev_client,
+                                                            "uevent",
+                                                            G_CALLBACK (on_gudev_client_uevent_cb),
+                                                            self);
 
       dex_future_disown (dex_scheduler_spawn (NULL, 0, devices_changed_fiber, self, NULL));
     }

@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <gusb.h>
 #include <hidapi.h>
 
 #include "bs-device-private.h"
@@ -64,10 +63,6 @@ struct _ElgatoStreamDeckClass
   gboolean (*read_state) (ElgatoStreamDeck *self);
 };
 
-BsDevice * elgato_stream_deck_new (GUsbDevice  *gusb_device,
-                                   GError     **out_error);
-
-GUsbDevice * elgato_stream_deck_get_gusb_device (ElgatoStreamDeck *self);
 hid_device * elgato_stream_deck_get_hid_device  (ElgatoStreamDeck *self);
 
 G_END_DECLS
