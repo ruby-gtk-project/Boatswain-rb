@@ -15,7 +15,7 @@
     <file>bs-touchscreen-slot-editor.ui</file>
     <file>bs-touchscreen-slot-widget.ui</file>
     <file>bs-window.ui</file>
-    <file>gtk/help-overlay.ui</file>
+    <file>shortcuts-dialog.ui</file>
     <file>style.css</file>
     <file>style-hc.css</file>
   </gresource>

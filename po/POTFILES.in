@@ -25,7 +25,7 @@ src/bs-touchscreen-slot-editor.c
 src/bs-touchscreen-slot-editor.ui
 src/bs-window.c
 src/bs-window.ui
-src/gtk/help-overlay.ui
+src/shortcuts-dialog.ui
 src/plugins/default/default-action-factory.c
 src/plugins/default/default-brightness-action.c
 src/plugins/default/default-multi-action-editor.c
