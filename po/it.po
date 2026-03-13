@@ -1,0 +1,658 @@
+# Italian translation for boatswain.
+# Copyright (C) 2023 boatswain's COPYRIGHT HOLDER
+# This file is distributed under the same license as the boatswain package.
+# Davide Ferracin <davide.ferracin@protonmail.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: boatswain main\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
+"POT-Creation-Date: 2024-03-14 13:01+0000\n"
+"PO-Revision-Date: 2024-03-19 22:32+0200\n"
+"Last-Translator: Davide Ferracin <davide.ferracin@protonmail.com>\n"
+"Language-Team: Italian <gnome-it-list@gnome.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: data/com.feaneron.Boatswain.desktop.in.in:3
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:6
+msgid "Boatswain"
+msgstr "Boatswain"
+
+#. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
+#: data/com.feaneron.Boatswain.desktop.in.in:11
+msgid "stream deck;streaming;deck;elgato;"
+msgstr "stream deck;streaming;deck;elgato;"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:12
+msgid "Control your Elgato Stream Decks"
+msgstr "Controlla i tuoi Stream Deck Elgato"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:14
+msgid "Boatswain allows you to control Elgato Stream Deck devices."
+msgstr "Boatswain permette di controllare i dispositivi Stream Deck di Elgato."
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:15
+msgid "With Boatswain you will be able to:"
+msgstr "Con Boatswain è possibile:"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:17
+msgid "Organize your actions in pages and profiles"
+msgstr "Organizzare le proprie azioni in pagine e profili"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:18
+msgid "Set custom icons to actions"
+msgstr "Impostare icone personalizzate per le azioni"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:19
+msgid "Control your music player"
+msgstr "Controllare il proprio riproduttore musicale"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:20
+msgid "Play sound effects during your streams"
+msgstr "Riprodurre effetti sonori durante i propri stream"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:21
+msgid ""
+"Control OBS Studio using Stream Deck (requires the obs-websocket extension)"
+msgstr ""
+"Controllare OBS Studio usando lo Stream Deck (richiede l'estensione obs-"
+"websocket)"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:22
+msgid "Send network requests"
+msgstr "Inviare richieste di rete"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:23
+msgid "Keep track of your gaming score"
+msgstr "Tenere traccia del proprio punteggio nei giochi"
+
+#: data/com.feaneron.Boatswain.appdata.xml.in.in:24
+msgid "Open files and launch applications"
+msgstr "Aprire file ed eseguire applicazioni"
+
+#: data/com.feaneron.Boatswain.gschema.xml:7
+#: data/com.feaneron.Boatswain.gschema.xml:8
+msgid "Restore token for the desktop controller"
+msgstr "Ripristina i token per il controller del desktop"
+
+#: src/bs-application.c:54
+msgid "Enable debug messages"
+msgstr "Abilita messaggi di debug"
+
+#: src/bs-application.c:117
+#, c-format
+msgid "Connected to %d device"
+msgid_plural "Connected to %d devices"
+msgstr[0] "Connesso a %d dispositivo"
+msgstr[1] "Connesso a %d dispositivi"
+
+#: src/bs-application.c:169
+msgid ""
+"Boatswain needs to run in background to detect and execute Stream Deck "
+"actions."
+msgstr ""
+"Boatswain deve poter essere eseguito sullo sfondo in modo da rilevare ed "
+"eseguire le azioni dello Stream Deck."
+
+#: src/bs-button-editor.c:388
+msgid "All supported formats"
+msgstr "Tutti i formati supportati"
+
+#: src/bs-button-editor.c:397
+msgid "Select icon"
+msgstr "Seleziona icona"
+
+#: src/bs-button-editor.c:398
+#: src/plugins/network/network-http-action-prefs.c:147
+msgid "Open"
+msgstr "Apri"
+
+#: src/bs-button-editor.ui:14
+msgid "Button Properties"
+msgstr "Proprietà dei pulsanti"
+
+#: src/bs-button-editor.ui:190
+msgid "Name"
+msgstr "Nome"
+
+#: src/bs-button-editor.ui:197
+msgid "Background Color"
+msgstr "Colore di sfondo"
+
+#: src/bs-button-editor.ui:233
+msgid "Select action"
+msgstr "Seleziona azione"
+
+#: src/bs-button-editor.ui:254
+msgid "Remove Action"
+msgstr "Rimuovi azione"
+
+#: src/bs-button-editor.ui:277
+#: src/plugins/default/default-multi-action-editor.ui:67
+msgid "Actions"
+msgstr "Azioni"
+
+#: src/bs-profile.c:184
+msgid "Unnamed profile"
+msgstr "Profilo senza nome"
+
+#: src/bs-profile-row.ui:8 src/bs-profile-row.ui:87
+msgid "Rename"
+msgstr "Rinomina"
+
+#: src/bs-profile-row.ui:14
+msgid "Move up"
+msgstr "Sposta in sù"
+
+#: src/bs-profile-row.ui:18
+msgid "Move down"
+msgstr "Sposta in giù"
+
+#: src/bs-profile-row.ui:24
+msgid "Delete"
+msgstr "Elimina"
+
+#: src/bs-stream-deck.c:326
+msgid "Default"
+msgstr "Predefinito"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:996 src/bs-stream-deck.c:1021
+msgid "Stream Deck Mini"
+msgstr "Stream Deck Mini"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:1046 src/bs-stream-deck.c:1071
+#: src/plugins/default/default-switch-profile-action.c:283
+#: src/plugins/default/default.plugin.desktop.in:3
+msgid "Stream Deck"
+msgstr "Stream Deck"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:1096 src/bs-stream-deck.c:1121
+msgid "Stream Deck XL"
+msgstr "Stream Deck XL"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:1146
+msgid "Stream Deck MK.2"
+msgstr "Stream Deck MK.2"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:1171
+msgid "Stream Deck Pedal"
+msgstr "Stream Deck Pedal"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: src/bs-stream-deck.c:1196
+msgid "Stream Deck +"
+msgstr "Stream Deck +"
+
+#: src/bs-stream-deck.c:1275
+msgid "Feaneron Hangar Original"
+msgstr "Feaneron Hangar Original"
+
+#: src/bs-stream-deck.c:1297
+msgid "Feaneron Hangar XL"
+msgstr "Feaneron Hangar XL"
+
+#: src/bs-stream-deck-editor.ui:61
+msgid "Select a button"
+msgstr "Seleziona un pulsante"
+
+#: src/bs-window.ui:113
+msgid "New profile…"
+msgstr "Nuovo profilo…"
+
+#: src/bs-window.ui:138 src/plugins/default/default-action-factory.c:54
+msgid "Brightness"
+msgstr "Luminosità"
+
+#: src/bs-window.ui:174
+msgid "Firmware"
+msgstr "Firmware"
+
+#: src/bs-window.ui:232
+msgid "No Stream Deck Found"
+msgstr "Nessuno Stream Deck trovato"
+
+#: src/bs-window.ui:233
+msgid "Plug in a Stream Deck device to use it."
+msgstr "Connettere uno Stream Deck per usarlo."
+
+#: src/bs-window.ui:256
+msgid "_Keyboard Shortcuts"
+msgstr "_Scorciatoie da tastiera"
+
+#: src/bs-window.ui:260
+msgid "_About Boatswain"
+msgstr "_Informazioni su Boatswain"
+
+#: src/bs-window.ui:264
+msgid "_Quit"
+msgstr "_Esci"
+
+#: src/bs-window.c:272
+msgid "Repository"
+msgstr "Repository"
+
+#: src/gtk/help-overlay.ui:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Generali"
+
+#: src/gtk/help-overlay.ui:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Mostra scorciatoie"
+
+#: src/gtk/help-overlay.ui:20
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Esce"
+
+#: src/plugins/default/default-action-factory.c:42
+msgid "Folder"
+msgstr "Cartella"
+
+#: src/plugins/default/default-action-factory.c:48
+msgid "Switch Profile"
+msgstr "Cambia profilo"
+
+#: src/plugins/default/default-action-factory.c:60
+msgid "Multiple Actions"
+msgstr "Azioni multiple"
+
+#. Translators: "Constant" as in "Constant value of brightness"
+#: src/plugins/default/default-brightness-action.c:141
+msgid "Constant"
+msgstr "Costante"
+
+#: src/plugins/default/default-brightness-action.c:142
+msgid "Increase"
+msgstr "Aumenta"
+
+#: src/plugins/default/default-brightness-action.c:143
+msgid "Decrease"
+msgstr "Riduci"
+
+#: src/plugins/default/default-brightness-action.c:146
+msgid "Mode"
+msgstr "Modo"
+
+#: src/plugins/default/default-brightness-action.c:153
+msgid "Value"
+msgstr "Valore"
+
+#: src/plugins/default/default-multi-action-editor.c:310
+#: src/plugins/default/default-multi-action-row.c:143
+msgid "Delay"
+msgstr "Ritardo"
+
+#: src/plugins/default/default-multi-action-editor.ui:31
+msgid "Add action"
+msgstr "Aggiungi azione"
+
+#: src/plugins/default/default-multi-action-editor.ui:49
+msgid "Add Action"
+msgstr "Aggiungi azione"
+
+#: src/plugins/default/default-multi-action-editor.ui:73
+msgid "Others"
+msgstr "Altri"
+
+#: src/plugins/default/default-multi-action-editor.ui:83
+msgid "Settings"
+msgstr "Impostazioni"
+
+#: src/plugins/default/default-switch-profile-action.c:306
+msgid "Profile"
+msgstr "Profilo"
+
+#: src/plugins/desktop/desktop-action-factory.c:41
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:257
+msgid "Keyboard Shortcut"
+msgstr "Scorciatoie da tastiera"
+
+#: src/plugins/desktop/desktop-action-factory.c:42
+msgid "Trigger a keyboard shortcut"
+msgstr "Attiva una scorciatoia da tastiera"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:7
+msgid "Set Shortcut"
+msgstr "Imposta scorciatoia"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:66
+msgid "Press Esc to cancel"
+msgstr "Premere Esc per annullare"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:100
+msgid "_Cancel"
+msgstr "_Annulla"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:109
+msgid "_Set"
+msgstr "_Imposta"
+
+#: src/plugins/desktop/desktop.plugin.desktop.in:3
+msgid "Desktop"
+msgstr "Scrivania"
+
+#: src/plugins/gaming/gaming.js:37
+msgid "Score"
+msgstr "Punteggio"
+
+#: src/plugins/gaming/gaming.js:38
+msgid "Keep track of your score. Reset with a long press."
+msgstr "Tiene traccia del punteggio. Premere a lungo per reimpostare."
+
+#: src/plugins/gaming/gaming.plugin.desktop.in:3
+msgid "Gaming"
+msgstr "Videogioco"
+
+#: src/plugins/gaming/score.js:39
+msgid "score.txt"
+msgstr "punteggio.txt"
+
+#. Restore score
+#: src/plugins/gaming/score.js:322
+msgid "Restore Score"
+msgstr "Ripristina punteggio"
+
+#: src/plugins/gaming/score.js:341
+msgid "Text Color"
+msgstr "Colore del testo"
+
+#: src/plugins/gaming/score.js:354
+msgid "Save to File"
+msgstr "Salva su file"
+
+#: src/plugins/gaming/score.js:355
+msgid ""
+"Save score to a text file. Other apps such as OBS Studio may read from it."
+msgstr ""
+"Salva il punteggio su un file di testo. Altre applicazioni come OBS Studio "
+"potranno leggerlo."
+
+#: src/plugins/gaming/score.js:364
+#: src/plugins/launcher/launcher-open-file-action.c:209
+#: src/plugins/network/network-http-action-prefs.ui:61
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
+msgid "File"
+msgstr "File"
+
+#: src/plugins/gaming/score.js:383
+msgid "Text File (.txt)"
+msgstr "File di testo (.txt)"
+
+#: src/plugins/launcher/launcher-action-factory.c:41
+msgid "Launch Application"
+msgstr "Esegui applicazione"
+
+#: src/plugins/launcher/launcher-action-factory.c:47
+msgid "Open File"
+msgstr "Apri file"
+
+#: src/plugins/launcher/launcher-action-factory.c:53
+msgid "Open URL"
+msgstr "Apri URL"
+
+#: src/plugins/launcher/launcher-launch-preferences.ui:8
+msgid "Choose Application"
+msgstr "Scegli applicazione"
+
+#: src/plugins/launcher/launcher-open-file-action.c:68
+msgid "No file selected"
+msgstr "Nessun file selezionato"
+
+#: src/plugins/launcher/launcher-open-file-action.c:156
+msgid "Select File"
+msgstr "Seleziona file"
+
+#: src/plugins/launcher/launcher-open-url-action.c:104
+msgid "URL"
+msgstr "URL"
+
+#: src/plugins/launcher/launcher.plugin.desktop.in:3
+msgid "Launcher"
+msgstr "Lanciatore"
+
+#: src/plugins/network/network-action-factory.c:41
+msgid "HTTP Request"
+msgstr "Richiesta HTTP"
+
+#: src/plugins/network/network-action-factory.c:42
+msgid "Send GET and POST requests to a webserver"
+msgstr "Invia richieste GET e POST ad un server web"
+
+#: src/plugins/network/network-http-action-prefs.c:146
+msgid "Select payload file"
+msgstr "Seleziona un file di carico utile"
+
+#: src/plugins/network/network-http-action-prefs.ui:14
+msgid "URI"
+msgstr "URI"
+
+#: src/plugins/network/network-http-action-prefs.ui:22
+msgid "Method"
+msgstr "Metodo"
+
+#: src/plugins/network/network-http-action-prefs.ui:45
+msgid "Payload source"
+msgstr "Fonte del carico utile"
+
+#: src/plugins/network/network-http-action-prefs.ui:82
+msgid "Edit payload"
+msgstr "Modifica carico utile"
+
+#: src/plugins/network/network-http-action-prefs.ui:99
+msgid "HTTP Request Payload"
+msgstr "Carico utile della richiesta HTTP"
+
+#: src/plugins/network/network.plugin.desktop.in:3
+msgid "Network"
+msgstr "Rete"
+
+#: src/plugins/obs-studio/obs-action-factory.c:46
+msgid "Switch Scene"
+msgstr "Cambia scena"
+
+#. Translators: "Record" is a verb here
+#: src/plugins/obs-studio/obs-action-factory.c:53
+msgid "Record"
+msgstr "Registra"
+
+#. Translators: "Stream" is a verb here
+#: src/plugins/obs-studio/obs-action-factory.c:60
+msgid "Stream"
+msgstr "Avvia stream"
+
+#: src/plugins/obs-studio/obs-action-factory.c:66
+msgid "Virtual Camera"
+msgstr "Fotocamera virtuale"
+
+#: src/plugins/obs-studio/obs-action-factory.c:72
+msgid "Toggle Mute"
+msgstr "Attiva/Disattiva audio"
+
+#: src/plugins/obs-studio/obs-action-factory.c:78
+msgid "Show / Hide Source"
+msgstr "Mostra/Nascondi sorgente"
+
+#: src/plugins/obs-studio/obs-connection.c:800
+msgid "Invalid password"
+msgstr "Password non valida"
+
+#: src/plugins/obs-studio/obs-connection-settings.ui:8
+msgid "Connection Settings"
+msgstr "Impostazioni connessione"
+
+#: src/plugins/obs-studio/obs-connection-settings.ui:12
+msgid "Host"
+msgstr "Host"
+
+#: src/plugins/obs-studio/obs-connection-settings.ui:20
+msgid "Port"
+msgstr "Porta"
+
+#: src/plugins/obs-studio/obs-connection-settings.ui:45
+msgid "Password"
+msgstr "Password"
+
+#: src/plugins/obs-studio/obs-switch-scene-action.c:283
+msgid "Scene"
+msgstr "Scena"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:124
+msgid "Toggle mute"
+msgstr "Attiva/Disattiva audio"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+msgid "Mute"
+msgstr "Muta"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+msgid "Unmute"
+msgstr "Riattiva audio"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:130
+msgid "Toggle visibility"
+msgstr "Mostra/Nascondi"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+msgid "Hide"
+msgstr "Nascondi"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+msgid "Show"
+msgstr "Mostra"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:479
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
+msgid "Behavior"
+msgstr "Comportamento"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:490
+msgid "Audio Source"
+msgstr "Sorgente audio"
+
+#: src/plugins/obs-studio/obs-toggle-source-action.c:492
+msgid "Source"
+msgstr "Sorgente"
+
+#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:3
+msgid "OBS Studio"
+msgstr "OBS Studio"
+
+#: src/plugins/soundboard/soundboard-action-factory.c:42
+msgid "Music Player"
+msgstr "Riproduttore musicale"
+
+#: src/plugins/soundboard/soundboard-action-factory.c:43
+msgid "Control the active music player"
+msgstr "Controlla il riproduttore musicale attivo"
+
+#: src/plugins/soundboard/soundboard-action-factory.c:48
+msgid "Play Audio"
+msgstr "Riproduci audio"
+
+#: src/plugins/soundboard/soundboard-mpris-action.c:197
+msgid "Next"
+msgstr "Successivo"
+
+#: src/plugins/soundboard/soundboard-mpris-action.c:198
+msgid "Pause"
+msgstr "Pausa"
+
+#: src/plugins/soundboard/soundboard-mpris-action.c:199
+msgid "Play"
+msgstr "Riproduci"
+
+#: src/plugins/soundboard/soundboard-mpris-action.c:200
+msgid "Previous"
+msgstr "Precedente"
+
+#: src/plugins/soundboard/soundboard-mpris-action.c:201
+msgid "Stop"
+msgstr "Ferma"
+
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
+msgid "Play / Pause"
+msgstr "Riproduci / Pausa"
+
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
+msgid "Playback Action"
+msgstr "Azione playback"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.c:96
+msgid "Audio Files"
+msgstr "File audio"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.c:103
+msgid "Select audio file"
+msgstr "Seleziona file audio"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:27
+msgid "Play / Stop"
+msgstr "Riproduci / Ferma"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:28
+msgid "Play / Overlap"
+msgstr "Riproduci / Sovrapponi"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:29
+msgid "Play / Restart"
+msgstr "Riproduci / Ricomincia"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:30
+msgid "Loop / Stop"
+msgstr "Ripeti / Ferma"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:31
+msgid "Press & Hold"
+msgstr "Tenere premuto"
+
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:40
+msgid "Volume"
+msgstr "Volume"
+
+#: src/plugins/soundboard/soundboard.plugin.desktop.in:3
+msgid "Soundboard"
+msgstr "Tavola dei suoni"
+
+#~ msgid "Georges Basile Stavracas Neto"
+#~ msgstr "Georges Basile Stavracas Neto"
+
+#~ msgid "Profiles"
+#~ msgstr "Profili"
+
+#~ msgid "Manage profiles…"
+#~ msgstr "Gestisci profili…"
+
+#~ msgid "Create"
+#~ msgstr "Crea"
+
+#~ msgid "Device"
+#~ msgstr "Dispositivo"
+
+#~ msgid "Serial Number"
+#~ msgstr "Numero di serie"
+
+#~ msgid "Devices"
+#~ msgstr "Dispositivi"
