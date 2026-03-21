@@ -2,295 +2,353 @@
 # Copyright © 2022 boatswain's COPYRIGHT HOLDER
 # This file is distributed under the same license as the boatswain package.
 # Мирослав Николић <miroslavnikolic@rocketmail.com>, 2022.
+# Марко Костић <marko.m.kostic@gmail.com>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2022-07-27 01:02+0000\n"
-"PO-Revision-Date: 2022-10-12 10:46+0200\n"
-"Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
+"POT-Creation-Date: 2026-01-31 21:11+0000\n"
+"PO-Revision-Date: 2026-03-21 10:57+0100\n"
+"Last-Translator: Марко М. Костић <marko.m.kostic@gmail.com>\n"
 "Language-Team: Serbian <српски <gnome-sr@googlegroups.org>>\n"
 "Language: sr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : n"
-"%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2\n"
+"Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2;\n"
+"X-Generator: Poedit 3.9\n"
 
-#: data/com.feaneron.Boatswain.desktop.in.in:3
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
+#: data/com.feaneron.Boatswain.desktop.in.in:2 data/com.feaneron.Boatswain.metainfo.xml.in.in:6
 msgid "Boatswain"
-msgstr "Боатсвајн"
+msgstr "Палубар"
 
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
-#: data/com.feaneron.Boatswain.desktop.in.in:11
+#: data/com.feaneron.Boatswain.desktop.in.in:10
 msgid "stream deck;streaming;deck;elgato;"
-msgstr "ток;дек тока;дек;stream deck;streaming;deck;elgato;"
+msgstr "ток;дек тока;дек;елгато;stream deck;streaming;deck;elgato;"
 
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:10
-#| msgid "Control your Elgato Stream Deck devices"
+#: data/com.feaneron.Boatswain.gschema.xml:7 data/com.feaneron.Boatswain.gschema.xml:8
+msgid "Restore token for the desktop controller"
+msgstr "Поврати жетон за управљач радне површи"
+
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:12
 msgid "Control your Elgato Stream Decks"
 msgstr "Управљајте вашим „Elgato Stream Deck“-овима"
 
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:12
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:14
 msgid "Boatswain allows you to control Elgato Stream Deck devices."
-msgstr ""
-"Боатсвајн вам омогућава да управљате вашим „Elgato Stream Deck“ уређајима."
-
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:13
-msgid "With Boatswain you will be able to:"
-msgstr "Са Боатсвајном бићете у могућности да:"
+msgstr "Палубар вам омогућава да управљате вашим „Elgato Stream Deck“ уређајима."
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:15
+msgid "With Boatswain you will be able to:"
+msgstr "Са Палубаром бићете у могућности да:"
+
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:17
 msgid "Organize your actions in pages and profiles"
 msgstr "Организујете ваше радње у страницама и профилима"
 
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:16
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:18
 msgid "Set custom icons to actions"
 msgstr "Поставите произвољне иконице за радње"
 
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:17
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:19
 msgid "Control your music player"
 msgstr "Управљате вашим програмом за пуштање музике"
 
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:18
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:20
 msgid "Play sound effects during your streams"
 msgstr "Пуштате звучна дејства за време ваших стримовања"
 
-#: data/com.feaneron.Boatswain.metainfo.xml.in.in:19
-msgid ""
-"Control OBS Studio using Stream Deck (requires the obs-websocket extension)"
-msgstr ""
-"Управљате OBS Студиом користећи „Stream Deck“ (захтева проширење „obs-"
-"websocket“)"
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:21
+msgid "Control OBS Studio using Stream Deck (requires the obs-websocket extension)"
+msgstr "Управљате OBS Студиом користећи „Stream Deck“ (захтева проширење „obs-websocket“)"
 
-#. Translators: please do NOT translate this
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:22
+msgid "Send network requests"
+msgstr "Шаљи мрежне захтеве"
+
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:23
-msgid "Georges Basile Stavracas Neto"
-msgstr "Џорџ Базиле Ставракас Нето"
+msgid "Keep track of your gaming score"
+msgstr "Пратите свој резултат у игри"
 
-#: src/bs-application.c:52
-msgid "Enable debug messages"
-msgstr "Укључи поруке прочишћавања"
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:24
+msgid "Open files and launch applications"
+msgstr "Отварајте датотеке и покрећите програме"
 
-#: src/bs-application.c:128
-msgid ""
-"Boatswain needs to run in background to detect and execute Stream Deck "
-"actions."
-msgstr ""
-"Боатсвајн треба да ради у позадини да би открио и извршио радње „Stream "
-"Deck“-а."
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mini.c:223
+#| msgid "Stream Deck Mini"
+msgid "Elgato Stream Deck Mini"
+msgstr "Elgato Stream Deck Mini"
 
-#: src/bs-profile.c:184
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-mk2.c:73
+#| msgid "Stream Deck MK.2"
+msgid "Elgato Stream Deck MK.2"
+msgstr "Elgato Stream Deck MK.2"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-neo.c:72
+#| msgid "No Stream Deck Found"
+msgid "Elgato Stream Deck Neo"
+msgstr "Elgato Stream Deck Neo"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-original.c:250
+#: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
+#| msgid "Stream Deck"
+msgid "Elgato Stream Deck"
+msgstr "Elgato Stream Deck"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-pedal.c:92
+#| msgid "No Stream Deck Found"
+msgid "Elgato Stream Deck Pedal"
+msgstr "Elgato Stream Deck Pedal"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-plus.c:384
+#| msgid "No Stream Deck Found"
+msgid "Elgato Stream Deck Plus"
+msgstr "Elgato Stream Deck Plus"
+
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Elgato translates their product names on your locale.
+#.
+#: lib/devices/elgato/elgato-stream-deck-xl.c:73
+#| msgid "Stream Deck XL"
+msgid "Elgato Stream Deck XL"
+msgstr "Elgato Stream Deck XL"
+
+#: lib/devices/mock/mock-device.c:108
+#| msgid "Feaneron Hangar XL"
+msgid "Feaneron Hangar Mild"
+msgstr "Feaneron Hangar Mild"
+
+#: lib/devices/mock/mock-device.c:125
+msgid "Feaneron Hangar XL"
+msgstr "Feaneron Hangar XL"
+
+#: lib/bs-device.c:361
+msgid "Default"
+msgstr "Основно"
+
+#: lib/bs-profile.c:185
 msgid "Unnamed profile"
 msgstr "Неименовани профил"
 
-#: src/bs-profile-row.ui:8 src/bs-profile-row.ui:58
+#: src/bs-application.c:48
+msgid "Enable debug messages"
+msgstr "Укључи поруке прочишћавања"
+
+#: src/bs-application.c:85
+#, c-format
+msgid "Connected to %d device"
+msgid_plural "Connected to %d devices"
+msgstr[0] "Повезан са %d уређајем"
+msgstr[1] "Повезан са %d уређаја"
+msgstr[2] "Повезан са %d уређаја"
+msgstr[3] "Повезан са %d уређајем"
+
+#: src/bs-application.c:137
+msgid "Boatswain needs to run in background to detect and execute Stream Deck actions."
+msgstr "Палубар треба да ради у позадини да би открио и извршио радње „Stream Deck“-а."
+
+#: src/bs-button-editor.c:327
+msgid "All supported formats"
+msgstr "Сви подржани формати"
+
+#: src/bs-button-editor.c:336
+msgid "Select icon"
+msgstr "Изаберите иконицу"
+
+#: src/bs-button-editor.c:337 src/plugins/network/network-http-action-prefs.c:147
+msgid "Open"
+msgstr "Отвори"
+
+#: src/bs-button-editor.ui:13
+msgid "Button Properties"
+msgstr "Својства дугмета"
+
+#: src/bs-button-editor.ui:189
+msgid "Name"
+msgstr "Назив"
+
+#: src/bs-button-editor.ui:196
+msgid "Background Color"
+msgstr "Боја позадине"
+
+#: src/bs-button-editor.ui:232 src/bs-touchscreen-slot-editor.ui:63
+msgid "Select Action"
+msgstr "Изабери радњу"
+
+#: src/bs-button-editor.ui:250 src/bs-touchscreen-slot-editor.ui:81
+msgid "Remove Action"
+msgstr "Уклони радњу"
+
+#: src/bs-button-editor.ui:272 src/bs-touchscreen-slot-editor.ui:103
+#: src/plugins/default/default-multi-action-editor.ui:67
+msgid "Actions"
+msgstr "Радње"
+
+#: src/bs-device-editor.ui:65
+msgid "Select a button"
+msgstr "Изаберите дугме"
+
+#: src/bs-profile-row.ui:8 src/bs-profile-row.ui:87
 msgid "Rename"
 msgstr "Преименуј"
 
 #: src/bs-profile-row.ui:14
-msgid "Move _up"
-msgstr "Помери _горе"
+msgid "Move up"
+msgstr "Помери навише"
 
 #: src/bs-profile-row.ui:18
-msgid "Move _down"
-msgstr "Помери _доле"
+msgid "Move down"
+msgstr "Помери наниже"
 
-#: src/bs-profiles-dialog.ui:26
-msgid "Profiles"
-msgstr "Профили"
+#: src/bs-profile-row.ui:24
+msgid "Delete"
+msgstr "Обриши"
 
-#: src/bs-stream-deck.c:277
-msgid "Default"
-msgstr "Основно"
+#. Adwaita
+#: src/bs-touchscreen-background-dialog.c:63 src/bs-touchscreen-background-dialog.ui:44
+msgid "Adwaita"
+msgstr "Адвајта"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:820
-msgid "Stream Deck Mini"
-msgstr "Stream Deck Mini"
+#: src/bs-touchscreen-background-dialog.c:64
+msgid "Glass"
+msgstr "Стакло"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:846 src/bs-stream-deck.c:872
-#: src/plugins/default/default-switch-profile-action.c:285
-msgid "Stream Deck"
-msgstr "Stream Deck"
+#: src/bs-touchscreen-background-dialog.c:65
+msgid "Oh Sheet!"
+msgstr "О, лист!"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:898
-msgid "Stream Deck XL"
-msgstr "Stream Deck XL"
+#: src/bs-touchscreen-background-dialog.c:66
+msgid "Pills"
+msgstr "Пилуле"
 
-#. Translators: this is a product name. In most cases, it is not translated.
-#. * Please verify if Elgato translates their product names on your locale.
-#.
-#: src/bs-stream-deck.c:924
-msgid "Stream Deck MK.2"
-msgstr "Stream Deck MK.2"
+#: src/bs-touchscreen-background-dialog.c:67
+msgid "Swoosh"
+msgstr "Фијук"
 
-#: src/bs-stream-deck.c:993
-msgid "Feaneron Hangar Original"
-msgstr "Feaneron Hangar Original"
+#: src/bs-touchscreen-background-dialog.ui:28 src/bs-touchscreen-background-dialog.ui:29
+#| msgid "Background Color"
+msgid "No Background"
+msgstr "Без позадине"
 
-#: src/bs-stream-deck.c:1016
-msgid "Feaneron Hangar XL"
-msgstr "Feaneron Hangar XL"
+#: src/bs-touchscreen-slot-editor.ui:14
+msgid "Touchscreen Properties"
+msgstr "Својства екрана на додир"
 
-#: src/bs-stream-deck-button-editor.c:380
-msgid "Select icon"
-msgstr "Изаберите иконицу"
+#: src/bs-touchscreen-slot-editor.ui:33
+msgid "Touchscreen"
+msgstr "Екран на додир"
 
-#: src/bs-stream-deck-button-editor.c:383
-#: src/plugins/soundboard/soundboard-play-action-prefs.c:98
-msgid "_Open"
-msgstr "_Отвори"
+#: src/bs-touchscreen-slot-editor.ui:51 src/bs-touchscreen-slot-editor.ui:58
+msgid "Action"
+msgstr "Радња"
 
-#: src/bs-stream-deck-button-editor.c:384
-#: src/plugins/soundboard/soundboard-play-action-prefs.c:99
-msgid "_Cancel"
-msgstr "_Откажи"
-
-#: src/bs-stream-deck-button-editor.c:388
-msgid "All supported formats"
-msgstr "Сви подржани формати"
-
-#: src/bs-stream-deck-button-editor.ui:17
-msgid "Select a button"
-msgstr "Изаберите дугме"
-
-#: src/bs-stream-deck-button-editor.ui:188
-msgid "Name"
-msgstr "Назив"
-
-#: src/bs-stream-deck-button-editor.ui:195
-msgid "Background Color"
-msgstr "Боја позадине"
-
-#: src/bs-stream-deck-button-editor.ui:226
-#: src/bs-stream-deck-button-editor.ui:288
-msgid "Select action"
-msgstr "Изаберите радњу"
-
-#: src/bs-stream-deck-button-editor.ui:247
-msgid "Remove Action"
-msgstr "Уклони радњу"
-
-#: src/bs-window.ui:13
-msgid "_New profile"
-msgstr "_Нови профил"
-
-#: src/bs-window.ui:19
-msgid "Manage profiles…"
-msgstr "Управљајте профилима…"
-
-#: src/bs-window.ui:61
-msgid "Create"
-msgstr "Направи"
-
-#: src/bs-window.ui:105
-msgid "Power"
-msgstr "Снага"
-
-#: src/bs-window.ui:121 src/plugins/default/default-action-factory.c:56
-msgid "Brightness"
-msgstr "Осветљеност"
-
-#: src/bs-window.ui:157
-msgid "Device"
-msgstr "Уређај"
-
-#: src/bs-window.ui:173
-msgid "Serial Number"
-msgstr "Серијски број"
-
-#: src/bs-window.ui:200
-msgid "Firmware"
-msgstr "Уграђени програм"
-
-#: src/bs-window.ui:248
-msgid "Devices"
-msgstr "Уређаји"
-
-#: src/bs-window.ui:292
+#: src/bs-window.ui:38
 msgid "No Stream Deck Found"
 msgstr "Нисам нашао „Stream Deck“"
 
-#: src/bs-window.ui:293
-msgid "Plug in a Stream Deck device to use it."
-msgstr "Прикључите „Stream Deck“ уређај да бисте га користили."
+#: src/bs-window.ui:39
+msgid "Plug in a Stream Deck device to use it"
+msgstr "Прикључите „Stream Deck“ уређај да бисте га користили"
 
-#: src/bs-window.ui:304
+#: src/bs-window.ui:155
+msgid "New profile…"
+msgstr "Нови профил…"
+
+#: src/bs-window.ui:180 src/plugins/default/default-action-factory.c:53
+msgid "Brightness"
+msgstr "Осветљеност"
+
+#: src/bs-window.ui:216
+msgid "Firmware"
+msgstr "Уграђени програм"
+
+#: src/bs-window.ui:275
 msgid "_Keyboard Shortcuts"
 msgstr "_Пречице тастатуре"
 
-#: src/bs-window.ui:308
+#: src/bs-window.ui:279
 msgid "_About Boatswain"
-msgstr "_О Боатсвајну"
+msgstr "_О Палубару"
 
-#: src/bs-window.ui:312
+#: src/bs-window.ui:283
 msgid "_Quit"
 msgstr "_Изађи"
 
-#: src/bs-window.c:329
-msgid "Repository"
-msgstr "Ризница"
-
-#: src/gtk/help-overlay.ui:11
+#: src/shortcuts-dialog.ui:6
 msgctxt "shortcut window"
 msgid "General"
 msgstr "Опште"
 
-#: src/gtk/help-overlay.ui:14
+#: src/shortcuts-dialog.ui:9
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "Прикажи пречице"
 
-#: src/gtk/help-overlay.ui:20
+#: src/shortcuts-dialog.ui:15
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Изађи"
 
-#: src/plugins/default/default-action-factory.c:44
+#: src/plugins/default/default-action-factory.c:41
 msgid "Folder"
 msgstr "Фасцикла"
 
-#: src/plugins/default/default-action-factory.c:50
+#: src/plugins/default/default-action-factory.c:47
 msgid "Switch Profile"
 msgstr "Промени профил"
 
-#: src/plugins/default/default-action-factory.c:62
+#: src/plugins/default/default-action-factory.c:59
 msgid "Multiple Actions"
 msgstr "Више радњи"
 
-#: src/plugins/default/default-brightness-action.c:140
+#: src/plugins/default/default-action-factory.c:65
+msgid "Go Up"
+msgstr "Иди горе"
+
+#. Translators: "Constant" as in "Constant value of brightness"
+#: src/plugins/default/default-brightness-action.c:141
 msgid "Constant"
 msgstr "Константно"
 
-#: src/plugins/default/default-brightness-action.c:141
+#: src/plugins/default/default-brightness-action.c:142
 msgid "Increase"
 msgstr "Повећај"
 
-#: src/plugins/default/default-brightness-action.c:142
+#: src/plugins/default/default-brightness-action.c:143
 msgid "Decrease"
 msgstr "Смањи"
 
-#: src/plugins/default/default-brightness-action.c:145
+#: src/plugins/default/default-brightness-action.c:146
 msgid "Mode"
 msgstr "Режим"
 
-#: src/plugins/default/default-brightness-action.c:152
+#: src/plugins/default/default-brightness-action.c:153
 msgid "Value"
 msgstr "Вредност"
 
-#: src/plugins/default/default-multi-action-editor.c:310
-#: src/plugins/default/default-multi-action-row.c:142
+#: src/plugins/default/default-multi-action-editor.c:303
+#: src/plugins/default/default-multi-action-row.c:141
 msgid "Delay"
 msgstr "Застој"
 
@@ -302,10 +360,6 @@ msgstr "Додајте радњу"
 msgid "Add Action"
 msgstr "Додај радњу"
 
-#: src/plugins/default/default-multi-action-editor.ui:67
-msgid "Actions"
-msgstr "Радње"
-
 #: src/plugins/default/default-multi-action-editor.ui:73
 msgid "Others"
 msgstr "Друго"
@@ -314,15 +368,96 @@ msgstr "Друго"
 msgid "Settings"
 msgstr "Поставке"
 
-#: src/plugins/default/default-switch-profile-action.c:308
+#: src/plugins/default/default-switch-profile-action.c:264
+#: src/plugins/default/default.plugin.desktop.in:2
+msgid "Stream Deck"
+msgstr "Stream Deck"
+
+#: src/plugins/default/default-switch-profile-action.c:287
 msgid "Profile"
 msgstr "Профил"
 
-#: src/plugins/launcher/launcher-action-factory.c:42
+#: src/plugins/desktop/desktop-action-factory.c:38
+#: src/plugins/desktop/desktop-keyboard-shortcut-action.c:277
+msgid "Keyboard Shortcut"
+msgstr "Пречица на тастатури"
+
+#: src/plugins/desktop/desktop-action-factory.c:39
+msgid "Trigger a keyboard shortcut"
+msgstr "Окидање пречице на тастатури"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:7
+msgid "Set Shortcut"
+msgstr "Постави пречицу"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:66
+msgid "Press Esc to cancel"
+msgstr "Притисните ESC да откажете"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:100
+msgid "_Cancel"
+msgstr "_Откажи"
+
+#: src/plugins/desktop/desktop-shortcut-dialog.ui:109
+msgid "_Set"
+msgstr "По_стави"
+
+#: src/plugins/desktop/desktop.plugin.desktop.in:2
+msgid "Desktop"
+msgstr "Радна површ"
+
+#: src/plugins/gaming/gaming.js:37
+msgid "Score"
+msgstr "Резултат"
+
+#: src/plugins/gaming/gaming.js:38
+msgid "Keep track of your score. Reset with a long press."
+msgstr "Пратите свој резултат. Ресетујте дугим притиском."
+
+#: src/plugins/gaming/gaming.plugin.desktop.in:2
+msgid "Gaming"
+msgstr "Игре"
+
+#: src/plugins/gaming/score.js:39
+msgid "score.txt"
+msgstr "rezultat.txt"
+
+#. Restore score
+#: src/plugins/gaming/score.js:352
+msgid "Restore Score"
+msgstr "Поврати резултат"
+
+#: src/plugins/gaming/score.js:371
+msgid "Text Color"
+msgstr "Боја текста"
+
+#: src/plugins/gaming/score.js:384
+msgid "Save to File"
+msgstr "Сачувај у датотеку"
+
+#: src/plugins/gaming/score.js:385
+msgid "Save score to a text file. Other apps such as OBS Studio may read from it."
+msgstr "Сачувај резултат у текстуалну датотеку. Остали програми као што је ОБС Студио могу читати из ње."
+
+#: src/plugins/gaming/score.js:394 src/plugins/launcher/launcher-open-file-action.c:213
+#: src/plugins/network/network-http-action-prefs.ui:61
+#: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
+msgid "File"
+msgstr "Датотека"
+
+#: src/plugins/gaming/score.js:413
+msgid "Text File (.txt)"
+msgstr "Текстуална датотека (.txt)"
+
+#: src/plugins/launcher/launcher-action-factory.c:39
 msgid "Launch Application"
 msgstr "Покрени програм"
 
-#: src/plugins/launcher/launcher-action-factory.c:48
+#: src/plugins/launcher/launcher-action-factory.c:45
+msgid "Open File"
+msgstr "Отвори датотеку"
+
+#: src/plugins/launcher/launcher-action-factory.c:51
 msgid "Open URL"
 msgstr "Отвори адресу"
 
@@ -330,31 +465,81 @@ msgstr "Отвори адресу"
 msgid "Choose Application"
 msgstr "Изабери програм"
 
-#: src/plugins/launcher/launcher-open-url-action.c:101
+#: src/plugins/launcher/launcher-open-file-action.c:68
+msgid "No file selected"
+msgstr "Није изабрана ниједна датотека"
+
+#: src/plugins/launcher/launcher-open-file-action.c:156
+msgid "Select File"
+msgstr "Изабери датотеку"
+
+#: src/plugins/launcher/launcher-open-url-action.c:108
 msgid "URL"
 msgstr "Адреса"
 
-#: src/plugins/obs-studio/obs-action-factory.c:48
+#: src/plugins/launcher/launcher.plugin.desktop.in:2
+msgid "Launcher"
+msgstr "Покретач"
+
+#: src/plugins/network/network-action-factory.c:39
+msgid "HTTP Request"
+msgstr "ХТТП захтев"
+
+#: src/plugins/network/network-action-factory.c:40
+msgid "Send GET and POST requests to a webserver"
+msgstr "Шаљи ГЕТ и ПОСТ захтеве веб серверу"
+
+#: src/plugins/network/network-http-action-prefs.c:146
+msgid "Select payload file"
+msgstr "Изаберите датотеку товара"
+
+#: src/plugins/network/network-http-action-prefs.ui:14
+msgid "URI"
+msgstr "Путања"
+
+#: src/plugins/network/network-http-action-prefs.ui:22
+msgid "Method"
+msgstr "Метода"
+
+#: src/plugins/network/network-http-action-prefs.ui:45
+msgid "Payload source"
+msgstr "Извор товара"
+
+#: src/plugins/network/network-http-action-prefs.ui:82
+msgid "Edit payload"
+msgstr "Уреди товар"
+
+#: src/plugins/network/network-http-action-prefs.ui:99
+msgid "HTTP Request Payload"
+msgstr "Товар ХТТП захтева"
+
+#: src/plugins/network/network.plugin.desktop.in:2
+msgid "Network"
+msgstr "Мрежа"
+
+#: src/plugins/obs-studio/obs-action-factory.c:44
 msgid "Switch Scene"
 msgstr "Промени сцену"
 
-#: src/plugins/obs-studio/obs-action-factory.c:54
+#. Translators: "Record" is a verb here
+#: src/plugins/obs-studio/obs-action-factory.c:51
 msgid "Record"
 msgstr "Сними"
 
-#: src/plugins/obs-studio/obs-action-factory.c:60
+#. Translators: "Stream" is a verb here
+#: src/plugins/obs-studio/obs-action-factory.c:58
 msgid "Stream"
 msgstr "Стримуј"
 
-#: src/plugins/obs-studio/obs-action-factory.c:66
+#: src/plugins/obs-studio/obs-action-factory.c:64
 msgid "Virtual Camera"
 msgstr "Виртуелна камера"
 
-#: src/plugins/obs-studio/obs-action-factory.c:72
+#: src/plugins/obs-studio/obs-action-factory.c:70
 msgid "Toggle Mute"
 msgstr "Окини утишање"
 
-#: src/plugins/obs-studio/obs-action-factory.c:78
+#: src/plugins/obs-studio/obs-action-factory.c:76
 msgid "Show / Hide Source"
 msgstr "Прикажи / сакриј извор"
 
@@ -378,98 +563,98 @@ msgstr "Прикључник"
 msgid "Password"
 msgstr "Лозинка"
 
-#: src/plugins/obs-studio/obs-switch-scene-action.c:283
+#: src/plugins/obs-studio/obs-switch-scene-action.c:286
 msgid "Scene"
 msgstr "Сцена"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:124
+#: src/plugins/obs-studio/obs-toggle-source-action.c:123
 msgid "Toggle mute"
 msgstr "Окините утишање"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:125
+#: src/plugins/obs-studio/obs-toggle-source-action.c:124
 msgid "Mute"
 msgstr "Утишај"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:126
+#: src/plugins/obs-studio/obs-toggle-source-action.c:125
 msgid "Unmute"
 msgstr "Поништи утишање"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:130
+#: src/plugins/obs-studio/obs-toggle-source-action.c:129
 msgid "Toggle visibility"
 msgstr "Окините видљивост"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:131
+#: src/plugins/obs-studio/obs-toggle-source-action.c:130
 msgid "Hide"
 msgstr "Сакриј"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:132
+#: src/plugins/obs-studio/obs-toggle-source-action.c:131
 msgid "Show"
 msgstr "Прикажи"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:479
+#: src/plugins/obs-studio/obs-toggle-source-action.c:482
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:22
 msgid "Behavior"
 msgstr "Понашање"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:490
+#: src/plugins/obs-studio/obs-toggle-source-action.c:493
 msgid "Audio Source"
 msgstr "Извор звука"
 
-#: src/plugins/obs-studio/obs-toggle-source-action.c:492
+#: src/plugins/obs-studio/obs-toggle-source-action.c:495
 msgid "Source"
 msgstr "Извор"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:45
+#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:2
+msgid "OBS Studio"
+msgstr "ОБС Студио"
+
+#: src/plugins/soundboard/soundboard-action-factory.c:40
 msgid "Music Player"
 msgstr "Програм за пуштање музике"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:46
+#: src/plugins/soundboard/soundboard-action-factory.c:41
 msgid "Control the active music player"
 msgstr "Управљајте радним програмом за пуштање музике"
 
-#: src/plugins/soundboard/soundboard-action-factory.c:51
+#: src/plugins/soundboard/soundboard-action-factory.c:46
 msgid "Play Audio"
 msgstr "Пусти звук"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:196
+#: src/plugins/soundboard/soundboard-mpris-action.c:201
 msgid "Next"
 msgstr "Следеће"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:197
+#: src/plugins/soundboard/soundboard-mpris-action.c:202
 msgid "Pause"
 msgstr "Застани"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:198
+#: src/plugins/soundboard/soundboard-mpris-action.c:203
 msgid "Play"
 msgstr "Пусти"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:199
+#: src/plugins/soundboard/soundboard-mpris-action.c:204
 msgid "Previous"
 msgstr "Претходно"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:200
+#: src/plugins/soundboard/soundboard-mpris-action.c:205
 msgid "Stop"
 msgstr "Стани"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:201
+#: src/plugins/soundboard/soundboard-mpris-action.c:206
 msgid "Play / Pause"
 msgstr "Пусти / Застани"
 
-#: src/plugins/soundboard/soundboard-mpris-action.c:204
+#: src/plugins/soundboard/soundboard-mpris-action.c:209
 msgid "Playback Action"
 msgstr "Радња пуштања"
 
-#: src/plugins/soundboard/soundboard-play-action-prefs.c:95
-msgid "Select audio file"
-msgstr "Изаберите датотеку звука"
-
-#: src/plugins/soundboard/soundboard-play-action-prefs.c:103
+#: src/plugins/soundboard/soundboard-play-action-prefs.c:96
 msgid "Audio Files"
 msgstr "Датотеке звука"
 
-#: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
-msgid "File"
-msgstr "Датотека"
+#: src/plugins/soundboard/soundboard-play-action-prefs.c:103
+msgid "Select audio file"
+msgstr "Изаберите датотеку звука"
 
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:27
 msgid "Play / Stop"
@@ -495,5 +680,6 @@ msgstr "Притисни и држи"
 msgid "Volume"
 msgstr "Гласност"
 
-#~ msgid "Copyright © 2022 Georges Basile Stavracas Neto"
-#~ msgstr "Ауторска права © 2022 Џорџ Базиле Ставракас Нето"
+#: src/plugins/soundboard/soundboard.plugin.desktop.in:2
+msgid "Soundboard"
+msgstr "Звучна табла"
