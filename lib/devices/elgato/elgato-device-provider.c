@@ -51,6 +51,7 @@ struct _ElgatoDeviceProvider
   GListStore *devices;
   GHashTable *syspaths_to_devices;
 
+  DexFuture *fiber;
   DexChannel *added_devices;
   DexChannel *removed_devices;
   DexPromise *quit_fiber;
@@ -406,14 +407,15 @@ elgato_device_provider_finalize (GObject *object)
   if (self->gudev_client_uevent_handler)
     g_signal_handler_disconnect (self->gudev_client, self->gudev_client_uevent_handler);
 
-  if (self->quit_fiber)
+  if (self->fiber)
     {
       dex_promise_resolve_boolean (self->quit_fiber, TRUE);
-      g_clear_pointer (&self->quit_fiber, dex_unref);
+      dex_await (g_steal_pointer (&self->fiber), NULL);
     }
 
   g_clear_pointer (&self->added_devices, dex_unref);
   g_clear_pointer (&self->removed_devices, dex_unref);
+  g_clear_pointer (&self->quit_fiber, dex_unref);
 
   g_clear_object (&self->devices);
   g_clear_object (&self->gudev_client);
@@ -452,7 +454,7 @@ elgato_device_provider_init (ElgatoDeviceProvider *self)
                                                             G_CALLBACK (on_gudev_client_uevent_cb),
                                                             self);
 
-      dex_future_disown (dex_scheduler_spawn (NULL, 0, devices_changed_fiber, self, NULL));
+      self->fiber = dex_scheduler_spawn (NULL, 0, devices_changed_fiber, self, NULL);
     }
 
   g_signal_connect (self->devices, "items-changed", G_CALLBACK (on_devices_items_changed_cb), self);
