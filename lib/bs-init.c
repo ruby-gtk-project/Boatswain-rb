@@ -21,8 +21,10 @@
 
 #include "bs-context-private.h"
 #include "bs-events-private.h"
+#include "bs-debug.h"
 #include "bs-init.h"
 #include "bs-log-private.h"
+#include "bs-macros.h"
 
 #include <libdex.h>
 
@@ -37,8 +39,45 @@ bs_init (void)
   bs_context_init_default (NULL);
 }
 
+static DexFuture *
+bs_shutdown_fiber (gpointer data G_GNUC_UNUSED)
+{
+  BS_ENTRY;
+
+  g_assert (BS_IS_MAIN_THREAD ());
+
+  bs_context_shutdown ();
+
+  BS_RETURN (NULL);
+}
+
+static DexFuture *
+bs_shutdown_cb (DexFuture *future,
+                gpointer   data)
+{
+  g_main_loop_quit ((GMainLoop *)data);
+
+  return NULL;
+}
+
 void
 bs_shutdown (void)
 {
-  bs_context_shutdown ();
+  g_autoptr (GMainLoop) loop = NULL;
+  g_autoptr (DexFuture) future = NULL;
+
+  BS_ENTRY;
+
+  loop = g_main_loop_new (NULL, FALSE);
+  future = dex_future_finally (dex_scheduler_spawn (NULL,
+                                          0,
+                                          bs_shutdown_fiber,
+                                          NULL,
+                                          NULL),
+                               bs_shutdown_cb,
+                               g_main_loop_ref (loop),
+                               (GDestroyNotify)g_main_loop_unref);
+  g_main_loop_run (loop);
+
+  BS_EXIT;
 }
