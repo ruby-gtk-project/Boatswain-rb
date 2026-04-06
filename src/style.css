@@ -105,3 +105,9 @@ row.touchscreen-background {
 row.touchscreen-default-background {
   font-weight: bold;
 }
+
+@media (prefers-contrast: more) {
+  splitbutton.omnibar {
+    box-shadow: inset 0 0 0 1px alpha(currentColor, .75);
+  }
+}

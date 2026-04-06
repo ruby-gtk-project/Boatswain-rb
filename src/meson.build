@@ -20,7 +20,7 @@ boatswain_sources = [
 ]
 
 boatswain_deps = [
-  dependency('libadwaita-1', version: '>= 1.8.0'),
+  dependency('libadwaita-1', version: '>= 1.9.0'),
   libboatswain_dep,
 ]
 

@@ -17,7 +17,6 @@
     <file>bs-window.ui</file>
     <file>shortcuts-dialog.ui</file>
     <file>style.css</file>
-    <file>style-hc.css</file>
   </gresource>
 
   <gresource prefix="/com/feaneron/Boatswain/icons/scalable/emblems">
