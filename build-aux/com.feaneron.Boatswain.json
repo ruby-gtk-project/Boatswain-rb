@@ -26,16 +26,6 @@
     ],
     "modules" : [
         {
-            "name" : "libusb",
-            "buildsystem" : "autotools",
-            "sources" : [
-                {
-                    "type" : "git",
-                    "url" : "https://github.com/libusb/libusb.git"
-                }
-            ]
-        },
-        {
             "name" : "hidapi-libusb",
             "buildsystem" : "autotools",
             "sources" : [
