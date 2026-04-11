@@ -365,9 +365,7 @@ desktop_keyboard_shortcut_action_init (DesktopKeyboardShortcutAction *self)
 }
 
 BsAction *
-desktop_keyboard_shortcut_action_new (BsContext *context)
+desktop_keyboard_shortcut_action_new (void)
 {
-  return g_object_new (DESKTOP_TYPE_KEYBOARD_SHORTCUT_ACTION,
-                       "context", context,
-                       NULL);
+  return g_object_new (DESKTOP_TYPE_KEYBOARD_SHORTCUT_ACTION, NULL);
 }

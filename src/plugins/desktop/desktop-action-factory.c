@@ -45,15 +45,11 @@ desktop_action_factory_create_action (BsActionFactory *action_factory,
                                       BsActionInfo    *action_info)
 {
   DesktopActionFactory *self = (DesktopActionFactory *)action_factory;
-  BsContext *context;
 
   g_assert (DESKTOP_IS_ACTION_FACTORY (self));
 
-  context = bs_action_factory_get_context (action_factory);
-
   if (g_strcmp0 (bs_action_info_get_id (action_info), "desktop-keyboard-shortcut") == 0)
-    return desktop_keyboard_shortcut_action_new (context);
-
+    return desktop_keyboard_shortcut_action_new ();
 
   return NULL;
 }
