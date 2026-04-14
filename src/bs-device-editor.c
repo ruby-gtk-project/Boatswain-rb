@@ -137,11 +137,16 @@ add_dial_grid (BsDeviceEditor *self,
     {
       g_autoptr (BsDial) dial = NULL;
       GtkWidget *widget;
+      GtkWidget *child;
 
       dial = g_list_model_get_item (dials, i);
       widget = bs_dial_widget_new (dial);
 
-      gtk_flow_box_append (dials_flowbox, widget);
+      child = gtk_flow_box_child_new();
+			gtk_flow_box_child_set_child (GTK_FLOW_BOX_CHILD (child), widget);
+			gtk_widget_set_can_target(child, FALSE);
+
+      gtk_flow_box_append (dials_flowbox, child);
     }
 
   region = BS_DEVICE_REGION (dial_grid);
