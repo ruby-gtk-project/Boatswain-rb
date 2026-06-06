@@ -22,6 +22,17 @@ else
   application_id = 'com.feaneron.Boatswain'
 endif
 
+##########
+# devenv #
+##########
+devenv = environment()
+
+devenv.set('XDG_CONFIG_HOME', meson.global_build_root() / 'config')
+devenv.set('XDG_CACHE_HOME', meson.global_build_root() / 'cache')
+devenv.set('XDG_DATA_HOME', meson.global_build_root() / 'share')
+devenv.set('XDG_STATE_HOME', meson.global_build_root() / 'state')
+
+meson.add_devenv(devenv)
 
 ############
 # config.h #

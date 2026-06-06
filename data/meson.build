@@ -56,6 +56,9 @@ install_data('com.feaneron.Boatswain.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
 )
 
+# Compile the schema in the current directory
+gnome.compile_schemas(depend_files: ['com.feaneron.Boatswain.gschema.xml'])
+
 compile_schemas = find_program('glib-compile-schemas', required: false)
 if compile_schemas.found()
   test('Validate schema file', compile_schemas,
