@@ -1,0 +1,12 @@
+[Plugin]
+Name = Loupedeck
+Module = loupedeck
+Description = Integrate with Loupedeck devices
+Icon=dialpad-symbolic
+Authors = tytan652 <tytan652@tytanium.xyz>
+Copyright = Copyleft © The Boatswain maintainers
+Builtin = true
+License = GPL
+Loader = C
+Embedded = loupedeck_plugin_register_types
+Depends =
