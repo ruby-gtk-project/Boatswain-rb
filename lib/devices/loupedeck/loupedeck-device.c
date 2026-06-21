@@ -26,6 +26,7 @@
 #include <gio/gio.h>
 #include <glib-object.h>
 #include <glib-unix.h>
+#include <libdex.h>
 #include <libusb.h>
 
 #include "bs-debug.h"
@@ -45,6 +46,12 @@ typedef struct
     uint8_t ep_out;
     uint8_t ep_in;
   } cdc_data;
+
+  struct {
+    DexFuture *fiber;
+    DexCancellable *cancellable;
+    uint8_t buffer[4096];
+  } bulk_in;
 } LoupedeckDevicePrivate;
 
 static void g_initable_iface_init (GInitableIface *iface);
@@ -61,6 +68,211 @@ enum {
 };
 
 static GParamSpec *properties [N_PROPS];
+
+static void dex_usb_transfer_cb (struct libusb_transfer *transfer);
+static void on_dex_usb_transfer_cancelled_cb (GCancellable           *cancellable,
+                                              struct libusb_transfer *transfer);
+
+
+/*
+ * Auxiliary methods
+ */
+
+static GError *
+usb_transfer_status_to_g_error (enum libusb_transfer_type   type,
+                                enum libusb_transfer_status status)
+{
+  g_autoptr (GError) error = NULL;
+  const char *message = NULL;
+  int code = G_IO_ERROR_FAILED;
+
+  g_assert (status != LIBUSB_TRANSFER_COMPLETED);
+
+  switch (status)
+    {
+    case LIBUSB_TRANSFER_ERROR:
+      message = "USB transfer has failed";
+      break;
+
+    case LIBUSB_TRANSFER_TIMED_OUT:
+      message = "USB transfer has timed out";
+      code = G_IO_ERROR_TIMED_OUT;
+      break;
+
+    case LIBUSB_TRANSFER_CANCELLED:
+      message = "USB transfer was cancelled";
+      code = G_IO_ERROR_CANCELLED;
+      break;
+
+    case LIBUSB_TRANSFER_STALL:
+      if (type == LIBUSB_TRANSFER_TYPE_CONTROL)
+        {
+          message = "USB control request not supported";
+          code = G_IO_ERROR_NOT_SUPPORTED;
+        }
+      else
+        message = "USB transfer has stalled";
+      break;
+
+    case LIBUSB_TRANSFER_NO_DEVICE:
+      message = "USB device was disconnected";
+      code = G_IO_ERROR_CONNECTION_CLOSED;
+      break;
+
+    case LIBUSB_TRANSFER_OVERFLOW:
+      message = "USB device sent more data than requested";
+      break;
+
+    case LIBUSB_TRANSFER_COMPLETED:
+    default:
+      g_assert_not_reached ();
+    }
+
+  g_assert (message != NULL);
+  g_set_error_literal (&error, G_IO_ERROR, code, message);
+
+  return g_steal_pointer (&error);
+}
+
+static DexFuture *
+bulk_in_transfer_future (LoupedeckDevice *self)
+{
+  LoupedeckDevicePrivate *priv =
+    loupedeck_device_get_instance_private (self);
+  DexPromise *promise;
+  struct libusb_transfer *transfer;
+
+  promise = dex_promise_new_cancellable ();
+  transfer = libusb_alloc_transfer (0);
+
+  memset (priv->bulk_in.buffer, 0, sizeof (priv->bulk_in.buffer));
+
+  libusb_fill_bulk_transfer (transfer,
+                             priv->usb_device_handle,
+                             priv->cdc_data.ep_in,
+                             priv->bulk_in.buffer,
+                             sizeof (priv->bulk_in.buffer),
+                             dex_usb_transfer_cb,
+                             dex_ref (promise),
+                             0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+
+  g_cancellable_connect (dex_promise_get_cancellable (promise),
+                         G_CALLBACK (on_dex_usb_transfer_cancelled_cb),
+                         transfer,
+                         NULL);
+
+  libusb_submit_transfer (transfer);
+
+  return DEX_FUTURE (promise);
+}
+
+
+/*
+ * Callbacks
+ */
+
+static void
+dex_usb_transfer_cb (struct libusb_transfer *transfer)
+{
+  g_autoptr (DexPromise) promise = transfer->user_data;
+  GValue value;
+
+  g_assert (DEX_IS_PROMISE (promise));
+
+  if (transfer->status != LIBUSB_TRANSFER_COMPLETED)
+    {
+      dex_promise_reject (promise, usb_transfer_status_to_g_error (transfer->type,
+                                                                   transfer->status));
+      return;
+    }
+
+  if ((transfer->flags & LIBUSB_TRANSFER_FREE_TRANSFER) &&
+      (transfer->flags & LIBUSB_TRANSFER_FREE_BUFFER))
+    {
+      uint8_t *real_buffer = transfer->buffer;
+      GByteArray *buffer = NULL;
+
+      if (transfer->type == LIBUSB_TRANSFER_TYPE_CONTROL)
+        real_buffer += LIBUSB_CONTROL_SETUP_SIZE;
+
+      if (transfer->type != LIBUSB_TRANSFER_TYPE_CONTROL ||
+          transfer->actual_length != 0)
+        {
+          buffer = g_byte_array_new ();
+          g_byte_array_append (buffer, real_buffer, transfer->actual_length);
+
+          dex_promise_resolve_boxed (promise, G_TYPE_BYTE_ARRAY, buffer);
+          return;
+        }
+    }
+
+  if (transfer->flags & LIBUSB_TRANSFER_FREE_TRANSFER)
+    {
+      dex_promise_resolve_boolean (promise, TRUE);
+      return;
+    }
+
+  g_value_init (&value, G_TYPE_POINTER);
+  g_value_set_pointer (&value, transfer);
+
+  dex_promise_resolve (promise, &value);
+}
+
+static void
+on_dex_usb_transfer_cancelled_cb (GCancellable           *cancellable,
+                                  struct libusb_transfer *transfer)
+{
+  libusb_cancel_transfer (transfer);
+}
+
+static DexFuture *
+bulk_in_loop_fiber (gpointer data)
+{
+  LoupedeckDevice *self = LOUPEDECK_DEVICE (data);
+  LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
+  DexFuture *bulk_in_transfer = NULL;
+
+  while (TRUE)
+    {
+      g_autoptr (GError) error = NULL;
+
+      if (!bulk_in_transfer)
+        bulk_in_transfer = bulk_in_transfer_future (self);
+
+      dex_await (dex_future_first (dex_ref (priv->bulk_in.cancellable),
+                                   dex_ref (bulk_in_transfer),
+                                   NULL),
+                 NULL);
+
+      if (dex_future_is_rejected (DEX_FUTURE (priv->bulk_in.cancellable)))
+        {
+          g_debug ("Bulk in transfer cancelled");
+          return dex_ref (priv->bulk_in.cancellable);
+        }
+
+      g_assert (dex_future_is_pending (DEX_FUTURE (priv->bulk_in.cancellable)));
+      g_assert (!dex_future_is_pending (bulk_in_transfer));
+
+      if (!dex_await (g_steal_pointer (&bulk_in_transfer), &error))
+        {
+          if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CONNECTION_CLOSED))
+            {
+              g_message ("Device was disconnected");
+              return dex_future_new_for_error (g_steal_pointer (&error));
+            }
+
+          g_warning ("Failed bulk in transfer: %s", error->message);
+        }
+      else
+        {
+          // TODO: Handle bulk in data
+          g_assert_not_reached ();
+        }
+    }
+
+  return dex_future_new_true ();
+}
 
 
 /*
@@ -180,6 +392,17 @@ loupedeck_device_initable_init (GInitable     *initable,
 
   g_debug ("Interfaces claimed");
 
+  g_debug ("Starting bulk in transfer loop");
+
+  priv->bulk_in.cancellable = dex_cancellable_new ();
+  priv->bulk_in.fiber = dex_scheduler_spawn (NULL,
+                                             0,
+                                             bulk_in_loop_fiber,
+                                             self,
+                                             NULL);
+
+  g_debug ("Bulk in transfer loop started");
+
   // TODO: Implement abstract class
   g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
                            "Not implemented");
@@ -224,6 +447,36 @@ loupedeck_device_set_property (GObject      *object,
 }
 
 static void
+loupedeck_device_dispose (GObject *object)
+{
+  LoupedeckDevicePrivate *priv =
+    loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (object));
+
+  BS_ENTRY;
+
+  if (priv->bulk_in.fiber)
+    {
+      GError *error = NULL;
+
+      g_debug ("Cancelling bulk in transfer loop and wait for cancellation");
+      dex_cancellable_cancel (priv->bulk_in.cancellable);
+
+      if (!dex_await (priv->bulk_in.fiber, &error) &&
+          !g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        g_warning ("Failed waiting for bulk in transfer cancellation: %s", error->message);
+      g_clear_error (&error);
+
+      dex_clear (&priv->bulk_in.cancellable);
+
+      g_debug ("Bulk in transfer loop cancelled");
+    }
+
+  G_OBJECT_CLASS (loupedeck_device_parent_class)->dispose (object);
+
+  BS_EXIT;
+}
+
+static void
 loupedeck_device_finalize (GObject *object)
 {
   LoupedeckDevicePrivate *priv =
@@ -248,6 +501,7 @@ loupedeck_device_class_init (LoupedeckDeviceClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->set_property = loupedeck_device_set_property;
+  object_class->dispose = loupedeck_device_dispose;
   object_class->finalize = loupedeck_device_finalize;
 
   properties[PROP_USB_DEVICE_FD] = g_param_spec_int ("usb-device-fd", NULL, NULL,
