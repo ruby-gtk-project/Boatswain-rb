@@ -1,9 +1,6 @@
 libboatswain_devices_ldflags += ['-Wl,--undefined=elgato_plugin_register_types']
 
-libboatswain_devices_deps += [
-  dependency('hidapi-libusb'),
-  dependency('gudev-1.0'),
-]
+libboatswain_devices_deps += dependency('hidapi-libusb')
 
 libboatswain_devices_sources += files(
   'elgato.c',

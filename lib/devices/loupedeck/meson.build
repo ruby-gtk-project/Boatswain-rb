@@ -2,6 +2,7 @@ libboatswain_devices_ldflags += ['-Wl,--undefined=loupedeck_plugin_register_type
 
 libboatswain_devices_sources += files(
   'loupedeck.c',
+  'loupedeck-device-provider.c',
 )
 
 libboatswain_devices_sources += gnome.compile_resources(

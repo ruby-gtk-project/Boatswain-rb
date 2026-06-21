@@ -1,5 +1,5 @@
 /*
- * loupedeck.c
+ * loupedeck-provider.h
  *
  * Copyright 2026 tytan652 <tytan652@tytanium.xyz>
  *
@@ -19,19 +19,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#pragma once
+
 #include <libpeas.h>
 
-#include "bs-utils-private.h"
-#include "bs-device-provider-private.h"
-#include "loupedeck-device-provider.h"
+G_BEGIN_DECLS
 
-G_MODULE_EXPORT void
-loupedeck_plugin_register_types (PeasObjectModule *module)
-{
-  if (bs_is_emulating_devices ())
-    return;
+#define LOUPEDECK_TYPE_DEVICE_PROVIDER (loupedeck_device_provider_get_type())
+G_DECLARE_FINAL_TYPE (LoupedeckDeviceProvider, loupedeck_device_provider, LOUPEDECK, DEVICE_PROVIDER, PeasExtensionBase)
 
-  peas_object_module_register_extension_type (module,
-                                              BS_TYPE_DEVICE_PROVIDER,
-                                              LOUPEDECK_TYPE_DEVICE_PROVIDER);
-}
+G_END_DECLS

@@ -4,7 +4,10 @@ libboatswain_devices_incs = [
 
 libboatswain_devices_sources = []
 libboatswain_devices_cflags = [ libboatswain_cflags ]
-libboatswain_devices_deps = [ libboatswain_deps ]
+libboatswain_devices_deps = [
+  libboatswain_deps,
+  dependency('gudev-1.0'),
+]
 libboatswain_devices_ldflags = []
 libboatswain_devices_libs = []
 libboatswain_devices_confs = []
