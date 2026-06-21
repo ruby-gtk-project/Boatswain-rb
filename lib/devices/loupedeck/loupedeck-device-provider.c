@@ -23,14 +23,24 @@
 
 #include "loupedeck-device-provider.h"
 
+#include <fcntl.h>
+
 #include <glib-object.h>
+#include <glib-unix.h>
 #include <gudev/gudev.h>
 #include <libdex.h>
+#include <libusb.h>
 
 #include "bs-debug.h"
 #include "bs-device.h"
 #include "bs-device-provider-private.h"
 #include "bs-macros.h"
+
+typedef struct {
+  GSource source;
+  GHashTable *pollfds;
+  libusb_context *context;
+} UsbSource;
 
 struct _LoupedeckDeviceProvider
 {
@@ -38,6 +48,9 @@ struct _LoupedeckDeviceProvider
 
   GUdevClient *gudev_client;
   gulong gudev_client_uevent_handler;
+
+  libusb_context *usb_context;
+  GSource *usb_source;
 
   GListStore *devices;
   GHashTable *syspaths_to_devices;
@@ -154,8 +167,13 @@ add_device (LoupedeckDeviceProvider *self,
 {
   const char *vendor_id;
   const char *product_id;
+  const char *device_file;
+  const char *syspath;
   GType device_type;
   g_autoptr (BsDevice) device = NULL;
+  g_autofd int fd = -1;
+  libusb_device_handle *handle = NULL;
+  int ret;
   g_autoptr (GError) error = NULL;
 
   BS_ENTRY;
@@ -168,6 +186,8 @@ add_device (LoupedeckDeviceProvider *self,
   // NOTE: ID_VENDOR_ID, ID_USB_VENDOR_ID, ID_MODEL_ID, ID_USB_MODEL_ID properties return NULL
   vendor_id = g_udev_device_get_sysfs_attr (gudev_device, "idVendor");
   product_id = g_udev_device_get_sysfs_attr (gudev_device, "idProduct");
+  device_file = g_udev_device_get_device_file (gudev_device);
+  syspath = g_udev_device_get_sysfs_path (gudev_device);
 
   g_assert (vendor_id != NULL);
   g_assert (product_id != NULL);
@@ -189,8 +209,39 @@ add_device (LoupedeckDeviceProvider *self,
   if (device_type == G_TYPE_NONE)
     BS_RETURN ();
 
-  // TODO: Implement LoupedeckDevice abstract class
-  g_assert_not_reached ();
+  fd = open (device_file, O_RDWR);
+  if (fd == -1)
+    {
+      g_warning ("Failed to open device file, %s", g_strerror (errno));
+      BS_RETURN ();
+    }
+
+  ret = libusb_wrap_sys_device (self->usb_context, fd, &handle);
+  if (ret != 0)
+    {
+      g_warning ("Failed to create device handle, %s", libusb_strerror (ret));
+      BS_RETURN ();
+    }
+
+  device = g_initable_new (device_type,
+                           NULL,
+                           &error,
+                           "usb-device-fd", g_steal_fd (&fd),
+                           "usb-device-handle", g_steal_pointer (&handle),
+                           NULL);
+  if (!device)
+    {
+      g_warning ("%s", error->message);
+      BS_RETURN ();
+    }
+
+  g_debug ("Found %s (%s) at %s",
+           bs_device_get_name (device),
+           bs_device_get_serial_number (device),
+           syspath);
+
+  g_list_store_append (self->devices, device);
+  g_hash_table_insert (self->syspaths_to_devices, g_strdup (syspath), device);
 
   BS_EXIT;
 }
@@ -328,6 +379,101 @@ on_devices_items_changed_cb (GListModel      *model,
 
 
 /*
+ * GSource
+ */
+
+static gboolean
+usb_source_dispatch (GSource     *source,
+                     GSourceFunc  callback,
+                     gpointer     user_data)
+{
+  UsbSource *usb_source = (UsbSource *)source;
+  struct timeval zero_tv = { 0, 0 };
+
+  libusb_handle_events_timeout_completed (usb_source->context, &zero_tv, NULL);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static void
+usb_source_finalize (GSource *source)
+{
+  UsbSource *usb_source = (UsbSource *)source;
+
+  g_clear_pointer (&usb_source->pollfds, g_hash_table_unref);
+}
+
+static void
+usb_source_add_pollfd (int    fd,
+                       short  events,
+                       void  *user_data)
+{
+  UsbSource *usb_source = user_data;
+  GSource *source = user_data;
+
+  g_hash_table_insert (usb_source->pollfds,
+                       GINT_TO_POINTER (fd),
+                       g_source_add_unix_fd (source, fd, events));
+}
+
+static void
+usb_source_remove_pollfd (int   fd,
+                          void *user_data)
+{
+  UsbSource *usb_source = user_data;
+  GSource *source = user_data;
+  gpointer tag;
+
+  g_hash_table_steal_extended (usb_source->pollfds,
+                               GINT_TO_POINTER (fd),
+                               NULL,
+                               &tag);
+
+  g_source_remove_unix_fd (source, tag);
+}
+
+GSourceFuncs usb_source_funcs = {
+  NULL,
+  NULL,
+  usb_source_dispatch,
+  usb_source_finalize,
+};
+
+static GSource *
+usb_source_new (libusb_context *context)
+{
+  UsbSource *usb_source;
+  GSource *source;
+  const struct libusb_pollfd **pollfds;
+
+  source = g_source_new (&usb_source_funcs, sizeof (UsbSource));
+  usb_source = (UsbSource *)source;
+  usb_source->pollfds = g_hash_table_new_full (g_direct_hash,
+                                               g_direct_equal,
+                                               NULL,
+                                               NULL);
+  usb_source->context = context;
+
+  libusb_set_pollfd_notifiers (context,
+                               usb_source_add_pollfd,
+                               usb_source_remove_pollfd,
+                               source);
+
+  pollfds = libusb_get_pollfds (context);
+
+  for (size_t i = 0; pollfds && pollfds[i]; i++)
+    usb_source_add_pollfd (pollfds[i]->fd, pollfds[i]->events, source);
+
+  libusb_free_pollfds (pollfds);
+
+  g_source_attach (source, NULL);
+  g_source_unref (source);
+
+  return source;
+}
+
+
+/*
  * GListModel interface
  */
 
@@ -391,6 +537,9 @@ loupedeck_device_provider_finalize (GObject *object)
 
   g_clear_pointer (&self->syspaths_to_devices, g_hash_table_unref);
 
+  g_clear_pointer (&self->usb_context, libusb_exit);
+  g_clear_pointer (&self->usb_source, g_source_destroy);
+
   G_OBJECT_CLASS (loupedeck_device_provider_parent_class)->finalize (object);
 }
 
@@ -406,11 +555,27 @@ static void
 loupedeck_device_provider_init (LoupedeckDeviceProvider *self)
 {
   static const char * const gudev_subsystems[] = { "usb", NULL };
+  static const struct libusb_init_option libusb_init_options[] = {
+    { LIBUSB_OPTION_LOG_LEVEL, { .ival = LIBUSB_LOG_LEVEL_NONE } },
+    { LIBUSB_OPTION_NO_DEVICE_DISCOVERY, },
+  };
+  int ret;
 
   self->devices = g_list_store_new (BS_TYPE_DEVICE);
   g_signal_connect (self->devices, "items-changed", G_CALLBACK (on_devices_items_changed_cb), self);
 
   self->syspaths_to_devices = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  ret = libusb_init_context (&self->usb_context,
+                             libusb_init_options,
+                             G_N_ELEMENTS (libusb_init_options));
+  if (ret != LIBUSB_SUCCESS)
+    {
+      g_critical ("Failed to initialize USB context");
+      return;
+    }
+
+  self->usb_source = usb_source_new (self->usb_context);
 
   self->gudev_client = g_udev_client_new (gudev_subsystems);
   if (self->gudev_client)
