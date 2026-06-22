@@ -51,7 +51,15 @@ typedef struct
     DexFuture *fiber;
     DexCancellable *cancellable;
     uint8_t buffer[4096];
+
+    gboolean expecting_second_payload;
+    uint32_t expected_second_payload_size;
   } bulk_in;
+
+  struct {
+    DexPromise *switch_promise;
+    gboolean switched;
+  } protocol;
 } LoupedeckDevicePrivate;
 
 static void g_initable_iface_init (GInitableIface *iface);
@@ -68,6 +76,20 @@ enum {
 };
 
 static GParamSpec *properties [N_PROPS];
+
+#define WS_UPGRADE_REQUEST \
+"GET /index.html\r\n" \
+"HTTP/1.1\r\n" \
+"Connection: Upgrade\r\n" \
+"Upgrade: websocket\r\n" \
+"Sec-WebSocket-Key: 123abc\r\n" \
+"\r\n"
+
+#define MAGIC_NUMBER 0x82
+
+enum {
+  MAGIC_NUMBER_0X73 = 0x73,
+};
 
 static void dex_usb_transfer_cb (struct libusb_transfer *transfer);
 static void on_dex_usb_transfer_cancelled_cb (GCancellable           *cancellable,
@@ -165,6 +187,134 @@ bulk_in_transfer_future (LoupedeckDevice *self)
   libusb_submit_transfer (transfer);
 
   return DEX_FUTURE (promise);
+}
+
+static DexFuture *
+dex_usb_submit_transfer (struct libusb_transfer *transfer)
+{
+  DexPromise *promise;
+
+  g_assert (transfer->user_data == NULL);
+  g_assert (transfer->callback == NULL);
+
+  g_return_val_if_fail (transfer->type == LIBUSB_TRANSFER_TYPE_BULK ||
+                        transfer->type == LIBUSB_TRANSFER_TYPE_CONTROL, NULL);
+
+  promise = dex_promise_new_cancellable ();
+  g_cancellable_connect (dex_promise_get_cancellable (promise),
+                         G_CALLBACK (on_dex_usb_transfer_cancelled_cb),
+                         transfer,
+                         NULL);
+
+  transfer->user_data = dex_ref (promise);
+  transfer->callback = dex_usb_transfer_cb;
+
+  libusb_submit_transfer (transfer);
+
+  return DEX_FUTURE (promise);
+}
+
+static DexFuture *
+send_break (LoupedeckDevice *self, uint16_t value)
+{
+  LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
+  struct libusb_transfer *transfer;
+
+  transfer = libusb_alloc_transfer (0);
+  transfer->buffer = g_malloc0 (LIBUSB_CONTROL_SETUP_SIZE);
+  libusb_fill_control_setup (transfer->buffer,
+                             LIBUSB_ENDPOINT_OUT |
+                             LIBUSB_REQUEST_TYPE_CLASS |
+                             LIBUSB_RECIPIENT_INTERFACE,
+                             0x23, // SEND_BREAK
+                             value,
+                             priv->cdc_acm.iface,
+                             0);
+  libusb_fill_control_transfer (transfer,
+                                priv->usb_device_handle,
+                                transfer->buffer,
+                                NULL,
+                                NULL,
+                                0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER;
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+
+  return dex_usb_submit_transfer (transfer);
+}
+
+static void
+handle_bulk_in_data (LoupedeckDevice *self)
+{
+  LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
+  uint8_t second_payload_size;
+
+  BS_ENTRY;
+
+  if (!priv->protocol.switched)
+    {
+      static char ws_upgrade_response[] = "HTTP/1.1 101 Switching Protocols";
+
+      if (g_ascii_strncasecmp ((char *)priv->bulk_in.buffer,
+                               ws_upgrade_response,
+                               strlen (ws_upgrade_response)) == 0)
+        {
+          char **split_response = NULL;
+
+          g_debug ("Protocol switched; response:");
+          split_response = g_strsplit ((char *)priv->bulk_in.buffer, "\r\n", -1);
+          for (size_t i = 0; split_response[i] != NULL; i++)
+            {
+              if (split_response[i][0] != '\0')
+                g_debug ("\t%s", split_response[i]);
+            }
+          g_strfreev (split_response);
+
+          priv->protocol.switched = TRUE;
+          dex_promise_resolve_boolean (priv->protocol.switch_promise, TRUE);
+
+          BS_RETURN ();
+        }
+
+      BS_GOTO (unknown);
+    }
+
+  if (!priv->bulk_in.expecting_second_payload &&
+      priv->bulk_in.buffer[0] == MAGIC_NUMBER)
+    {
+      g_debug ("Device message start received");
+
+      priv->bulk_in.expected_second_payload_size = priv->bulk_in.buffer[1];
+      priv->bulk_in.expecting_second_payload = TRUE;
+
+      BS_RETURN ();
+    }
+
+  second_payload_size = priv->bulk_in.buffer[0];
+  if (priv->bulk_in.expecting_second_payload &&
+      priv->bulk_in.expected_second_payload_size == second_payload_size)
+    {
+      g_debug ("Device message end received");
+
+      switch (priv->bulk_in.buffer[1])
+        {
+        case MAGIC_NUMBER_0X73:
+          g_debug ("Received post protocol switch gibberish");
+          break;
+
+        default:
+          g_warning ("Unknown second payload received");
+        }
+
+      priv->bulk_in.expected_second_payload_size = 0;
+      priv->bulk_in.expecting_second_payload = FALSE;
+
+      BS_RETURN ();
+    }
+
+unknown:
+  g_warning ("Received unknown data");
+
+  BS_EXIT;
 }
 
 
@@ -266,8 +416,7 @@ bulk_in_loop_fiber (gpointer data)
         }
       else
         {
-          // TODO: Handle bulk in data
-          g_assert_not_reached ();
+          handle_bulk_in_data (self);
         }
     }
 
@@ -288,13 +437,19 @@ loupedeck_device_initable_init (GInitable     *initable,
 {
   LoupedeckDevice *self = LOUPEDECK_DEVICE (initable);
   LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
+  static unsigned char ws_upgrade_request[] = WS_UPGRADE_REQUEST;
   libusb_device *device = NULL;
   struct libusb_config_descriptor *descriptor;
   const struct libusb_interface_descriptor *cdc_acm_iface;
   const struct libusb_interface_descriptor *cdc_data_iface;
+  struct libusb_transfer *transfer = NULL;
+  uint8_t line_coding[LIBUSB_CONTROL_SETUP_SIZE + 7] = {};
+  uint8_t line_coding_set[LIBUSB_CONTROL_SETUP_SIZE + 7] = {};
   int ret;
 
   BS_ENTRY;
+
+  g_assert (sizeof (line_coding) == sizeof(line_coding_set));
 
   if (priv->usb_device_fd == -1 || priv->usb_device_handle == NULL)
     {
@@ -403,6 +558,127 @@ loupedeck_device_initable_init (GInitable     *initable,
 
   g_debug ("Bulk in transfer loop started");
 
+  g_debug ("Set control line state");
+  transfer = libusb_alloc_transfer (0);
+  transfer->buffer = g_malloc0 (LIBUSB_CONTROL_SETUP_SIZE);
+  libusb_fill_control_setup (transfer->buffer,
+                             LIBUSB_ENDPOINT_OUT |
+                             LIBUSB_REQUEST_TYPE_CLASS |
+                             LIBUSB_RECIPIENT_INTERFACE,
+                             0x22, // SET_CONTROL_LINE_STATE
+                             0, // deactivate carrier and DTE not present
+                             priv->cdc_acm.iface,
+                             0);
+  libusb_fill_control_transfer (transfer,
+                                priv->usb_device_handle,
+                                transfer->buffer,
+                                NULL,
+                                NULL,
+                                0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_BUFFER;
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+  if (!dex_await (dex_usb_submit_transfer (g_steal_pointer (&transfer)), error))
+    BS_RETURN (FALSE);
+
+  g_debug ("Set line coding");
+
+  *((uint32_t *)&line_coding[LIBUSB_CONTROL_SETUP_SIZE + 0]) = GUINT32_TO_LE (9600); // dwDTERate
+  line_coding[LIBUSB_CONTROL_SETUP_SIZE + 4] = 2; // bCharFormat
+  line_coding[LIBUSB_CONTROL_SETUP_SIZE + 5] = 0; // bParityType
+  line_coding[LIBUSB_CONTROL_SETUP_SIZE + 6] = 8; // bDataBits
+
+  transfer = libusb_alloc_transfer (0);
+  libusb_fill_control_setup (line_coding,
+                             LIBUSB_ENDPOINT_OUT |
+                             LIBUSB_REQUEST_TYPE_CLASS |
+                             LIBUSB_RECIPIENT_INTERFACE,
+                             0x20, // SET_LINE_CODING
+                             0,
+                             priv->cdc_acm.iface,
+                             sizeof (line_coding) - LIBUSB_CONTROL_SETUP_SIZE);
+  libusb_fill_control_transfer (transfer,
+                                priv->usb_device_handle,
+                                line_coding,
+                                NULL,
+                                NULL,
+                                0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+  if (!dex_await (dex_usb_submit_transfer (g_steal_pointer (&transfer)), error))
+    BS_RETURN (FALSE);
+
+  g_debug ("Get line coding for validation");
+  transfer = libusb_alloc_transfer (0);
+  libusb_fill_control_setup (line_coding_set,
+                             LIBUSB_ENDPOINT_IN |
+                             LIBUSB_REQUEST_TYPE_CLASS |
+                             LIBUSB_RECIPIENT_INTERFACE,
+                             0x21, // GET_LINE_CODING
+                             0,
+                             priv->cdc_acm.iface,
+                             sizeof (line_coding_set) - LIBUSB_CONTROL_SETUP_SIZE);
+  libusb_fill_control_transfer (transfer,
+                                priv->usb_device_handle,
+                                line_coding_set,
+                                NULL,
+                                NULL,
+                                0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+  if (!dex_await (dex_usb_submit_transfer (g_steal_pointer (&transfer)), error))
+    BS_RETURN (FALSE);
+
+  if (memcmp (&line_coding_set[LIBUSB_CONTROL_SETUP_SIZE + 0],
+              &line_coding[LIBUSB_CONTROL_SETUP_SIZE + 0],
+              sizeof (line_coding_set) - LIBUSB_CONTROL_SETUP_SIZE))
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to set line coding");
+      BS_RETURN (FALSE);
+    }
+
+  g_debug ("Send breaks");
+  if (!dex_await (send_break (self, 0xFFFF), error))
+    BS_RETURN (FALSE);
+
+  if (!dex_await (send_break (self, 0x0000), error))
+    BS_RETURN (FALSE);
+
+  if (!dex_await (send_break (self, 0xFFFF), error))
+    BS_RETURN (FALSE);
+
+  if (!dex_await (send_break (self, 0x0000), error))
+    BS_RETURN (FALSE);
+
+  g_debug ("Switching protocol");
+
+  priv->protocol.switch_promise = dex_ref (dex_promise_new ());
+
+  transfer = libusb_alloc_transfer (0);
+  libusb_fill_bulk_transfer (transfer,
+                             priv->usb_device_handle,
+                             priv->cdc_data.ep_out,
+                             ws_upgrade_request,
+                             // NOTE: This needs to be sent without NULL-termination
+                             strlen ((char *)ws_upgrade_request),
+                             NULL,
+                             NULL,
+                             0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+  if (!dex_await (dex_future_first (dex_usb_submit_transfer (g_steal_pointer(&transfer)),
+                                    dex_timeout_new_seconds (1),
+                                    NULL),
+                  error))
+    BS_RETURN (FALSE);
+
+  if (!dex_await (dex_future_first (DEX_FUTURE (priv->protocol.switch_promise),
+                                    dex_timeout_new_seconds (1),
+                                    NULL),
+                  error))
+    BS_RETURN (FALSE);
+
+  /* Let the device send post-switch gibberish */
+  dex_await (dex_timeout_new_usec (2000), NULL);
+
+  g_debug ("Protocol switched");
+
   // TODO: Implement abstract class
   g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
                            "Not implemented");
@@ -449,8 +725,8 @@ loupedeck_device_set_property (GObject      *object,
 static void
 loupedeck_device_dispose (GObject *object)
 {
-  LoupedeckDevicePrivate *priv =
-    loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (object));
+  LoupedeckDevice *self = LOUPEDECK_DEVICE (object);
+  LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
 
   BS_ENTRY;
 
@@ -471,6 +747,28 @@ loupedeck_device_dispose (GObject *object)
       g_debug ("Bulk in transfer loop cancelled");
     }
 
+  g_debug ("Send breaks");
+  if (!dex_await (dex_future_first (send_break (self, 0xFFFF),
+                                    dex_timeout_new_msec (100),
+                                    NULL), NULL))
+    BS_GOTO (exit);
+
+  if (!dex_await (dex_future_first (send_break (self, 0x0000),
+                                    dex_timeout_new_msec (100),
+                                    NULL), NULL))
+    BS_GOTO (exit);
+
+  if (!dex_await (dex_future_first (send_break (self, 0xFFFF),
+                                    dex_timeout_new_msec (100),
+                                    NULL), NULL))
+    BS_GOTO (exit);
+
+  if (!dex_await (dex_future_first (send_break (self, 0x0000),
+                                    dex_timeout_new_msec (100),
+                                    NULL), NULL))
+    BS_GOTO (exit);
+
+exit:
   G_OBJECT_CLASS (loupedeck_device_parent_class)->dispose (object);
 
   BS_EXIT;
@@ -483,6 +781,8 @@ loupedeck_device_finalize (GObject *object)
     loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (object));
 
   BS_ENTRY;
+
+  dex_clear (&priv->protocol.switch_promise);
 
   libusb_release_interface (priv->usb_device_handle, priv->cdc_data.iface);
   libusb_release_interface (priv->usb_device_handle, priv->cdc_acm.iface);
