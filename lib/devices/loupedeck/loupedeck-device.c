@@ -68,6 +68,7 @@ typedef struct
   } host_transactions;
 
   char *serial_number;
+  char *firmware_version;
 } LoupedeckDevicePrivate;
 
 static void g_initable_iface_init (GInitableIface *iface);
@@ -97,6 +98,7 @@ static GParamSpec *properties [N_PROPS];
 
 enum {
   GET_SERIAL_NUMBER = 0x03,
+  GET_FIRMWARE_VERSION = 0x07,
   MAGIC_NUMBER_0X73 = 0x73,
 };
 
@@ -336,6 +338,7 @@ handle_bulk_in_data (LoupedeckDevice *self)
       switch (priv->bulk_in.buffer[1])
         {
         case GET_SERIAL_NUMBER:
+        case GET_FIRMWARE_VERSION:
           {
             GByteArray *content;
 
@@ -653,6 +656,7 @@ loupedeck_device_initable_init (GInitable     *initable,
   uint8_t line_coding[LIBUSB_CONTROL_SETUP_SIZE + 7] = {};
   uint8_t line_coding_set[LIBUSB_CONTROL_SETUP_SIZE + 7] = {};
   uint8_t get_serial_number_payload[3] = { 3, GET_SERIAL_NUMBER, };
+  uint8_t get_firmware_version_payload[3] = { 3, GET_FIRMWARE_VERSION, };
   DexFuture *future;
   const GValue *value = NULL;
   GByteArray *content = NULL;
@@ -915,10 +919,28 @@ loupedeck_device_initable_init (GInitable     *initable,
   /* Remove trailing whitespaces if present */
   priv->serial_number = g_strchomp (priv->serial_number);
 
-  // TODO: Implement abstract class
-  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                           "Not implemented");
-  BS_RETURN (FALSE);
+  g_debug ("Get firmware version");
+  future = loupedeck_device_send_payloads (self,
+                                           get_firmware_version_payload,
+                                           sizeof (get_firmware_version_payload),
+                                           NULL,
+                                           0);
+
+  if (!dex_await (dex_future_first (dex_ref (future),
+                                    dex_timeout_new_seconds (1),
+                                    NULL),
+                  error))
+    BS_RETURN (FALSE);
+
+  value = dex_future_get_value (future, error);
+  if (!value)
+    BS_RETURN (FALSE);
+
+  content = g_value_get_boxed (g_steal_pointer (&value));
+  priv->firmware_version =
+    g_strdup_printf ("%u.%u.%u", content->data[0], content->data[1], content->data[2]);
+
+  BS_RETURN (parent_initable_iface->init (initable, cancellable, error));
 }
 
 static void
@@ -944,6 +966,18 @@ loupedeck_device_get_serial_number (BsDevice *device)
   priv = loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (device));
 
   return priv->serial_number;
+}
+
+static const char *
+loupedeck_device_get_firmware_version (BsDevice *device)
+{
+  LoupedeckDevicePrivate *priv;
+
+  g_return_val_if_fail (LOUPEDECK_IS_DEVICE (device), NULL);
+
+  priv = loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (device));
+
+  return priv->firmware_version;
 }
 
 
@@ -1054,6 +1088,7 @@ loupedeck_device_finalize (GObject *object)
   BS_ENTRY;
 
   g_clear_pointer (&priv->serial_number, g_free);
+  g_clear_pointer (&priv->firmware_version, g_free);
 
   g_clear_pointer (&priv->host_transactions.table, g_hash_table_unref);
 
@@ -1083,6 +1118,7 @@ loupedeck_device_class_init (LoupedeckDeviceClass *klass)
   object_class->finalize = loupedeck_device_finalize;
 
   device_class->get_serial_number = loupedeck_device_get_serial_number;
+  device_class->get_firmware_version = loupedeck_device_get_firmware_version;
 
   properties[PROP_USB_DEVICE_FD] = g_param_spec_int ("usb-device-fd", NULL, NULL,
                                                      -1,
