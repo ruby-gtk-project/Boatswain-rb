@@ -67,6 +67,8 @@ typedef struct
     DexLimiter *limiter;
   } host_transactions;
 
+  DexLimiter *send_payloads_limiter;
+
   char *serial_number;
   char *firmware_version;
 } LoupedeckDevicePrivate;
@@ -99,6 +101,7 @@ static GParamSpec *properties [N_PROPS];
 enum {
   GET_SERIAL_NUMBER = 0x03,
   GET_FIRMWARE_VERSION = 0x07,
+  SET_BRIGHTNESS = 0x09,
   MAGIC_NUMBER_0X73 = 0x73,
 };
 
@@ -349,6 +352,17 @@ handle_bulk_in_data (LoupedeckDevice *self)
             break;
           }
 
+        case SET_BRIGHTNESS:
+          if (priv->bulk_in.buffer[3] == 1)
+            dex_promise_resolve_boolean (promise, TRUE);
+          else
+            dex_promise_reject (promise,
+                                g_error_new (G_IO_ERROR,
+                                             G_IO_ERROR_FAILED,
+                                             "Transaction returned: %u",
+                                             priv->bulk_in.buffer[3]));
+          break;
+
         case MAGIC_NUMBER_0X73:
           g_debug ("Received post protocol switch gibberish");
           break;
@@ -460,6 +474,7 @@ loupedeck_device_send_payloads (LoupedeckDevice  *self,
                                                        G_IO_ERROR_FAILED,
                                                        "Failed to send first payload: %s",
                                                        error->message));
+          dex_limiter_close (priv->send_payloads_limiter);
           goto exit;
         }
     }
@@ -484,6 +499,7 @@ loupedeck_device_send_payloads (LoupedeckDevice  *self,
                                                    G_IO_ERROR_FAILED,
                                                    "Failed to send second payload: %s",
                                                    error->message));
+      dex_limiter_close (priv->send_payloads_limiter);
       goto exit;
     }
 
@@ -510,6 +526,7 @@ loupedeck_device_send_payloads (LoupedeckDevice  *self,
                                                        G_IO_ERROR_FAILED,
                                                        "Failed to send extra payload: %s",
                                                        error->message));
+          dex_limiter_close (priv->send_payloads_limiter);
           goto exit;
         }
     }
@@ -525,6 +542,15 @@ exit:
   dex_limiter_release (priv->host_transactions.limiter);
 
   return ret;
+}
+
+static DexFuture *
+loupedeck_device_set_brightness_internal (LoupedeckDevice *self,
+                                          uint8_t          brightness)
+{
+  uint8_t payload[4] = { 4, SET_BRIGHTNESS, 0, brightness };
+
+  return loupedeck_device_send_payloads (self, payload, sizeof (payload), NULL, 0);
 }
 
 
@@ -631,6 +657,26 @@ bulk_in_loop_fiber (gpointer data)
     }
 
   return dex_future_new_true ();
+}
+
+static DexFuture *
+loupedeck_device_set_brightness_fiber (gpointer data)
+{
+  LoupedeckDevice *self = LOUPEDECK_DEVICE (data);
+  uint8_t brightness =
+    CLAMP (bs_device_get_brightness (BS_DEVICE (self)) * 10, 0, 10);
+  g_autoptr (GError) error = NULL;
+
+  if (!dex_await (dex_future_first (loupedeck_device_set_brightness_internal (self,
+                                                                              brightness),
+                                    dex_timeout_new_seconds (1),
+                                    NULL),
+                  &error))
+    {
+      g_warning ("Failed to send set brighness payload: %s", error->message);
+    }
+
+  return NULL;
 }
 
 
@@ -980,6 +1026,27 @@ loupedeck_device_get_firmware_version (BsDevice *device)
   return priv->firmware_version;
 }
 
+static void
+loupedeck_device_set_brightness (BsDevice *device,
+                                 double    brightness)
+{
+  LoupedeckDevicePrivate *priv;
+
+  g_return_if_fail (LOUPEDECK_IS_DEVICE (device));
+
+  priv = loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (device));
+
+  BS_DEVICE_CLASS (loupedeck_device_parent_class)->set_brightness (device,
+                                                                   brightness);
+
+  dex_future_disown (dex_limiter_run (priv->send_payloads_limiter,
+                                      NULL,
+                                      0,
+                                      loupedeck_device_set_brightness_fiber,
+                                      device,
+                                      NULL));
+}
+
 
 /*
  * GObject overrides
@@ -1014,14 +1081,26 @@ loupedeck_device_dispose (GObject *object)
 {
   LoupedeckDevice *self = LOUPEDECK_DEVICE (object);
   LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
+  GError *error = NULL;
 
   BS_ENTRY;
 
+  if (bs_device_is_initialized (BS_DEVICE (self)))
+    {
+      g_debug ("Set brightness to 0");
+      if (!dex_await (dex_future_first (loupedeck_device_set_brightness_internal (self, 0),
+                                        dex_timeout_new_msec (100),
+                                        NULL),
+                      &error))
+        g_warning ("Failed to set brightness: %s", error->message);
+      g_clear_error (&error);
+    }
+
   dex_limiter_close (priv->host_transactions.limiter);
+  dex_limiter_close (priv->send_payloads_limiter);
 
   if (priv->bulk_in.fiber)
     {
-      GError *error = NULL;
       GHashTableIter iter;
       gpointer value;
 
@@ -1093,6 +1172,7 @@ loupedeck_device_finalize (GObject *object)
   g_clear_pointer (&priv->host_transactions.table, g_hash_table_unref);
 
   dex_clear (&priv->host_transactions.limiter);
+  dex_clear (&priv->send_payloads_limiter);
 
   dex_clear (&priv->protocol.switch_promise);
 
@@ -1119,6 +1199,7 @@ loupedeck_device_class_init (LoupedeckDeviceClass *klass)
 
   device_class->get_serial_number = loupedeck_device_get_serial_number;
   device_class->get_firmware_version = loupedeck_device_get_firmware_version;
+  device_class->set_brightness = loupedeck_device_set_brightness;
 
   properties[PROP_USB_DEVICE_FD] = g_param_spec_int ("usb-device-fd", NULL, NULL,
                                                      -1,
@@ -1137,6 +1218,7 @@ loupedeck_device_init (LoupedeckDevice *self)
 {
   LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
 
+  priv->send_payloads_limiter = dex_limiter_new (1);
   priv->host_transactions.limiter = dex_limiter_new (1);
 
   priv->host_transactions.table = g_hash_table_new_full (g_direct_hash,
