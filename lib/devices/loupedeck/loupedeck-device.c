@@ -60,6 +60,14 @@ typedef struct
     DexPromise *switch_promise;
     gboolean switched;
   } protocol;
+
+  struct {
+    uint8_t next_id;
+    GHashTable *table;
+    DexLimiter *limiter;
+  } host_transactions;
+
+  char *serial_number;
 } LoupedeckDevicePrivate;
 
 static void g_initable_iface_init (GInitableIface *iface);
@@ -88,6 +96,7 @@ static GParamSpec *properties [N_PROPS];
 #define MAGIC_NUMBER 0x82
 
 enum {
+  GET_SERIAL_NUMBER = 0x03,
   MAGIC_NUMBER_0X73 = 0x73,
 };
 
@@ -293,10 +302,50 @@ handle_bulk_in_data (LoupedeckDevice *self)
   if (priv->bulk_in.expecting_second_payload &&
       priv->bulk_in.expected_second_payload_size == second_payload_size)
     {
+      uint8_t host_transaction_id = priv->bulk_in.buffer[2];
+      g_autoptr (DexPromise) promise = NULL;
+
+      if (host_transaction_id)
+        {
+          g_autoptr (GError) error = NULL;
+
+          if (!dex_await (dex_limiter_acquire (priv->host_transactions.limiter), &error))
+            {
+              if (!g_error_matches (error, DEX_ERROR, DEX_ERROR_SEMAPHORE_CLOSED))
+                {
+                  g_critical ("Failed to acquire host transactions limiter: %s",
+                              error->message);
+                  dex_limiter_close (priv->host_transactions.limiter);
+                }
+
+              BS_RETURN ();
+            }
+
+          g_hash_table_steal_extended (priv->host_transactions.table,
+                                       GUINT_TO_POINTER (host_transaction_id),
+                                       NULL,
+                                       (gpointer *)&promise);
+
+          g_assert (promise != NULL && DEX_IS_PROMISE (promise));
+
+          dex_limiter_release (priv->host_transactions.limiter);
+        }
+
       g_debug ("Device message end received");
 
       switch (priv->bulk_in.buffer[1])
         {
+        case GET_SERIAL_NUMBER:
+          {
+            GByteArray *content;
+
+            content = g_byte_array_sized_new (second_payload_size);
+            g_byte_array_append (content, &priv->bulk_in.buffer[3], second_payload_size - 3);
+
+            dex_promise_resolve_boxed (promise, G_TYPE_BYTE_ARRAY, g_steal_pointer (&content));
+            break;
+          }
+
         case MAGIC_NUMBER_0X73:
           g_debug ("Received post protocol switch gibberish");
           break;
@@ -315,6 +364,164 @@ unknown:
   g_warning ("Received unknown data");
 
   BS_EXIT;
+}
+
+static DexFuture *
+loupedeck_device_send_payloads (LoupedeckDevice  *self,
+                                uint8_t          *second_payload,
+                                uint32_t          second_payload_size,
+                                uint8_t          *extra_payload,
+                                uint32_t          extra_payload_size)
+{
+  LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
+  uint64_t total_size = second_payload_size + extra_payload_size;
+  uint8_t transaction_id;
+  g_autoptr (DexPromise) promise = NULL;
+  struct libusb_transfer *transfer = NULL;
+  DexFuture *ret = NULL;
+  g_autoptr (GError) error = NULL;
+
+  g_assert (second_payload != NULL && second_payload_size >= 3);
+  g_assert ((extra_payload == NULL && extra_payload_size == 0) || extra_payload_size != 0);
+  g_assert (total_size <= G_MAXUINT32);
+
+  g_assert (second_payload[2] == 0);
+
+  if (!dex_await (dex_limiter_acquire (priv->host_transactions.limiter), &error))
+    {
+      return dex_future_new_for_error (g_error_new (G_IO_ERROR,
+                                                    G_IO_ERROR_FAILED,
+                                                    "Failed to acquire host transactions limiter: %s",
+                                                    error->message));
+    }
+
+  if (priv->host_transactions.next_id == 0)
+    priv->host_transactions.next_id = 1;
+
+  transaction_id = priv->host_transactions.next_id++;
+  second_payload[2] = transaction_id;
+
+  /* First payload */
+
+  transfer = libusb_alloc_transfer (0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+  if (total_size <= 0x7E)
+    {
+      uint8_t first_payload[6] = { MAGIC_NUMBER, 0x80 + (uint8_t)total_size, };
+
+      g_assert (*((uint32_t *)&first_payload[2]) == 0);
+      g_assert (second_payload[0] == total_size);
+
+      libusb_fill_bulk_transfer (transfer,
+                                 priv->usb_device_handle,
+                                 priv->cdc_data.ep_out,
+                                 first_payload,
+                                 sizeof (first_payload),
+                                 NULL,
+                                 NULL,
+                                 0);
+      if (!dex_await (dex_future_first (dex_usb_submit_transfer (transfer),
+                                        dex_timeout_new_msec (100),
+                                        NULL), &error))
+        {
+          ret = dex_future_new_for_error (g_error_new (G_IO_ERROR,
+                                                       G_IO_ERROR_FAILED,
+                                                       "Failed to send first payload: %s",
+                                                       error->message));
+          goto exit;
+        }
+    }
+  else
+    {
+      uint8_t first_payload[14] = { MAGIC_NUMBER, 0xFF, };
+
+      *((uint32_t *)&first_payload[6]) = GUINT32_TO_BE (total_size);
+
+      g_assert (*((uint32_t *)&first_payload[2]) == 0);
+      g_assert (*((uint32_t *)&first_payload[10]) == 0);
+      g_assert (second_payload[0] == 0xFF);
+
+      libusb_fill_bulk_transfer (transfer,
+                                 priv->usb_device_handle,
+                                 priv->cdc_data.ep_out,
+                                 first_payload,
+                                 sizeof (first_payload),
+                                 NULL,
+                                 NULL,
+                                 0);
+      if (!dex_await (dex_future_first (dex_usb_submit_transfer (transfer),
+                                        dex_timeout_new_msec (100),
+                                        NULL), &error))
+        {
+          ret = dex_future_new_for_error (g_error_new (G_IO_ERROR,
+                                                       G_IO_ERROR_FAILED,
+                                                       "Failed to send first payload: %s",
+                                                       error->message));
+          goto exit;
+        }
+    }
+
+  /* Second payload */
+
+  transfer = libusb_alloc_transfer (0);
+  transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+  libusb_fill_bulk_transfer (transfer,
+                             priv->usb_device_handle,
+                             priv->cdc_data.ep_out,
+                             second_payload,
+                             second_payload_size,
+                             NULL,
+                             NULL,
+                             0);
+  if (!dex_await (dex_future_first (dex_usb_submit_transfer (transfer),
+                                    dex_timeout_new_msec (100),
+                                    NULL), &error))
+    {
+      ret = dex_future_new_for_error (g_error_new (G_IO_ERROR,
+                                                   G_IO_ERROR_FAILED,
+                                                   "Failed to send second payload: %s",
+                                                   error->message));
+      goto exit;
+    }
+
+  if (extra_payload)
+    {
+
+      /* Extra payload */
+
+      transfer = libusb_alloc_transfer (0);
+      transfer->flags |= LIBUSB_TRANSFER_FREE_TRANSFER;
+      libusb_fill_bulk_transfer (transfer,
+                                 priv->usb_device_handle,
+                                 priv->cdc_data.ep_out,
+                                 extra_payload,
+                                 extra_payload_size,
+                                 NULL,
+                                 NULL,
+                                 0);
+      if (!dex_await (dex_future_first (dex_usb_submit_transfer (transfer),
+                                            dex_timeout_new_msec (500),
+                                            NULL), &error))
+        {
+          ret = dex_future_new_for_error (g_error_new (G_IO_ERROR,
+                                                       G_IO_ERROR_FAILED,
+                                                       "Failed to send extra payload: %s",
+                                                       error->message));
+          goto exit;
+        }
+    }
+
+  ret = DEX_FUTURE (dex_promise_new ());
+  g_hash_table_insert (priv->host_transactions.table,
+                       GUINT_TO_POINTER (transaction_id),
+                       dex_ref (ret));
+
+exit:
+  g_assert (ret != NULL);
+
+  dex_limiter_release (priv->host_transactions.limiter);
+
+  return ret;
 }
 
 
@@ -445,6 +652,10 @@ loupedeck_device_initable_init (GInitable     *initable,
   struct libusb_transfer *transfer = NULL;
   uint8_t line_coding[LIBUSB_CONTROL_SETUP_SIZE + 7] = {};
   uint8_t line_coding_set[LIBUSB_CONTROL_SETUP_SIZE + 7] = {};
+  uint8_t get_serial_number_payload[3] = { 3, GET_SERIAL_NUMBER, };
+  DexFuture *future;
+  const GValue *value = NULL;
+  GByteArray *content = NULL;
   int ret;
 
   BS_ENTRY;
@@ -679,6 +890,31 @@ loupedeck_device_initable_init (GInitable     *initable,
 
   g_debug ("Protocol switched");
 
+  g_debug ("Get device serial number");
+  future = loupedeck_device_send_payloads (self,
+                                           get_serial_number_payload,
+                                           sizeof (get_serial_number_payload),
+                                           NULL,
+                                           0);
+
+
+  if (!dex_await (dex_future_first (dex_ref (future),
+                                    dex_timeout_new_seconds (1),
+                                    NULL), error))
+    BS_RETURN (FALSE);
+
+  value = dex_future_get_value (future, error);
+  if (!value)
+    BS_RETURN (FALSE);
+
+  content = g_value_get_boxed (g_steal_pointer (&value));
+
+  /* NULL-terminate the serial number */
+  g_byte_array_append (content, (uint8_t *)"", 1);
+  priv->serial_number = (char *)g_byte_array_free (g_steal_pointer (&content), FALSE);
+  /* Remove trailing whitespaces if present */
+  priv->serial_number = g_strchomp (priv->serial_number);
+
   // TODO: Implement abstract class
   g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
                            "Not implemented");
@@ -691,6 +927,23 @@ g_initable_iface_init (GInitableIface *iface)
   parent_initable_iface = g_type_interface_peek_parent (iface);
 
   iface->init = loupedeck_device_initable_init;
+}
+
+
+/*
+ * BsDevice overrides
+ */
+
+static const char *
+loupedeck_device_get_serial_number (BsDevice *device)
+{
+  LoupedeckDevicePrivate *priv;
+
+  g_return_val_if_fail (LOUPEDECK_IS_DEVICE (device), NULL);
+
+  priv = loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (device));
+
+  return priv->serial_number;
 }
 
 
@@ -730,9 +983,13 @@ loupedeck_device_dispose (GObject *object)
 
   BS_ENTRY;
 
+  dex_limiter_close (priv->host_transactions.limiter);
+
   if (priv->bulk_in.fiber)
     {
       GError *error = NULL;
+      GHashTableIter iter;
+      gpointer value;
 
       g_debug ("Cancelling bulk in transfer loop and wait for cancellation");
       dex_cancellable_cancel (priv->bulk_in.cancellable);
@@ -745,6 +1002,20 @@ loupedeck_device_dispose (GObject *object)
       dex_clear (&priv->bulk_in.cancellable);
 
       g_debug ("Bulk in transfer loop cancelled");
+
+      g_debug ("Cleanup remaining transactions if any");
+      g_hash_table_iter_init (&iter, priv->host_transactions.table);
+      while (g_hash_table_iter_next (&iter, NULL, &value))
+        {
+          g_autoptr (DexPromise) promise = value;
+
+          if (promise && dex_future_is_pending (DEX_FUTURE (promise)))
+            dex_promise_reject (promise, g_error_new_literal (G_IO_ERROR,
+                                                              G_IO_ERROR_FAILED,
+                                                              "Device is being disposed"));
+
+          g_hash_table_iter_remove (&iter);
+        }
     }
 
   g_debug ("Send breaks");
@@ -782,6 +1053,12 @@ loupedeck_device_finalize (GObject *object)
 
   BS_ENTRY;
 
+  g_clear_pointer (&priv->serial_number, g_free);
+
+  g_clear_pointer (&priv->host_transactions.table, g_hash_table_unref);
+
+  dex_clear (&priv->host_transactions.limiter);
+
   dex_clear (&priv->protocol.switch_promise);
 
   libusb_release_interface (priv->usb_device_handle, priv->cdc_data.iface);
@@ -799,10 +1076,13 @@ static void
 loupedeck_device_class_init (LoupedeckDeviceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  BsDeviceClass *device_class = BS_DEVICE_CLASS (klass);
 
   object_class->set_property = loupedeck_device_set_property;
   object_class->dispose = loupedeck_device_dispose;
   object_class->finalize = loupedeck_device_finalize;
+
+  device_class->get_serial_number = loupedeck_device_get_serial_number;
 
   properties[PROP_USB_DEVICE_FD] = g_param_spec_int ("usb-device-fd", NULL, NULL,
                                                      -1,
@@ -819,4 +1099,12 @@ loupedeck_device_class_init (LoupedeckDeviceClass *klass)
 static void
 loupedeck_device_init (LoupedeckDevice *self)
 {
+  LoupedeckDevicePrivate *priv = loupedeck_device_get_instance_private (self);
+
+  priv->host_transactions.limiter = dex_limiter_new (1);
+
+  priv->host_transactions.table = g_hash_table_new_full (g_direct_hash,
+                                                         g_direct_equal,
+                                                         NULL,
+                                                         NULL);
 }
