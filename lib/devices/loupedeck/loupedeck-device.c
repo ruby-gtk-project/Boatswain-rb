@@ -102,6 +102,7 @@ enum {
   GET_SERIAL_NUMBER = 0x03,
   GET_FIRMWARE_VERSION = 0x07,
   SET_BRIGHTNESS = 0x09,
+  CLEAR = 0x1f,
   MAGIC_NUMBER_0X73 = 0x73,
 };
 
@@ -353,6 +354,7 @@ handle_bulk_in_data (LoupedeckDevice *self)
           }
 
         case SET_BRIGHTNESS:
+        case CLEAR:
           if (priv->bulk_in.buffer[3] == 1)
             dex_promise_resolve_boolean (promise, TRUE);
           else
@@ -1087,6 +1089,20 @@ loupedeck_device_dispose (GObject *object)
 
   if (bs_device_is_initialized (BS_DEVICE (self)))
     {
+      uint8_t payload[3] = {3, CLEAR, };
+
+      g_debug ("Send clear payload");
+      if (!dex_await (dex_future_first (loupedeck_device_send_payloads (self,
+                                                                        payload,
+                                                                        sizeof (payload),
+                                                                        NULL,
+                                                                        0),
+                                        dex_timeout_new_msec (100),
+                                        NULL),
+                      &error))
+        g_warning ("Failed to clear: %s", error->message);
+      g_clear_error (&error);
+
       g_debug ("Set brightness to 0");
       if (!dex_await (dex_future_first (loupedeck_device_set_brightness_internal (self, 0),
                                         dex_timeout_new_msec (100),
