@@ -22,6 +22,7 @@
 #pragma once
 
 #include "bs-device-private.h"
+#include "bs-events.h"
 
 G_BEGIN_DECLS
 
@@ -31,6 +32,10 @@ G_DECLARE_DERIVABLE_TYPE (LoupedeckDevice, loupedeck_device, LOUPEDECK, DEVICE, 
 struct _LoupedeckDeviceClass
 {
   BsDeviceClass parent_class;
+
+  void (*button_state_changed) (LoupedeckDevice *self,
+                                uint8_t          id,
+                                BsEventType      event_type);
 };
 
 G_END_DECLS

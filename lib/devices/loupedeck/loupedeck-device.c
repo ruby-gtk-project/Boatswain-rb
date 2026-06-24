@@ -30,6 +30,7 @@
 #include <libusb.h>
 
 #include "bs-debug.h"
+#include "bs-events.h"
 
 typedef struct
 {
@@ -99,6 +100,7 @@ static GParamSpec *properties [N_PROPS];
 #define MAGIC_NUMBER 0x82
 
 enum {
+  BUTTON_STATE_CHANGED = 0,
   GET_SERIAL_NUMBER = 0x03,
   GET_FIRMWARE_VERSION = 0x07,
   SET_BRIGHTNESS = 0x09,
@@ -364,6 +366,31 @@ handle_bulk_in_data (LoupedeckDevice *self)
                                              "Transaction returned: %u",
                                              priv->bulk_in.buffer[3]));
           break;
+
+        case BUTTON_STATE_CHANGED:
+          {
+            LoupedeckDeviceClass *klass = LOUPEDECK_DEVICE_GET_CLASS (self);
+            BsEventType event_type = BS_BUTTON_PRESS;
+
+            g_assert (second_payload_size == 5);
+
+            /* 0x00 is pressed and 0x01 is released */
+            if (priv->bulk_in.buffer[4])
+              event_type = BS_BUTTON_RELEASE;
+
+            if (klass->button_state_changed)
+              {
+                klass->button_state_changed (self, priv->bulk_in.buffer[3], event_type);
+              }
+            else
+              {
+                g_warning ("button_state_changed not implemented");
+                g_debug ("Button 0x%02x %s",
+                         priv->bulk_in.buffer[3],
+                         event_type == BS_BUTTON_PRESS ? "pressed" : "released");
+              }
+            break;
+          }
 
         case MAGIC_NUMBER_0X73:
           g_debug ("Received post protocol switch gibberish");
