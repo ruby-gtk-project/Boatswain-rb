@@ -104,8 +104,21 @@ enum {
   GET_SERIAL_NUMBER = 0x03,
   GET_FIRMWARE_VERSION = 0x07,
   SET_BRIGHTNESS = 0x09,
+  APPLY_FRAMEBUFFER = 0x0f,
+  SETUP_FRAMEBUFFER = 0x10,
   CLEAR = 0x1f,
   MAGIC_NUMBER_0X73 = 0x73,
+};
+
+struct SendFramebuffer
+{
+  LoupedeckDevice *self;
+  uint16_t id;
+  uint16_t x_pos;
+  uint16_t y_pos;
+  uint16_t width;
+  uint16_t height;
+  GByteArray *buffer;
 };
 
 static void dex_usb_transfer_cb (struct libusb_transfer *transfer);
@@ -356,8 +369,20 @@ handle_bulk_in_data (LoupedeckDevice *self)
           }
 
         case SET_BRIGHTNESS:
+        case SETUP_FRAMEBUFFER:
         case CLEAR:
           if (priv->bulk_in.buffer[3] == 1)
+            dex_promise_resolve_boolean (promise, TRUE);
+          else
+            dex_promise_reject (promise,
+                                g_error_new (G_IO_ERROR,
+                                             G_IO_ERROR_FAILED,
+                                             "Transaction returned: %u",
+                                             priv->bulk_in.buffer[3]));
+          break;
+
+        case APPLY_FRAMEBUFFER:
+          if (priv->bulk_in.buffer[3] == 0)
             dex_promise_resolve_boolean (promise, TRUE);
           else
             dex_promise_reject (promise,
@@ -582,6 +607,41 @@ loupedeck_device_set_brightness_internal (LoupedeckDevice *self,
   return loupedeck_device_send_payloads (self, payload, sizeof (payload), NULL, 0);
 }
 
+static struct SendFramebuffer *
+send_framebuffer_new (LoupedeckDevice *self,
+                      uint16_t         id,
+                      uint16_t         x_pos,
+                      uint16_t         y_pos,
+                      uint16_t         width,
+                      uint16_t         height,
+                      GByteArray      *buffer)
+{
+  struct SendFramebuffer *send_fb = g_new0 (struct SendFramebuffer, 1);
+
+  g_assert (LOUPEDECK_IS_DEVICE (self));
+  g_assert (buffer != NULL);
+
+  send_fb->self = self;
+  send_fb->id = id;
+  send_fb->x_pos = x_pos;
+  send_fb->y_pos = y_pos;
+  send_fb->width = width;
+  send_fb->height = height;
+  send_fb->buffer = g_byte_array_ref (buffer);
+
+  return send_fb;
+}
+
+static void
+send_framebuffer_free (struct SendFramebuffer *send_fb)
+{
+  g_return_if_fail (send_fb != NULL);
+
+  g_clear_pointer (&send_fb->buffer, g_byte_array_unref);
+
+  g_free (send_fb);
+}
+
 
 /*
  * Callbacks
@@ -706,6 +766,54 @@ loupedeck_device_set_brightness_fiber (gpointer data)
     }
 
   return NULL;
+}
+
+static DexFuture *
+loupedeck_device_send_framebuffer_fiber (gpointer data)
+{
+  struct SendFramebuffer *send_fb = data;
+  uint8_t setup_payload[13] = { 0xFF, SETUP_FRAMEBUFFER, };
+  uint8_t apply_payload[5] = { 5, APPLY_FRAMEBUFFER, };
+  DexFuture *setup_future = NULL;
+  DexFuture *apply_future = NULL;
+  g_autoptr (GError) error = NULL;
+
+  BS_ENTRY;
+
+  g_assert (send_fb != NULL);
+  g_assert (LOUPEDECK_IS_DEVICE (send_fb->self));
+  g_assert (send_fb->buffer != NULL);
+  g_assert (send_fb->buffer->len <= G_MAXINT32);
+
+  *(uint16_t *)&setup_payload[3] = GUINT16_TO_BE (send_fb->id);
+  *(uint16_t *)&setup_payload[5] = GUINT16_TO_BE (send_fb->x_pos);
+  *(uint16_t *)&setup_payload[7] = GUINT16_TO_BE (send_fb->y_pos);
+  *(uint16_t *)&setup_payload[9] = GUINT16_TO_BE (send_fb->width);
+  *(uint16_t *)&setup_payload[11] = GUINT16_TO_BE (send_fb->height);
+  setup_future = loupedeck_device_send_payloads (send_fb->self,
+                                                 setup_payload,
+                                                 sizeof (setup_payload),
+                                                 send_fb->buffer->data,
+                                                 send_fb->buffer->len);
+
+  *(uint16_t *)&apply_payload[3] = GUINT16_TO_BE (send_fb->id);
+  apply_future = loupedeck_device_send_payloads (send_fb->self,
+                                                 apply_payload,
+                                                 sizeof (apply_payload),
+                                                 NULL,
+                                                 0);
+
+  if (!dex_await (dex_future_first (dex_future_all (g_steal_pointer (&setup_future),
+                                                    g_steal_pointer (&apply_future),
+                                                    NULL),
+                                    dex_timeout_new_msec (2500),
+                                    NULL),
+                  &error))
+    {
+      g_warning ("Failed to send framebuffer: %s", error->message);
+    }
+
+  BS_RETURN (NULL);
 }
 
 
@@ -1268,4 +1376,31 @@ loupedeck_device_init (LoupedeckDevice *self)
                                                          g_direct_equal,
                                                          NULL,
                                                          NULL);
+}
+
+void
+loupedeck_device_send_framebuffer (LoupedeckDevice *self,
+                                   uint16_t         id,
+                                   uint16_t         x_pos,
+                                   uint16_t         y_pos,
+                                   uint16_t         width,
+                                   uint16_t         height,
+                                   GByteArray      *buffer)
+{
+  LoupedeckDevicePrivate *priv;
+  struct SendFramebuffer *send_fb;
+
+  g_return_if_fail (LOUPEDECK_IS_DEVICE (self));
+  g_return_if_fail (buffer != NULL);
+  g_return_if_fail (buffer->len <= G_MAXINT32);
+
+  priv = loupedeck_device_get_instance_private (self);
+  send_fb = send_framebuffer_new (self, id, x_pos, y_pos, width, height, buffer);
+
+  dex_future_disown (dex_limiter_run (priv->send_payloads_limiter,
+                                      NULL,
+                                      0,
+                                      loupedeck_device_send_framebuffer_fiber,
+                                      send_fb,
+                                      (GDestroyNotify)send_framebuffer_free));
 }
