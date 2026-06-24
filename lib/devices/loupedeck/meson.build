@@ -6,6 +6,7 @@ libboatswain_devices_sources += files(
   'loupedeck.c',
   'loupedeck-device.c',
   'loupedeck-device-provider.c',
+  'razer-stream-controller-x.c',
 )
 
 libboatswain_devices_sources += gnome.compile_resources(

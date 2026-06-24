@@ -35,6 +35,7 @@
 #include "bs-device.h"
 #include "bs-device-provider-private.h"
 #include "bs-macros.h"
+#include "razer-stream-controller-x.h"
 
 typedef struct {
   GSource source;
@@ -150,7 +151,9 @@ find_razer_device_gtype (uint16_t product_id)
   const struct {
     uint16_t product_id;
     GType gtype;
-  } device_vtable[] = {};
+  } device_vtable[] = {
+    { 0x0d09, RAZER_TYPE_STREAM_CONTROLLER_X },
+  };
 
   for (size_t i = 0; i < G_N_ELEMENTS (device_vtable); i++)
     {
