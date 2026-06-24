@@ -36,6 +36,9 @@ struct _LoupedeckDeviceClass
   void (*button_state_changed) (LoupedeckDevice *self,
                                 uint8_t          id,
                                 BsEventType      event_type);
+
+  void (*apply_button_update) (LoupedeckDevice *self,
+                               BsButtonUpdate  *update);
 };
 
   void loupedeck_device_send_framebuffer (LoupedeckDevice *self,

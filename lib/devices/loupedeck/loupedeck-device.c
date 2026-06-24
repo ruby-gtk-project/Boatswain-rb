@@ -1184,6 +1184,33 @@ loupedeck_device_set_brightness (BsDevice *device,
                                       NULL));
 }
 
+static void
+loupedeck_device_push_update (BsDevice       *device,
+                              BsDeviceUpdate *update)
+{
+  LoupedeckDevice *self;
+  LoupedeckDeviceClass *klass;
+  g_autoptr (GError) error = NULL;
+
+  g_return_if_fail (LOUPEDECK_IS_DEVICE (device));
+
+  self = LOUPEDECK_DEVICE (device);
+  klass = LOUPEDECK_DEVICE_GET_CLASS (self);
+
+  if (klass->apply_button_update != NULL)
+    {
+      BsButtonUpdate **button_updates =
+      bs_device_update_get_button_updates (update);
+
+      for (size_t i = 0; button_updates && button_updates[i]; i++)
+        klass->apply_button_update (self, button_updates[i]);
+    }
+  else
+    {
+      g_warning ("apply_button_update not implemented");
+    }
+}
+
 
 /*
  * GObject overrides
@@ -1351,6 +1378,8 @@ loupedeck_device_class_init (LoupedeckDeviceClass *klass)
   device_class->get_serial_number = loupedeck_device_get_serial_number;
   device_class->get_firmware_version = loupedeck_device_get_firmware_version;
   device_class->set_brightness = loupedeck_device_set_brightness;
+  device_class->push_update = loupedeck_device_push_update;
+  device_class->push_update_timeout = 1000;
 
   properties[PROP_USB_DEVICE_FD] = g_param_spec_int ("usb-device-fd", NULL, NULL,
                                                      -1,
