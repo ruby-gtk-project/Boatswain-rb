@@ -2,30 +2,30 @@
 # Copyright (C) 2022 boatswain's COPYRIGHT HOLDER
 # This file is distributed under the same license as the boatswain package.
 # D <afecr@foxmail.com>, 2022.
-# lumingzh <lumingzh@qq.com>, 2023-2025.
+# lumingzh <lumingzh@qq.com>, 2023-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-04-17 13:00+0000\n"
-"PO-Revision-Date: 2025-04-19 15:57+0800\n"
+"POT-Creation-Date: 2026-04-11 20:20+0000\n"
+"PO-Revision-Date: 2026-08-15 17:32+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Gtranslator 48.0\n"
+"X-Generator: Gtranslator 50.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: data/com.feaneron.Boatswain.desktop.in.in:3
+#: data/com.feaneron.Boatswain.desktop.in.in:2
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
 msgid "Boatswain"
 msgstr "Boatswain"
 
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
-#: data/com.feaneron.Boatswain.desktop.in.in:11
+#: data/com.feaneron.Boatswain.desktop.in.in:10
 msgid "stream deck;streaming;deck;elgato;"
 msgstr "stream deck;streaming;deck;elgato;"
 
@@ -79,10 +79,14 @@ msgstr "保持对您游戏分数的追踪"
 msgid "Open files and launch applications"
 msgstr "打开文件和启动应用程序"
 
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:28
+msgid "Georges Basile Stavracas Neto"
+msgstr "Georges Basile Stavracas Neto"
+
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-mini.c:222
+#: lib/devices/elgato/elgato-stream-deck-mini.c:223
 msgid "Elgato Stream Deck Mini"
 msgstr "Elgato Stream Deck Mini"
 
@@ -103,7 +107,7 @@ msgstr "Elgato Stream Deck Neo"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-original.c:247
+#: lib/devices/elgato/elgato-stream-deck-original.c:250
 #: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
 msgid "Elgato Stream Deck"
 msgstr "Elgato Stream Deck"
@@ -118,7 +122,7 @@ msgstr "Elgato Stream Deck Pedal"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-plus.c:383
+#: lib/devices/elgato/elgato-stream-deck-plus.c:384
 msgid "Elgato Stream Deck Plus"
 msgstr "Elgato Stream Deck Plus"
 
@@ -137,7 +141,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:360
+#: lib/bs-device.c:361
 msgid "Default"
 msgstr "默认"
 
@@ -290,17 +294,17 @@ msgstr "关于 Boatswain(_A)"
 msgid "_Quit"
 msgstr "退出(_Q)"
 
-#: src/gtk/help-overlay.ui:11
+#: src/shortcuts-dialog.ui:6
 msgctxt "shortcut window"
 msgid "General"
 msgstr "常规"
 
-#: src/gtk/help-overlay.ui:14
+#: src/shortcuts-dialog.ui:9
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "显示快捷键"
 
-#: src/gtk/help-overlay.ui:20
+#: src/shortcuts-dialog.ui:15
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "退出"
@@ -357,14 +361,14 @@ msgstr "添加动作"
 
 #: src/plugins/default/default-multi-action-editor.ui:73
 msgid "Others"
-msgstr "其它"
+msgstr "其他"
 
 #: src/plugins/default/default-multi-action-editor.ui:83
 msgid "Settings"
 msgstr "设置"
 
 #: src/plugins/default/default-switch-profile-action.c:264
-#: src/plugins/default/default.plugin.desktop.in:3
+#: src/plugins/default/default.plugin.desktop.in:2
 msgid "Stream Deck"
 msgstr "Stream Deck"
 
@@ -397,7 +401,7 @@ msgstr "取消(_C)"
 msgid "_Set"
 msgstr "设置(_S)"
 
-#: src/plugins/desktop/desktop.plugin.desktop.in:3
+#: src/plugins/desktop/desktop.plugin.desktop.in:2
 msgid "Desktop"
 msgstr "桌面"
 
@@ -409,7 +413,7 @@ msgstr "分数"
 msgid "Keep track of your score. Reset with a long press."
 msgstr "保持对您分数的追踪。长按可重置。"
 
-#: src/plugins/gaming/gaming.plugin.desktop.in:3
+#: src/plugins/gaming/gaming.plugin.desktop.in:2
 msgid "Gaming"
 msgstr "游戏"
 
@@ -433,7 +437,7 @@ msgstr "保存到文件"
 #: src/plugins/gaming/score.js:385
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
-msgstr "保存分数到文本文件。其它应用比如 OBS Studio 可以读取它。"
+msgstr "保存分数到文本文件。其他应用比如 OBS Studio 可以读取它。"
 
 #: src/plugins/gaming/score.js:394
 #: src/plugins/launcher/launcher-open-file-action.c:213
@@ -474,7 +478,7 @@ msgstr "选择文件"
 msgid "URL"
 msgstr "URL"
 
-#: src/plugins/launcher/launcher.plugin.desktop.in:3
+#: src/plugins/launcher/launcher.plugin.desktop.in:2
 msgid "Launcher"
 msgstr "启动器"
 
@@ -510,7 +514,7 @@ msgstr "编辑载荷"
 msgid "HTTP Request Payload"
 msgstr "HTTP 请求载荷"
 
-#: src/plugins/network/network.plugin.desktop.in:3
+#: src/plugins/network/network.plugin.desktop.in:2
 msgid "Network"
 msgstr "网络"
 
@@ -601,7 +605,7 @@ msgstr "音频源"
 msgid "Source"
 msgstr "源"
 
-#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:3
+#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:2
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
@@ -677,7 +681,7 @@ msgstr "长按"
 msgid "Volume"
 msgstr "音量"
 
-#: src/plugins/soundboard/soundboard.plugin.desktop.in:3
+#: src/plugins/soundboard/soundboard.plugin.desktop.in:2
 msgid "Soundboard"
 msgstr "响板"
 
@@ -689,9 +693,6 @@ msgstr "响板"
 
 #~ msgid "Repository"
 #~ msgstr "仓库"
-
-#~ msgid "Georges Basile Stavracas Neto"
-#~ msgstr "Georges Basile Stavracas Neto"
 
 #~ msgid "_Open"
 #~ msgstr "打开(_O)"
