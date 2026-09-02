@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-04-17 13:00+0000\n"
-"PO-Revision-Date: 2025-05-06 16:16+0300\n"
+"POT-Creation-Date: 2026-04-11 20:20+0000\n"
+"PO-Revision-Date: 2026-09-02 09:50+0300\n"
 "Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
 "Language-Team: Hebrew\n"
 "Language: he\n"
@@ -18,15 +18,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n==2 ? 1 : n>10 && n%10==0 ? "
 "2 : 3);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.9\n"
 
-#: data/com.feaneron.Boatswain.desktop.in.in:3
+#: data/com.feaneron.Boatswain.desktop.in.in:2
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
 msgid "Boatswain"
 msgstr "Boatswain"
 
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
-#: data/com.feaneron.Boatswain.desktop.in.in:11
+#: data/com.feaneron.Boatswain.desktop.in.in:10
 msgid "stream deck;streaming;deck;elgato;"
 msgstr "stream deck;הזרמה;תזרים;שידור;deck;elgato;דק;סטרים דק;אלגאטו;אלגטו;"
 
@@ -81,11 +81,14 @@ msgstr "מעקב אחר ניקוד המשחקים שלך"
 msgid "Open files and launch applications"
 msgstr "פתיחת קבצים ושיגור יישומים"
 
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:28
+msgid "Georges Basile Stavracas Neto"
+msgstr "ג׳ורג׳ס באסיל סטאברקאס נטו"
+
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-mini.c:222
-#| msgid "Stream Deck Mini"
+#: lib/devices/elgato/elgato-stream-deck-mini.c:223
 msgid "Elgato Stream Deck Mini"
 msgstr "Elgato Stream Deck Mini"
 
@@ -93,7 +96,6 @@ msgstr "Elgato Stream Deck Mini"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-mk2.c:73
-#| msgid "Stream Deck MK.2"
 msgid "Elgato Stream Deck MK.2"
 msgstr "Elgato Stream Deck MK.2"
 
@@ -101,16 +103,14 @@ msgstr "Elgato Stream Deck MK.2"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-neo.c:72
-#| msgid "Stream Deck Neo"
 msgid "Elgato Stream Deck Neo"
 msgstr "Elgato Stream Deck Neo"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-original.c:247
+#: lib/devices/elgato/elgato-stream-deck-original.c:250
 #: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
-#| msgid "Stream Deck"
 msgid "Elgato Stream Deck"
 msgstr "Elgato Stream Deck"
 
@@ -118,15 +118,13 @@ msgstr "Elgato Stream Deck"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-pedal.c:92
-#| msgid "Stream Deck Pedal"
 msgid "Elgato Stream Deck Pedal"
 msgstr "Elgato Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-plus.c:383
-#| msgid "Stream Deck Pedal"
+#: lib/devices/elgato/elgato-stream-deck-plus.c:384
 msgid "Elgato Stream Deck Plus"
 msgstr "Elgato Stream Deck Plus"
 
@@ -134,12 +132,10 @@ msgstr "Elgato Stream Deck Plus"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-xl.c:73
-#| msgid "Stream Deck XL"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
 #: lib/devices/mock/mock-device.c:108
-#| msgid "Feaneron Hangar XL"
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
 
@@ -147,7 +143,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:360
+#: lib/bs-device.c:361
 msgid "Default"
 msgstr "ברירת מחדל"
 
@@ -303,17 +299,17 @@ msgstr "_על Boatswain"
 msgid "_Quit"
 msgstr "י_ציאה"
 
-#: src/gtk/help-overlay.ui:11
+#: src/shortcuts-dialog.ui:6
 msgctxt "shortcut window"
 msgid "General"
 msgstr "כללי"
 
-#: src/gtk/help-overlay.ui:14
+#: src/shortcuts-dialog.ui:9
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "הצגת קיצורי מקלדת"
 
-#: src/gtk/help-overlay.ui:20
+#: src/shortcuts-dialog.ui:15
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "יציאה"
@@ -377,7 +373,7 @@ msgid "Settings"
 msgstr "הגדרות"
 
 #: src/plugins/default/default-switch-profile-action.c:264
-#: src/plugins/default/default.plugin.desktop.in:3
+#: src/plugins/default/default.plugin.desktop.in:2
 msgid "Stream Deck"
 msgstr "Stream Deck"
 
@@ -410,7 +406,7 @@ msgstr "_ביטול"
 msgid "_Set"
 msgstr "ה_גדרה"
 
-#: src/plugins/desktop/desktop.plugin.desktop.in:3
+#: src/plugins/desktop/desktop.plugin.desktop.in:2
 msgid "Desktop"
 msgstr "שולחן עבודה"
 
@@ -422,7 +418,7 @@ msgstr "ניקוד"
 msgid "Keep track of your score. Reset with a long press."
 msgstr "מעקב אחר הניקוד שלך. אפשר לאפס בלחיצה ארוכה."
 
-#: src/plugins/gaming/gaming.plugin.desktop.in:3
+#: src/plugins/gaming/gaming.plugin.desktop.in:2
 msgid "Gaming"
 msgstr "משחק"
 
@@ -488,7 +484,7 @@ msgstr "בחירת קובץ"
 msgid "URL"
 msgstr "כתובת"
 
-#: src/plugins/launcher/launcher.plugin.desktop.in:3
+#: src/plugins/launcher/launcher.plugin.desktop.in:2
 msgid "Launcher"
 msgstr "משגר"
 
@@ -524,7 +520,7 @@ msgstr "עריכת מטען"
 msgid "HTTP Request Payload"
 msgstr "מטען בקשת HTTP"
 
-#: src/plugins/network/network.plugin.desktop.in:3
+#: src/plugins/network/network.plugin.desktop.in:2
 msgid "Network"
 msgstr "רשת"
 
@@ -615,7 +611,7 @@ msgstr "מקור שמע"
 msgid "Source"
 msgstr "מקור"
 
-#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:3
+#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:2
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
@@ -691,7 +687,7 @@ msgstr "לחיצה והחזקה"
 msgid "Volume"
 msgstr "עוצמת שמע"
 
-#: src/plugins/soundboard/soundboard.plugin.desktop.in:3
+#: src/plugins/soundboard/soundboard.plugin.desktop.in:2
 msgid "Soundboard"
 msgstr "לוח שמע"
 
