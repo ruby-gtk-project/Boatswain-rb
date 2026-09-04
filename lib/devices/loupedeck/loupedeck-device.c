@@ -34,6 +34,12 @@
 
 typedef struct
 {
+  GSource source;
+  LoupedeckDevice *loupedeck_device;
+} LoupedeckSource;
+
+typedef struct
+{
   int usb_device_fd;
   libusb_device_handle *usb_device_handle;
 
@@ -72,6 +78,8 @@ typedef struct
 
   char *serial_number;
   char *firmware_version;
+
+  GSource *update_source;
 } LoupedeckDevicePrivate;
 
 static void g_initable_iface_init (GInitableIface *iface);
@@ -824,6 +832,67 @@ loupedeck_device_send_framebuffer_fiber (gpointer data)
 static GInitableIface *parent_initable_iface = NULL;
 
 static gboolean
+loupedeck_source_dispatch (GSource     *source,
+                           GSourceFunc  callback,
+                           gpointer     user_data)
+{
+  g_autoptr (BsDeviceUpdate) update = NULL;
+  LoupedeckSource *loupedeck_source;
+  LoupedeckDevice *self;
+
+  loupedeck_source = (LoupedeckSource *)source;
+  self = loupedeck_source->loupedeck_device;
+
+  g_assert (LOUPEDECK_IS_DEVICE (self));
+
+  if ((update = bs_device_steal_update (BS_DEVICE (self))))
+    {
+      LoupedeckDeviceClass *klass = LOUPEDECK_DEVICE_GET_CLASS (self);
+
+      bs_device_update_seal (update);
+
+      if (klass->apply_button_update != NULL)
+        {
+          BsButtonUpdate **button_updates = bs_device_update_get_button_updates (update);
+
+          for (size_t i = 0; button_updates && button_updates[i]; i++)
+            klass->apply_button_update (self, button_updates[i]);
+        }
+      else
+        {
+          g_warning ("apply_button_update not implemented");
+        }
+    }
+
+  g_source_set_ready_time (source, -1);
+
+  return TRUE;
+}
+
+GSourceFuncs loupedeck_source_funcs =
+{
+  NULL, /* prepare */
+  NULL, /* check */
+  loupedeck_source_dispatch,
+  NULL, NULL, NULL,
+};
+
+static GSource *
+loupedeck_source_new (LoupedeckDevice *self)
+{
+  LoupedeckSource *loupedeck_source;
+  GSource *source;
+
+  source = g_source_new (&loupedeck_source_funcs, sizeof (LoupedeckSource));
+  loupedeck_source = (LoupedeckSource *)source;
+  loupedeck_source->loupedeck_device = self;
+
+  g_source_set_ready_time (source, -1);
+
+  return source;
+}
+
+static gboolean
 loupedeck_device_initable_init (GInitable     *initable,
                                GCancellable  *cancellable,
                                GError       **error)
@@ -1123,6 +1192,9 @@ loupedeck_device_initable_init (GInitable     *initable,
   priv->firmware_version =
     g_strdup_printf ("%u.%u.%u", content->data[0], content->data[1], content->data[2]);
 
+  priv->update_source = loupedeck_source_new (self);
+  g_source_attach (priv->update_source, NULL);
+
   BS_RETURN (parent_initable_iface->init (initable, cancellable, error));
 }
 
@@ -1185,30 +1257,16 @@ loupedeck_device_set_brightness (BsDevice *device,
 }
 
 static void
-loupedeck_device_push_update (BsDevice       *device,
-                              BsDeviceUpdate *update)
+loupedeck_device_update_queued (BsDevice       *device,
+                                BsDeviceUpdate *update)
 {
-  LoupedeckDevice *self;
-  LoupedeckDeviceClass *klass;
-  g_autoptr (GError) error = NULL;
+  LoupedeckDevicePrivate *priv;
 
-  g_return_if_fail (LOUPEDECK_IS_DEVICE (device));
+  g_assert (LOUPEDECK_IS_DEVICE (device));
 
-  self = LOUPEDECK_DEVICE (device);
-  klass = LOUPEDECK_DEVICE_GET_CLASS (self);
+  priv = loupedeck_device_get_instance_private (LOUPEDECK_DEVICE (device));
 
-  if (klass->apply_button_update != NULL)
-    {
-      BsButtonUpdate **button_updates =
-      bs_device_update_get_button_updates (update);
-
-      for (size_t i = 0; button_updates && button_updates[i]; i++)
-        klass->apply_button_update (self, button_updates[i]);
-    }
-  else
-    {
-      g_warning ("apply_button_update not implemented");
-    }
+  g_source_set_ready_time (priv->update_source, g_get_monotonic_time () + 1000);
 }
 
 
@@ -1344,6 +1402,11 @@ loupedeck_device_finalize (GObject *object)
 
   BS_ENTRY;
 
+  if (priv->update_source)
+    g_source_destroy (priv->update_source);
+
+  g_clear_pointer (&priv->update_source, g_source_unref);
+
   g_clear_pointer (&priv->serial_number, g_free);
   g_clear_pointer (&priv->firmware_version, g_free);
 
@@ -1378,8 +1441,7 @@ loupedeck_device_class_init (LoupedeckDeviceClass *klass)
   device_class->get_serial_number = loupedeck_device_get_serial_number;
   device_class->get_firmware_version = loupedeck_device_get_firmware_version;
   device_class->set_brightness = loupedeck_device_set_brightness;
-  device_class->push_update = loupedeck_device_push_update;
-  device_class->push_update_timeout = 1000;
+  device_class->update_queued = loupedeck_device_update_queued;
 
   properties[PROP_USB_DEVICE_FD] = g_param_spec_int ("usb-device-fd", NULL, NULL,
                                                      -1,

@@ -51,8 +51,6 @@ typedef struct
 {
   GObject parent_instance;
 
-  GSource *update_push_source;
-
   GListStore *profiles;
   GListModel *regions;
   BsProfile *active_profile;
@@ -513,61 +511,6 @@ save_after_timeout_cb (gpointer data)
 
 
 /*
- * GSource
- */
-
-static gboolean
-bs_device_source_dispatch (GSource     *source,
-                           GSourceFunc  callback,
-                           gpointer     user_data)
-{
-  g_autoptr (BsDeviceUpdate) update = NULL;
-  BsDeviceSource *device_source;
-  BsDeviceClass *klass;
-  BsDevice *self;
-
-  BS_ENTRY;
-
-  device_source = (BsDeviceSource *) source;
-  self = device_source->device;
-  klass = BS_DEVICE_GET_CLASS (self);
-
-  if ((update = bs_device_steal_update (self)))
-    {
-      bs_device_update_seal (update);
-      klass->push_update (self, update);
-    }
-
-  g_source_set_ready_time (source, -1);
-
-  BS_RETURN (TRUE);
-}
-
-GSourceFuncs bs_device_source_funcs =
-{
-  NULL, /* prepare */
-  NULL, /* check */
-  bs_device_source_dispatch,
-  NULL, NULL, NULL,
-};
-
-static GSource *
-bs_device_source_new (BsDevice *self)
-{
-  BsDeviceSource *device_source;
-  GSource *source;
-
-  source = g_source_new (&bs_device_source_funcs, sizeof (BsDeviceSource));
-  device_source = (BsDeviceSource *)source;
-  device_source->device = self;
-
-  g_source_set_ready_time (source, -1);
-
-  return source;
-}
-
-
-/*
  * GInitable interface
  */
 
@@ -640,7 +583,6 @@ bs_device_initable_init (GInitable     *initable,
                          GError       **error)
 {
   BsDevice *self = BS_DEVICE (initable);
-  BsDeviceClass *klass = BS_DEVICE_GET_CLASS (self);
   BsDevicePrivate *priv = bs_device_get_instance_private (self);
 
   BS_ENTRY;
@@ -673,13 +615,6 @@ bs_device_initable_init (GInitable     *initable,
     }
 
   priv->initialized = TRUE;
-
-  if (klass->push_update_timeout)
-    {
-      g_assert (klass->push_update != NULL);
-      priv->update_push_source = bs_device_source_new (self);
-      g_source_attach (priv->update_push_source, NULL);
-    }
 
   bs_device_load (self);
 
@@ -727,6 +662,12 @@ bs_device_real_load (BsDevice *self)
   priv->loaded = TRUE;
 }
 
+static void
+bs_device_real_update_queued (BsDevice       *self,
+                              BsDeviceUpdate *update)
+{
+}
+
 
 /*
  * GObject overrides
@@ -765,10 +706,6 @@ bs_device_finalize (GObject *object)
 
   g_assert (BS_IS_MAIN_THREAD ());
 
-  if (priv->update_push_source)
-    g_source_destroy (priv->update_push_source);
-
-  g_clear_pointer (&priv->update_push_source, g_source_unref);
   g_queue_free_full (priv->active_pages, g_object_unref);
   g_clear_object (&priv->regions);
   g_clear_object (&priv->profiles);
@@ -847,6 +784,7 @@ bs_device_class_init (BsDeviceClass *klass)
   klass->get_brightness = bs_device_real_get_brightness;
   klass->set_brightness = bs_device_real_set_brightness;
   klass->load = bs_device_real_load;
+  klass->update_queued = bs_device_real_update_queued;
 
   properties[PROP_ACTIVE_PAGE] = g_param_spec_object ("active-page", NULL, NULL,
                                                       BS_TYPE_PAGE,
@@ -1011,9 +949,7 @@ bs_device_upload_button (BsDevice *self,
 
   bs_device_update_add_button (priv->update, button);
 
-  if (priv->update_push_source)
-    g_source_set_ready_time (priv->update_push_source,
-                             g_get_monotonic_time () + klass->push_update_timeout);
+  klass->update_queued (self, priv->update);
 }
 
 void
@@ -1030,9 +966,7 @@ bs_device_upload_touchscreen (BsDevice              *self,
 
   bs_device_update_add_touchscreen_region (priv->update, touchscreen, region);
 
-  if (priv->update_push_source)
-    g_source_set_ready_time (priv->update_push_source,
-                             g_get_monotonic_time () + klass->push_update_timeout);
+  klass->update_queued (self, priv->update);
 }
 
 GListModel *
