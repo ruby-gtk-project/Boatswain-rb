@@ -212,7 +212,7 @@ add_device (LoupedeckDeviceProvider *self,
   if (device_type == G_TYPE_NONE)
     BS_RETURN ();
 
-  fd = open (device_file, O_RDWR);
+  fd = open (device_file, O_RDWR | O_CLOEXEC);
   if (fd == -1)
     {
       g_warning ("Failed to open device file, %s", g_strerror (errno));

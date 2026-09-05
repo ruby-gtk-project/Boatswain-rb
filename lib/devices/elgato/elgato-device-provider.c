@@ -164,7 +164,7 @@ add_device (GUdevDevice          *gudev_device,
   if (device_type == G_TYPE_NONE)
     BS_RETURN ();
 
-  fd = open (device_file, O_RDWR);
+  fd = open (device_file, O_RDWR | O_CLOEXEC);
 
   if (fd == -1)
     {
