@@ -11,6 +11,7 @@ lib/devices/elgato/elgato-stream-deck-original-v2.c
 lib/devices/elgato/elgato-stream-deck-pedal.c
 lib/devices/elgato/elgato-stream-deck-plus.c
 lib/devices/elgato/elgato-stream-deck-xl.c
+lib/devices/loupedeck/razer-stream-controller-x.c
 lib/devices/mock/mock-device.c
 lib/bs-device.c
 lib/bs-profile.c
