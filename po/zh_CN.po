@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2026-04-11 20:20+0000\n"
-"PO-Revision-Date: 2026-08-15 17:32+0800\n"
+"POT-Creation-Date: 2026-09-05 15:31+0000\n"
+"PO-Revision-Date: 2026-09-06 07:59+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -27,7 +27,7 @@ msgstr "Boatswain"
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
 #: data/com.feaneron.Boatswain.desktop.in.in:10
 msgid "stream deck;streaming;deck;elgato;"
-msgstr "stream deck;streaming;deck;elgato;"
+msgstr "stream deck;streaming;deck;elgato;直播;控制台;"
 
 #: data/com.feaneron.Boatswain.gschema.xml:7
 #: data/com.feaneron.Boatswain.gschema.xml:8
@@ -133,6 +133,13 @@ msgstr "Elgato Stream Deck Plus"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "雷蛇直播控制台 X"
+
 #: lib/devices/mock/mock-device.c:108
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
@@ -141,7 +148,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:361
+#: lib/bs-device.c:366
 msgid "Default"
 msgstr "默认"
 
