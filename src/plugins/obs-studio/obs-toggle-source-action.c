@@ -325,8 +325,6 @@ on_connection_sources_items_changed_cb (GListModel            *list,
 {
   if (self->frozen_id == 0)
     self->frozen_id = g_idle_add (unfreeze_cb, self);
-
-  find_source_from_model (self);
 }
 
 static void
