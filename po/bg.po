@@ -1,39 +1,39 @@
 # Bulgarian translation of boatswain po-file.
-# Copyright (C) 2024 twlvnn kraftwerk <kraft_werk@tutanota.com
-# Copyright (C) 2025 Alexander Shopov <ash@kambanaria.org>
+# Copyright (C) 2024, 2026 twlvnn kraftwerk <kraft_werk@tutanota.com
+# Copyright (C) 2025, 2026 Alexander Shopov <ash@kambanaria.org>
 # This file is distributed under the same license as the boatswain package.
-# Alexander Shopov <ash@kambanaria.org>, 2025.
-# twlvnn kraftwerk <kraft_werk@tutanota.com>, 2024, 2025.
+# Alexander Shopov <ash@kambanaria.org>, 2025, 2026.
+# twlvnn kraftwerk <kraft_werk@tutanota.com>, 2024, 2025, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-04-30 15:25+0000\n"
-"PO-Revision-Date: 2025-05-03 20:13+0200\n"
+"POT-Creation-Date: 2026-09-05 15:31+0000\n"
+"PO-Revision-Date: 2026-09-06 12:10+0200\n"
 "Last-Translator: twlvnn kraftwerk <kraft_werk@tutanota.com>\n"
 "Language-Team: Bulgarian <dict-notifications@fsa-bg.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"X-Generator: Gtranslator 47.1\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.9\n"
 
-#: data/com.feaneron.Boatswain.desktop.in.in:3
+#: data/com.feaneron.Boatswain.desktop.in.in:2
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
 msgid "Boatswain"
 msgstr "Boatswain"
 
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
-#: data/com.feaneron.Boatswain.desktop.in.in:11
+#: data/com.feaneron.Boatswain.desktop.in.in:10
 msgid "stream deck;streaming;deck;elgato;"
 msgstr "предаване;поток;stream deck;streaming;deck;elgato;"
 
 #: data/com.feaneron.Boatswain.gschema.xml:7
 #: data/com.feaneron.Boatswain.gschema.xml:8
 msgid "Restore token for the desktop controller"
-msgstr "Възстановите жетона за контролера на работния плот"
+msgstr "Жетон за възстановяване за контролера на работния плот"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:12
 msgid "Control your Elgato Stream Decks"
@@ -82,10 +82,14 @@ msgstr "Следите точките си от игрите"
 msgid "Open files and launch applications"
 msgstr "Отваряте файлове и стартирате приложения"
 
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:28
+msgid "Georges Basile Stavracas Neto"
+msgstr "Georges Basile Stavracas Neto"
+
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-mini.c:222
+#: lib/devices/elgato/elgato-stream-deck-mini.c:223
 msgid "Elgato Stream Deck Mini"
 msgstr "Elgato Stream Deck Mini"
 
@@ -106,7 +110,7 @@ msgstr "Elgato Stream Deck Neo"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-original.c:247
+#: lib/devices/elgato/elgato-stream-deck-original.c:250
 #: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
 msgid "Elgato Stream Deck"
 msgstr "Elgato Stream Deck"
@@ -121,7 +125,7 @@ msgstr "Elgato Stream Deck Pedal"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-plus.c:383
+#: lib/devices/elgato/elgato-stream-deck-plus.c:384
 msgid "Elgato Stream Deck Plus"
 msgstr "Elgato Stream Deck Plus"
 
@@ -132,6 +136,13 @@ msgstr "Elgato Stream Deck Plus"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "Razer Stream Controller X"
+
 # Не успях да разгадая какво е това..
 #: lib/devices/mock/mock-device.c:108
 msgid "Feaneron Hangar Mild"
@@ -141,7 +152,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:360
+#: lib/bs-device.c:366
 msgid "Default"
 msgstr "Стандартно"
 
@@ -297,17 +308,17 @@ msgstr "_Относно „Boatswain“"
 msgid "_Quit"
 msgstr "_Спиране на програмата"
 
-#: src/gtk/help-overlay.ui:11
+#: src/shortcuts-dialog.ui:6
 msgctxt "shortcut window"
 msgid "General"
 msgstr "Общи"
 
-#: src/gtk/help-overlay.ui:14
+#: src/shortcuts-dialog.ui:9
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "Показване на клавишните комбинации"
 
-#: src/gtk/help-overlay.ui:20
+#: src/shortcuts-dialog.ui:15
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Спиране на програмата"
@@ -371,7 +382,7 @@ msgid "Settings"
 msgstr "Настройки"
 
 #: src/plugins/default/default-switch-profile-action.c:264
-#: src/plugins/default/default.plugin.desktop.in:3
+#: src/plugins/default/default.plugin.desktop.in:2
 msgid "Stream Deck"
 msgstr "Stream Deck"
 
@@ -404,7 +415,7 @@ msgstr "_Отказване"
 msgid "_Set"
 msgstr "_Задаване"
 
-#: src/plugins/desktop/desktop.plugin.desktop.in:3
+#: src/plugins/desktop/desktop.plugin.desktop.in:2
 msgid "Desktop"
 msgstr "Работeн плот"
 
@@ -416,7 +427,7 @@ msgstr "Точки"
 msgid "Keep track of your score. Reset with a long press."
 msgstr "Следете точките си. Анулирайте с дълго натискане."
 
-#: src/plugins/gaming/gaming.plugin.desktop.in:3
+#: src/plugins/gaming/gaming.plugin.desktop.in:2
 msgid "Gaming"
 msgstr "Игри"
 
@@ -483,7 +494,7 @@ msgstr "Избор на файл"
 msgid "URL"
 msgstr "Адрес"
 
-#: src/plugins/launcher/launcher.plugin.desktop.in:3
+#: src/plugins/launcher/launcher.plugin.desktop.in:2
 msgid "Launcher"
 msgstr "Стартер"
 
@@ -519,7 +530,7 @@ msgstr "Редактиране на тялото"
 msgid "HTTP Request Payload"
 msgstr "Тяло на заявката по HTTP"
 
-#: src/plugins/network/network.plugin.desktop.in:3
+#: src/plugins/network/network.plugin.desktop.in:2
 msgid "Network"
 msgstr "Мрежа"
 
@@ -610,7 +621,7 @@ msgstr "Източник на аудио"
 msgid "Source"
 msgstr "Източник"
 
-#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:3
+#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:2
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
@@ -686,6 +697,6 @@ msgstr "Натискане и задържане"
 msgid "Volume"
 msgstr "Сила на звука"
 
-#: src/plugins/soundboard/soundboard.plugin.desktop.in:3
+#: src/plugins/soundboard/soundboard.plugin.desktop.in:2
 msgid "Soundboard"
 msgstr "Мишпулт"
