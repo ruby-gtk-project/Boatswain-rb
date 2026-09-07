@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2026-01-31 21:11+0000\n"
+"POT-Creation-Date: 2026-09-05 15:31+0000\n"
 "PO-Revision-Date: 2026-03-21 10:57+0100\n"
 "Last-Translator: Марко М. Костић <marko.m.kostic@gmail.com>\n"
 "Language-Team: Serbian <српски <gnome-sr@googlegroups.org>>\n"
@@ -16,11 +16,12 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : "
+"n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Poedit 3.9\n"
 
-#: data/com.feaneron.Boatswain.desktop.in.in:2 data/com.feaneron.Boatswain.metainfo.xml.in.in:6
+#: data/com.feaneron.Boatswain.desktop.in.in:2
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
 msgid "Boatswain"
 msgstr "Палубар"
 
@@ -29,7 +30,8 @@ msgstr "Палубар"
 msgid "stream deck;streaming;deck;elgato;"
 msgstr "ток;дек тока;дек;елгато;stream deck;streaming;deck;elgato;"
 
-#: data/com.feaneron.Boatswain.gschema.xml:7 data/com.feaneron.Boatswain.gschema.xml:8
+#: data/com.feaneron.Boatswain.gschema.xml:7
+#: data/com.feaneron.Boatswain.gschema.xml:8
 msgid "Restore token for the desktop controller"
 msgstr "Поврати жетон за управљач радне површи"
 
@@ -39,7 +41,8 @@ msgstr "Управљајте вашим „Elgato Stream Deck“-овима"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:14
 msgid "Boatswain allows you to control Elgato Stream Deck devices."
-msgstr "Палубар вам омогућава да управљате вашим „Elgato Stream Deck“ уређајима."
+msgstr ""
+"Палубар вам омогућава да управљате вашим „Elgato Stream Deck“ уређајима."
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:15
 msgid "With Boatswain you will be able to:"
@@ -62,8 +65,11 @@ msgid "Play sound effects during your streams"
 msgstr "Пуштате звучна дејства за време ваших стримовања"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:21
-msgid "Control OBS Studio using Stream Deck (requires the obs-websocket extension)"
-msgstr "Управљате OBS Студиом користећи „Stream Deck“ (захтева проширење „obs-websocket“)"
+msgid ""
+"Control OBS Studio using Stream Deck (requires the obs-websocket extension)"
+msgstr ""
+"Управљате OBS Студиом користећи „Stream Deck“ (захтева проширење „obs-"
+"websocket“)"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:22
 msgid "Send network requests"
@@ -77,11 +83,14 @@ msgstr "Пратите свој резултат у игри"
 msgid "Open files and launch applications"
 msgstr "Отварајте датотеке и покрећите програме"
 
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:28
+msgid "Georges Basile Stavracas Neto"
+msgstr "Жорж Базил Ставракас Нето"
+
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-mini.c:223
-#| msgid "Stream Deck Mini"
 msgid "Elgato Stream Deck Mini"
 msgstr "Elgato Stream Deck Mini"
 
@@ -89,7 +98,6 @@ msgstr "Elgato Stream Deck Mini"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-mk2.c:73
-#| msgid "Stream Deck MK.2"
 msgid "Elgato Stream Deck MK.2"
 msgstr "Elgato Stream Deck MK.2"
 
@@ -97,7 +105,6 @@ msgstr "Elgato Stream Deck MK.2"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-neo.c:72
-#| msgid "No Stream Deck Found"
 msgid "Elgato Stream Deck Neo"
 msgstr "Elgato Stream Deck Neo"
 
@@ -106,7 +113,6 @@ msgstr "Elgato Stream Deck Neo"
 #.
 #: lib/devices/elgato/elgato-stream-deck-original.c:250
 #: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
-#| msgid "Stream Deck"
 msgid "Elgato Stream Deck"
 msgstr "Elgato Stream Deck"
 
@@ -114,7 +120,6 @@ msgstr "Elgato Stream Deck"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-pedal.c:92
-#| msgid "No Stream Deck Found"
 msgid "Elgato Stream Deck Pedal"
 msgstr "Elgato Stream Deck Pedal"
 
@@ -122,7 +127,6 @@ msgstr "Elgato Stream Deck Pedal"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-plus.c:384
-#| msgid "No Stream Deck Found"
 msgid "Elgato Stream Deck Plus"
 msgstr "Elgato Stream Deck Plus"
 
@@ -130,12 +134,17 @@ msgstr "Elgato Stream Deck Plus"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-xl.c:73
-#| msgid "Stream Deck XL"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "Razer Stream Controller X"
+
 #: lib/devices/mock/mock-device.c:108
-#| msgid "Feaneron Hangar XL"
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
 
@@ -143,7 +152,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:361
+#: lib/bs-device.c:366
 msgid "Default"
 msgstr "Основно"
 
@@ -165,8 +174,12 @@ msgstr[2] "Повезан са %d уређаја"
 msgstr[3] "Повезан са %d уређајем"
 
 #: src/bs-application.c:137
-msgid "Boatswain needs to run in background to detect and execute Stream Deck actions."
-msgstr "Палубар треба да ради у позадини да би открио и извршио радње „Stream Deck“-а."
+msgid ""
+"Boatswain needs to run in background to detect and execute Stream Deck "
+"actions."
+msgstr ""
+"Палубар треба да ради у позадини да би открио и извршио радње „Stream Deck“-"
+"а."
 
 #: src/bs-button-editor.c:327
 msgid "All supported formats"
@@ -176,7 +189,8 @@ msgstr "Сви подржани формати"
 msgid "Select icon"
 msgstr "Изаберите иконицу"
 
-#: src/bs-button-editor.c:337 src/plugins/network/network-http-action-prefs.c:147
+#: src/bs-button-editor.c:337
+#: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Отвори"
 
@@ -226,7 +240,8 @@ msgid "Delete"
 msgstr "Обриши"
 
 #. Adwaita
-#: src/bs-touchscreen-background-dialog.c:63 src/bs-touchscreen-background-dialog.ui:44
+#: src/bs-touchscreen-background-dialog.c:63
+#: src/bs-touchscreen-background-dialog.ui:44
 msgid "Adwaita"
 msgstr "Адвајта"
 
@@ -246,8 +261,8 @@ msgstr "Пилуле"
 msgid "Swoosh"
 msgstr "Фијук"
 
-#: src/bs-touchscreen-background-dialog.ui:28 src/bs-touchscreen-background-dialog.ui:29
-#| msgid "Background Color"
+#: src/bs-touchscreen-background-dialog.ui:28
+#: src/bs-touchscreen-background-dialog.ui:29
 msgid "No Background"
 msgstr "Без позадине"
 
@@ -436,10 +451,14 @@ msgid "Save to File"
 msgstr "Сачувај у датотеку"
 
 #: src/plugins/gaming/score.js:385
-msgid "Save score to a text file. Other apps such as OBS Studio may read from it."
-msgstr "Сачувај резултат у текстуалну датотеку. Остали програми као што је ОБС Студио могу читати из ње."
+msgid ""
+"Save score to a text file. Other apps such as OBS Studio may read from it."
+msgstr ""
+"Сачувај резултат у текстуалну датотеку. Остали програми као што је ОБС "
+"Студио могу читати из ње."
 
-#: src/plugins/gaming/score.js:394 src/plugins/launcher/launcher-open-file-action.c:213
+#: src/plugins/gaming/score.js:394
+#: src/plugins/launcher/launcher-open-file-action.c:213
 #: src/plugins/network/network-http-action-prefs.ui:61
 #: src/plugins/soundboard/soundboard-play-action-prefs.ui:8
 msgid "File"
