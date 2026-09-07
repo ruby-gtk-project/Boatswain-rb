@@ -5,38 +5,38 @@
 # Enrico Nicoletto <hiko@duck.com>, 2022.
 # Leônidas Araújo <leorusvellt@hotmail.com>, 2023.
 # Alex Jr <alexalencarjr@outlook.com>, 2023.
-# Juliano de Souza Camargo <julianosc@pm.me>, 2024.
 # Filipe Motta <luizfilipemotta@gmail.com>, 2024.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2022-2025.
 # Álvaro Burns <>, 2025.
+# Juliano de Souza Camargo <julianosc@pm.me>, 2024-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-04-17 13:00+0000\n"
-"PO-Revision-Date: 2025-04-17 23:17-0300\n"
-"Last-Translator: Álvaro Burns <>\n"
+"POT-Creation-Date: 2026-09-05 15:31+0000\n"
+"PO-Revision-Date: 2026-09-07 16:04-0300\n"
+"Last-Translator: Juliano de Souza Camargo <julianosc@pm.me>\n"
 "Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao/>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Gtranslator 48.0\n"
+"X-Generator: Gtranslator 50.0\n"
 "X-DL-Lang: pt_BR\n"
 "X-DL-Module: boatswain\n"
 "X-DL-Branch: main\n"
 "X-DL-Domain: po\n"
 "X-DL-State: Translating\n"
 
-#: data/com.feaneron.Boatswain.desktop.in.in:3
+#: data/com.feaneron.Boatswain.desktop.in.in:2
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
 msgid "Boatswain"
 msgstr "Boatswain"
 
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
-#: data/com.feaneron.Boatswain.desktop.in.in:11
+#: data/com.feaneron.Boatswain.desktop.in.in:10
 msgid "stream deck;streaming;deck;elgato;"
 msgstr "stream deck;streaming;fluxo de mídia;deck;elgato;transmissão;"
 
@@ -92,10 +92,14 @@ msgstr "Acompanhar a sua pontuação em jogos"
 msgid "Open files and launch applications"
 msgstr "Abrir arquivos e lançar aplicações"
 
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:28
+msgid "Georges Basile Stavracas Neto"
+msgstr "Georges Basile Stavracas Neto"
+
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-mini.c:222
+#: lib/devices/elgato/elgato-stream-deck-mini.c:223
 msgid "Elgato Stream Deck Mini"
 msgstr "Elgato Stream Deck Mini"
 
@@ -116,7 +120,7 @@ msgstr "Elgato Stream Deck Neo"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-original.c:247
+#: lib/devices/elgato/elgato-stream-deck-original.c:250
 #: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
 msgid "Elgato Stream Deck"
 msgstr "Elgato Stream Deck"
@@ -131,7 +135,7 @@ msgstr "Elgato Stream Deck Pedal"
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-plus.c:383
+#: lib/devices/elgato/elgato-stream-deck-plus.c:384
 msgid "Elgato Stream Deck Plus"
 msgstr "Elgato Stream Deck Plus"
 
@@ -142,6 +146,13 @@ msgstr "Elgato Stream Deck Plus"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "Razer Stream Controller X"
+
 #: lib/devices/mock/mock-device.c:108
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
@@ -150,7 +161,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:360
+#: lib/bs-device.c:366
 msgid "Default"
 msgstr "Padrão"
 
@@ -306,17 +317,17 @@ msgstr "_Sobre Boatswain"
 msgid "_Quit"
 msgstr "Sa_ir"
 
-#: src/gtk/help-overlay.ui:11
+#: src/shortcuts-dialog.ui:6
 msgctxt "shortcut window"
 msgid "General"
 msgstr "Geral"
 
-#: src/gtk/help-overlay.ui:14
+#: src/shortcuts-dialog.ui:9
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "Mostra os atalhos"
 
-#: src/gtk/help-overlay.ui:20
+#: src/shortcuts-dialog.ui:15
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Sai"
@@ -380,7 +391,7 @@ msgid "Settings"
 msgstr "Configurações"
 
 #: src/plugins/default/default-switch-profile-action.c:264
-#: src/plugins/default/default.plugin.desktop.in:3
+#: src/plugins/default/default.plugin.desktop.in:2
 msgid "Stream Deck"
 msgstr "Stream Deck"
 
@@ -413,7 +424,7 @@ msgstr "_Cancelar"
 msgid "_Set"
 msgstr "_Definir"
 
-#: src/plugins/desktop/desktop.plugin.desktop.in:3
+#: src/plugins/desktop/desktop.plugin.desktop.in:2
 msgid "Desktop"
 msgstr "Área de trabalho"
 
@@ -425,7 +436,7 @@ msgstr "Pontuação"
 msgid "Keep track of your score. Reset with a long press."
 msgstr "Acompanhe o registro da sua pontuação. Reinicie com um toque longo."
 
-#: src/plugins/gaming/gaming.plugin.desktop.in:3
+#: src/plugins/gaming/gaming.plugin.desktop.in:2
 msgid "Gaming"
 msgstr "Jogos"
 
@@ -492,7 +503,7 @@ msgstr "Selecionar arquivo"
 msgid "URL"
 msgstr "URL"
 
-#: src/plugins/launcher/launcher.plugin.desktop.in:3
+#: src/plugins/launcher/launcher.plugin.desktop.in:2
 msgid "Launcher"
 msgstr "Iniciador"
 
@@ -528,7 +539,7 @@ msgstr "Editar conteúdo"
 msgid "HTTP Request Payload"
 msgstr "Conteúdo de Solicitação HTTP"
 
-#: src/plugins/network/network.plugin.desktop.in:3
+#: src/plugins/network/network.plugin.desktop.in:2
 msgid "Network"
 msgstr "Rede"
 
@@ -619,7 +630,7 @@ msgstr "Fonte de áudio"
 msgid "Source"
 msgstr "Fonte"
 
-#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:3
+#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:2
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
@@ -695,7 +706,7 @@ msgstr "Pressionar e segurar"
 msgid "Volume"
 msgstr "Volume"
 
-#: src/plugins/soundboard/soundboard.plugin.desktop.in:3
+#: src/plugins/soundboard/soundboard.plugin.desktop.in:2
 msgid "Soundboard"
 msgstr "Mesa de som"
 
@@ -707,9 +718,6 @@ msgstr "Mesa de som"
 
 #~ msgid "Repository"
 #~ msgstr "Repositório"
-
-#~ msgid "Georges Basile Stavracas Neto"
-#~ msgstr "Georges Basile Stavracas Neto"
 
 #~ msgid "Profiles"
 #~ msgstr "Perfis"
