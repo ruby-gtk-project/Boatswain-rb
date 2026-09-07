@@ -1,14 +1,14 @@
 # Georgian translation for boatswain.
 # Copyright (C) 2023 boatswain's authors
 # This file is distributed under the same license as the boatswain package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023-2025.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-04-17 13:00+0000\n"
-"PO-Revision-Date: 2025-04-20 04:37+0200\n"
+"POT-Creation-Date: 2026-09-05 15:31+0000\n"
+"PO-Revision-Date: 2026-09-07 07:09+0200\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <ka@li.org>\n"
 "Language: ka\n"
@@ -16,15 +16,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.9\n"
 
-#: data/com.feaneron.Boatswain.desktop.in.in:3
+#: data/com.feaneron.Boatswain.desktop.in.in:2
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
 msgid "Boatswain"
 msgstr "Boatswain"
 
 #. Translators: Search terms to find this application. Do NOT translate or localize the semicolons! The list MUST also end with a semicolon!
-#: data/com.feaneron.Boatswain.desktop.in.in:11
+#: data/com.feaneron.Boatswain.desktop.in.in:10
 msgid "stream deck;streaming;deck;elgato;"
 msgstr "stream deck;streaming;deck;elgato;"
 
@@ -81,11 +81,14 @@ msgstr "იცოდეთ თქვენი ქულები"
 msgid "Open files and launch applications"
 msgstr "ფაილების გახსნა და აპლიკაციების გაშვება"
 
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:28
+msgid "Georges Basile Stavracas Neto"
+msgstr "Georges Basile Stavracas Neto"
+
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-mini.c:222
-#| msgid "Stream Deck Mini"
+#: lib/devices/elgato/elgato-stream-deck-mini.c:223
 msgid "Elgato Stream Deck Mini"
 msgstr "Elgato Stream Deck Mini"
 
@@ -93,7 +96,6 @@ msgstr "Elgato Stream Deck Mini"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-mk2.c:73
-#| msgid "Stream Deck MK.2"
 msgid "Elgato Stream Deck MK.2"
 msgstr "Elgato Stream Deck MK.2"
 
@@ -101,16 +103,14 @@ msgstr "Elgato Stream Deck MK.2"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-neo.c:72
-#| msgid "Stream Deck Neo"
 msgid "Elgato Stream Deck Neo"
 msgstr "Elgato Stream Deck Neo"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-original.c:247
+#: lib/devices/elgato/elgato-stream-deck-original.c:250
 #: lib/devices/elgato/elgato-stream-deck-original-v2.c:73
-#| msgid "Stream Deck"
 msgid "Elgato Stream Deck"
 msgstr "Elgato Stream Deck"
 
@@ -118,15 +118,13 @@ msgstr "Elgato Stream Deck"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-pedal.c:92
-#| msgid "Stream Deck Pedal"
 msgid "Elgato Stream Deck Pedal"
 msgstr "Elgato Stream Deck Pedal"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
 #.
-#: lib/devices/elgato/elgato-stream-deck-plus.c:383
-#| msgid "Stream Deck Pedal"
+#: lib/devices/elgato/elgato-stream-deck-plus.c:384
 msgid "Elgato Stream Deck Plus"
 msgstr "Elgato Stream Deck Plus"
 
@@ -134,12 +132,17 @@ msgstr "Elgato Stream Deck Plus"
 #. * Please verify if Elgato translates their product names on your locale.
 #.
 #: lib/devices/elgato/elgato-stream-deck-xl.c:73
-#| msgid "Stream Deck XL"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "Razer Stream Controller X"
+
 #: lib/devices/mock/mock-device.c:108
-#| msgid "Feaneron Hangar XL"
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
 
@@ -147,7 +150,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:360
+#: lib/bs-device.c:366
 msgid "Default"
 msgstr "ნაგულისხმები"
 
@@ -303,17 +306,17 @@ msgstr "Boatswain-ის _შესახებ"
 msgid "_Quit"
 msgstr "დატოვება"
 
-#: src/gtk/help-overlay.ui:11
+#: src/shortcuts-dialog.ui:6
 msgctxt "shortcut window"
 msgid "General"
 msgstr "ძირითადი"
 
-#: src/gtk/help-overlay.ui:14
+#: src/shortcuts-dialog.ui:9
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "მალსახმობების ჩვენება"
 
-#: src/gtk/help-overlay.ui:20
+#: src/shortcuts-dialog.ui:15
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "გასვლა"
@@ -377,7 +380,7 @@ msgid "Settings"
 msgstr "მორგება"
 
 #: src/plugins/default/default-switch-profile-action.c:264
-#: src/plugins/default/default.plugin.desktop.in:3
+#: src/plugins/default/default.plugin.desktop.in:2
 msgid "Stream Deck"
 msgstr "Stream Deck"
 
@@ -410,7 +413,7 @@ msgstr "_შეწყვეტა"
 msgid "_Set"
 msgstr "_დაყენება"
 
-#: src/plugins/desktop/desktop.plugin.desktop.in:3
+#: src/plugins/desktop/desktop.plugin.desktop.in:2
 msgid "Desktop"
 msgstr "სამუშაო მაგიდა"
 
@@ -422,7 +425,7 @@ msgstr "ქულები"
 msgid "Keep track of your score. Reset with a long press."
 msgstr "იცოდეთ თქვენი ქულები. ჩამოყრა დიდხანს დაწოლით."
 
-#: src/plugins/gaming/gaming.plugin.desktop.in:3
+#: src/plugins/gaming/gaming.plugin.desktop.in:2
 msgid "Gaming"
 msgstr "თამაშები"
 
@@ -489,7 +492,7 @@ msgstr "აირჩიეთ ფაილი"
 msgid "URL"
 msgstr "ბმული"
 
-#: src/plugins/launcher/launcher.plugin.desktop.in:3
+#: src/plugins/launcher/launcher.plugin.desktop.in:2
 msgid "Launcher"
 msgstr "გამშვები"
 
@@ -525,7 +528,7 @@ msgstr "სასარგებლო შემცველობის ჩა�
 msgid "HTTP Request Payload"
 msgstr "HTTP მოთხოვნის სასარგებლო დატვირთვა"
 
-#: src/plugins/network/network.plugin.desktop.in:3
+#: src/plugins/network/network.plugin.desktop.in:2
 msgid "Network"
 msgstr "ქსელი"
 
@@ -616,7 +619,7 @@ msgstr "აუდიოს წყარო"
 msgid "Source"
 msgstr "წყარო"
 
-#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:3
+#: src/plugins/obs-studio/obs-studio.plugin.desktop.in:2
 msgid "OBS Studio"
 msgstr "OBS Studio"
 
@@ -692,7 +695,7 @@ msgstr "დააწექით და გეჭიროთ"
 msgid "Volume"
 msgstr "ხმის სიმაღლე"
 
-#: src/plugins/soundboard/soundboard.plugin.desktop.in:3
+#: src/plugins/soundboard/soundboard.plugin.desktop.in:2
 msgid "Soundboard"
 msgstr "Soundboard"
 
@@ -707,9 +710,6 @@ msgstr "Soundboard"
 
 #~ msgid "_Open"
 #~ msgstr "_გახსნა"
-
-#~ msgid "Georges Basile Stavracas Neto"
-#~ msgstr "Georges Basile Stavracas Neto"
 
 #~ msgid "Profiles"
 #~ msgstr "პროფილები"
