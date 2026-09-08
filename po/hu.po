@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2026-04-11 20:20+0000\n"
-"PO-Revision-Date: 2026-09-01 20:07+0200\n"
+"POT-Creation-Date: 2026-09-05 15:31+0000\n"
+"PO-Revision-Date: 2026-09-08 23:43+0200\n"
 "Last-Translator: Balázs Úr <ur.balazs at fsf dot hu>\n"
 "Language-Team: Hungarian <openscope at fsf dot hu>\n"
 "Language: hu\n"
@@ -136,6 +136,13 @@ msgstr "Elgato Stream Deck Plus"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "Razer Stream Controller X"
+
 #: lib/devices/mock/mock-device.c:108
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
@@ -144,7 +151,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:361
+#: lib/bs-device.c:366
 msgid "Default"
 msgstr "Alapértelmezett"
 
