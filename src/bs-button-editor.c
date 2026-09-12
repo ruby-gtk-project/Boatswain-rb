@@ -32,7 +32,7 @@ struct _BsButtonEditor
   AdwPreferencesPage *button_preferences_page;
   GtkMenuButton *custom_icon_menubutton;
   GtkEditable *custom_icon_text_row;
-  GtkImage *icon_image;
+  GtkPicture *icon_picture;
   GtkFilterListModel *icons_filter_list_model;
   AdwNavigationView *navigation_view;
   GtkWidget *remove_group;
@@ -149,7 +149,7 @@ update_icon (BsButtonEditor *self)
 {
   BsIcon *icon = bs_button_get_icon (self->button);
 
-  gtk_image_set_from_paintable (self->icon_image, GDK_PAINTABLE (icon));
+  gtk_picture_set_paintable (self->icon_picture, GDK_PAINTABLE (icon));
 }
 
 static void
@@ -497,7 +497,7 @@ bs_button_editor_class_init (BsButtonEditorClass *klass)
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, button_preferences_page);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, custom_icon_menubutton);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, custom_icon_text_row);
-  gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, icon_image);
+  gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, icon_picture);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, icons_filter_list_model);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, navigation_view);
   gtk_widget_class_bind_template_child (widget_class, BsButtonEditor, remove_group);
