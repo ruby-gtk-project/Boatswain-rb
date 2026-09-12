@@ -44,5 +44,6 @@ gboolean  bs_page_realize         (BsPage      *self,
                                    GError     **error);
 void      bs_page_load_items      (BsPage      *self);
 void      bs_page_unload_items    (BsPage      *self);
+void      bs_page_update_items    (BsPage      *self);
 
 G_END_DECLS

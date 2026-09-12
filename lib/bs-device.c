@@ -115,85 +115,30 @@ get_profile_path (BsDevice *self)
 }
 
 static void
-update_page_items (BsDevice *self,
-                   BsPage   *page)
+update_page_region_data (BsDevice *self,
+                         BsPage   *page)
 {
   BsDevicePrivate *priv = bs_device_get_instance_private (self);
   size_t n_regions = g_list_model_get_n_items (priv->regions);
 
   for (size_t i = 0; i < n_regions; i++)
     {
-      g_autoptr (BsDeviceRegion) region = g_list_model_get_item (priv->regions, i);
-      const char *region_id = bs_device_region_get_id (region);
+      g_autoptr (BsDeviceRegion) region = NULL;
+      g_autoptr (JsonNode) region_data = NULL;
+      const char *region_id = NULL;
 
-      if (BS_IS_BUTTON_GRID (region))
-        {
-          g_autoptr (JsonNode) region_data = NULL;
-          BsButtonGrid *button_grid;
-          GListModel *buttons;
+      region = g_list_model_get_item (priv->regions, i);
 
-          button_grid = BS_BUTTON_GRID (region);
-          buttons = bs_button_grid_get_buttons (button_grid);
-
-          region_data = bs_device_region_serialize (region);
-          bs_page_set_region_data (page, region_id, region_data);
-
-          for (size_t i = 0; i < g_list_model_get_n_items (buttons); i++)
-            {
-              g_autoptr (BsButton) button = g_list_model_get_item (buttons, i);
-
-              bs_page_update_item (page,
-                                   region_id,
-                                   i,
-                                   bs_actionable_get_action (BS_ACTIONABLE (button)),
-                                   bs_button_get_custom_icon (button));
-            }
-        }
-      else if (BS_IS_DIAL_GRID (region))
+      if (BS_IS_DIAL_GRID (region))
         {
           /* TODO: implement me */
+          continue;
         }
-      else if (BS_IS_TOUCHSCREEN (region))
-        {
-          g_autoptr (JsonNode) region_data = NULL;
-          BsTouchscreen *touchscreen;
-          GListModel *touchscreen_slots;
 
-          touchscreen = BS_TOUCHSCREEN (region);
-          touchscreen_slots = bs_touchscreen_get_slots (touchscreen);
-
-          region_data = bs_device_region_serialize (region);
-          bs_page_set_region_data (page, region_id, region_data);
-
-          for (size_t i = 0; i < g_list_model_get_n_items (touchscreen_slots); i++)
-            {
-              g_autoptr (BsTouchscreenSlot) slot = g_list_model_get_item (touchscreen_slots, i);
-
-              bs_page_update_item (page,
-                                   region_id,
-                                   i,
-                                   bs_actionable_get_action (BS_ACTIONABLE (slot)),
-                                   NULL);
-            }
-        }
-      else
-        {
-          g_assert_not_reached ();
-        }
+      region_id = bs_device_region_get_id (region);
+      region_data = bs_device_region_serialize (region);
+      bs_page_set_region_data (page, region_id, region_data);
     }
-}
-
-static void
-update_pages (BsDevice *self)
-{
-  BsPage *active_page;
-
-  BS_ENTRY;
-
-  active_page = bs_device_get_active_page (self);
-  update_page_items (self, active_page);
-
-  BS_EXIT;
 }
 
 static void
@@ -209,9 +154,12 @@ save_profiles (BsDevice *self)
 
   BS_ENTRY;
 
+  update_page_region_data (self, bs_device_get_active_page (self));
+  for (GList *l = g_queue_peek_head_link (priv->active_pages); l; l = l->next)
+    bs_page_update_items (l->data);
+
   /* Update the active profile */
   bs_profile_set_brightness (priv->active_profile, priv->brightness);
-  update_pages (self);
 
   builder = json_builder_new ();
 
@@ -1003,8 +951,17 @@ bs_device_load_profile (BsDevice  *self,
   if (priv->active_profile == profile)
     BS_RETURN ();
 
-  if (g_queue_get_length (priv->active_pages) > 0)
-    update_page_items (self, g_queue_peek_head (priv->active_pages));
+  if (!g_queue_is_empty (priv->active_pages))
+    update_page_region_data (self, g_queue_peek_head (priv->active_pages));
+
+  while (!g_queue_is_empty (priv->active_pages))
+    {
+      g_autoptr (BsPage) page = g_queue_pop_head (priv->active_pages);
+
+      bs_page_unload_items (page);
+    }
+
+  g_assert (g_queue_is_empty (priv->active_pages));
 
   g_queue_clear_full (priv->active_pages, g_object_unref);
 
@@ -1044,9 +1001,6 @@ bs_device_push_page (BsDevice *self,
 
   BS_ENTRY;
 
-  if (g_queue_get_length (priv->active_pages) > 0)
-    update_page_items (self, g_queue_peek_head (priv->active_pages));
-
   g_queue_push_head (priv->active_pages, g_object_ref (page));
 
   bs_page_load_items (page);
@@ -1069,7 +1023,7 @@ bs_device_pop_page (BsDevice *self)
   BS_ENTRY;
 
   page = g_queue_pop_head (priv->active_pages);
-  update_page_items (self, page);
+  update_page_region_data (self, page);
   bs_page_unload_items (page);
 
   load_active_page (self);

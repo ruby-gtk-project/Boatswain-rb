@@ -813,3 +813,31 @@ bs_page_unload_items (BsPage *self)
 
   self->loaded = FALSE;
 }
+
+void
+bs_page_update_items (BsPage *self)
+{
+  GHashTableIter iter;
+  PageRegion *page_region;
+  const char *region_id;
+
+  g_assert (BS_IS_PAGE (self));
+  g_assert (self->loaded);
+
+  g_hash_table_iter_init (&iter, self->page_regions);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &region_id, (gpointer *) &page_region))
+    {
+      for (unsigned int i = 0; i < page_region->items->len; i++)
+        {
+          g_autoptr (GError) error = NULL;
+          ItemData *item_data = NULL;
+
+          item_data = g_ptr_array_index (page_region->items, i);
+
+          g_assert (item_data != NULL);
+          g_assert (BS_IS_PAGE_ITEM (item_data->item));
+
+          bs_page_item_update (item_data->item, item_data->action, item_data->custom_icon);
+        }
+    }
+}
