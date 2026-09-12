@@ -186,41 +186,11 @@ on_action_selector_action_selected_cb (BsActionSelector *selector,
                                        BsActionInfo     *action_info,
                                        BsButtonEditor   *self)
 {
-  g_autoptr (BsAction) new_action = NULL;
-  g_autoptr (BsIcon) new_custom_icon = NULL;
-  g_autoptr (GError) error = NULL;
-  PeasPluginInfo *plugin_info;
-  BsDeviceRegion *region;
-  BsPageItem *item;
-  BsDevice *device;
-  BsIcon *custom_icon;
-  BsPage *active_page;
-  const char *region_id;
-  size_t position;
+  g_autoptr (BsAction) action = NULL;
 
-  device = bs_button_get_device (self->button);
-  active_page = bs_device_get_active_page (device);
-  plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (factory));
-  region = bs_button_get_region (self->button);
-  region_id = bs_device_region_get_id (region);
+  action = bs_action_factory_create_action (factory, action_info);
 
-  position = bs_button_get_position (self->button);
-  item = bs_page_get_item (active_page, region_id, position);
-  bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
-  bs_page_item_set_factory (item, peas_plugin_info_get_module_name (plugin_info));
-  bs_page_item_set_action (item, bs_action_info_get_id (action_info));
-
-  custom_icon = bs_button_get_custom_icon (self->button);
-  if (custom_icon)
-    bs_page_item_set_custom_icon (item, bs_icon_to_json (custom_icon));
-
-  bs_page_realize (active_page, region_id, position, &new_custom_icon, &new_action, &error);
-
-  if (error)
-    g_warning ("Error realizing action: %s", error->message);
-
-  bs_actionable_set_action (BS_ACTIONABLE (self->button), new_action);
-  bs_button_set_custom_icon (self->button, new_custom_icon);
+  bs_actionable_set_action (BS_ACTIONABLE (self->button), action);
   update_action_preferences_group (self);
 
   adw_navigation_view_pop (self->navigation_view);
