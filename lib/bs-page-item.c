@@ -428,53 +428,45 @@ bs_page_item_realize (BsPageItem  *self,
                       BsAction   **out_action,
                       GError     **error)
 {
+  g_autoptr (BsAction) action = NULL;
+  g_autoptr (BsIcon) custom_icon = NULL;
+  BsActionFactory *action_factory;
+  BsActionInfo *action_info;
+
   g_return_val_if_fail (BS_IS_PAGE_ITEM (self), FALSE);
   g_return_val_if_fail (out_custom_icon != NULL, FALSE);
   g_return_val_if_fail (out_action != NULL, FALSE);
 
-  if (out_action)
+  switch (self->item_type)
     {
-      g_autoptr (BsAction) action = NULL;
-      BsActionFactory *action_factory;
-      BsActionInfo *action_info;
+    case BS_PAGE_ITEM_EMPTY:
+      action = bs_empty_action_new ();
+      break;
 
-      switch (self->item_type)
+    case BS_PAGE_ITEM_ACTION:
+      action_factory = get_action_factory (self->factory);
+
+      if (!action_factory)
         {
-        case BS_PAGE_ITEM_EMPTY:
-          action = bs_empty_action_new ();
-          break;
-
-        case BS_PAGE_ITEM_ACTION:
-          action_factory = get_action_factory (self->factory);
-
-          if (!action_factory)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "No action factory named \"%s\"", self->factory);
-              *out_custom_icon = NULL;
-              *out_action = NULL;
-              return FALSE;
-            }
-
-          action_info = bs_action_factory_get_info (action_factory, self->action);
-          action = bs_action_factory_create_action (action_factory, action_info);
-          if (self->settings)
-            bs_action_deserialize_settings (action, json_node_get_object (self->settings));
-          break;
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "No action factory named \"%s\"", self->factory);
+          *out_custom_icon = NULL;
+          *out_action = NULL;
+          return FALSE;
         }
 
-      *out_action = g_steal_pointer (&action);
+      action_info = bs_action_factory_get_info (action_factory, self->action);
+      action = bs_action_factory_create_action (action_factory, action_info);
+      if (self->settings)
+        bs_action_deserialize_settings (action, json_node_get_object (self->settings));
+      break;
     }
 
-  if (out_custom_icon)
-    {
-      g_autoptr (BsIcon) custom_icon = NULL;
+  if (self->custom_icon)
+    custom_icon = bs_icon_new_from_json (self->custom_icon, NULL);
 
-      if (self->custom_icon)
-        custom_icon = bs_icon_new_from_json (self->custom_icon, NULL);
-
-      *out_custom_icon = g_steal_pointer (&custom_icon);
-    }
+  *out_action = g_steal_pointer (&action);
+  *out_custom_icon = g_steal_pointer (&custom_icon);
 
   return TRUE;
 }
