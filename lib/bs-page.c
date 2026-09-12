@@ -26,7 +26,7 @@
 #include "bs-action-private.h"
 #include "bs-empty-action.h"
 #include "bs-icon.h"
-#include "bs-page-item.h"
+#include "bs-page-item-private.h"
 #include "bs-button.h"
 
 #include <libpeas.h>

@@ -24,7 +24,6 @@ libboatswain_headers = [
   'bs-icon.h',
   'bs-init.h',
   'bs-page.h',
-  'bs-page-item.h',
   'bs-profile.h',
   'bs-touchscreen.h',
   'bs-touchscreen-content.h',
@@ -88,7 +87,7 @@ generated_sources += configure_file(
 
 generated_sources += gnome.mkenums_simple('bs-enum-types',
   body_prefix: '#include "bs-config.h"',
-  sources: ['bs-page-item.h'],
+  sources: ['bs-page-item-private.h'],
   install_header: true,
 )
 
@@ -140,7 +139,6 @@ gir_headers = [
   'bs-events.h',
   'bs-icon.h',
   'bs-page.h',
-  'bs-page-item.h',
   'bs-profile.h',
   'bs-touchscreen.h',
   'bs-touchscreen-content.h',

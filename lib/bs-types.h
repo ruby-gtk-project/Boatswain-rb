@@ -70,7 +70,6 @@ typedef struct _BsEvent BsEvent;
 typedef struct _BsIcon BsIcon;
 typedef struct _BsImageInfo BsImageInfo;
 typedef struct _BsPage BsPage;
-typedef struct _BsPageItem BsPageItem;
 typedef struct _BsProfile BsProfile;
 typedef struct _BsRenderer BsRenderer;
 typedef struct _BsSelectionController BsSelectionController;
