@@ -627,6 +627,7 @@ bs_page_update_item (BsPage     *self,
 
   g_return_if_fail (BS_IS_PAGE (self));
   g_return_if_fail (!custom_icon || BS_IS_ICON (custom_icon));
+  g_return_if_fail (self->loaded);
 
   item_data = get_item_data (self, region_id, position);
 
@@ -638,36 +639,10 @@ bs_page_update_item (BsPage     *self,
 
   g_assert (item_data != NULL);
 
-  item = item_data->item;
+  bs_page_item_update (item_data->item, action, custom_icon);
 
-  bs_page_item_set_custom_icon (item_data->item, custom_icon ? bs_icon_to_json (custom_icon) : NULL);
-
-  if (BS_IS_EMPTY_ACTION (action))
-    {
-      bs_page_item_set_item_type (item, BS_PAGE_ITEM_EMPTY);
-      bs_page_item_set_factory (item, NULL);
-      bs_page_item_set_action (item, NULL);
-      bs_page_item_set_settings (item, NULL);
-    }
-  else
-    {
-      BsActionFactory *action_factory;
-      PeasPluginInfo *plugin_info;
-
-      action_factory = bs_action_get_factory (action);
-      plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (action_factory));
-
-      bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
-      bs_page_item_set_factory (item, peas_plugin_info_get_module_name (plugin_info));
-      bs_page_item_set_action (item, bs_action_get_id (action));
-      bs_page_item_set_settings (item, bs_action_serialize_settings (action));
-    }
-
-  if (self->loaded)
-    {
-      g_set_object (&item_data->action, action);
-      g_set_object (&item_data->custom_icon, custom_icon);
-    }
+  g_set_object (&item_data->action, action);
+  g_set_object (&item_data->custom_icon, custom_icon);
 }
 
 gboolean
@@ -829,29 +804,7 @@ bs_page_unload_items (BsPage *self)
           g_assert (item_data != NULL);
           g_assert (BS_IS_PAGE_ITEM (item_data->item));
 
-          bs_page_item_set_custom_icon (item_data->item,
-                                        item_data->custom_icon ? bs_icon_to_json (item_data->custom_icon) : NULL);
-
-          if (item_data->action && !BS_IS_EMPTY_ACTION (item_data->action))
-            {
-              BsActionFactory *action_factory;
-              PeasPluginInfo *plugin_info;
-
-              action_factory = bs_action_get_factory (item_data->action);
-              plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (action_factory));
-
-              bs_page_item_set_item_type (item_data->item, BS_PAGE_ITEM_ACTION);
-              bs_page_item_set_factory (item_data->item, peas_plugin_info_get_module_name (plugin_info));
-              bs_page_item_set_action (item_data->item, bs_action_get_id (item_data->action));
-              bs_page_item_set_settings (item_data->item, bs_action_serialize_settings (item_data->action));
-            }
-          else
-            {
-              bs_page_item_set_item_type (item_data->item, BS_PAGE_ITEM_EMPTY);
-              bs_page_item_set_factory (item_data->item, NULL);
-              bs_page_item_set_action (item_data->item, NULL);
-              bs_page_item_set_settings (item_data->item, NULL);
-            }
+          bs_page_item_update (item_data->item, item_data->action, item_data->custom_icon);
 
           g_clear_object (&item_data->action);
           g_clear_object (&item_data->custom_icon);

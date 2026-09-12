@@ -62,6 +62,8 @@ gboolean        bs_page_item_realize         (BsPageItem      *self,
                                               BsIcon         **out_custom_icon,
                                               BsAction       **out_action,
                                               GError         **error);
-void            bs_page_item_update          (BsPageItem      *self);
+void            bs_page_item_update          (BsPageItem      *self,
+                                              BsAction        *action,
+                                              BsIcon          *custom_icon);
 
 G_END_DECLS

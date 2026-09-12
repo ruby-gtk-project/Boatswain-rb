@@ -470,3 +470,36 @@ bs_page_item_realize (BsPageItem  *self,
 
   return TRUE;
 }
+
+void
+bs_page_item_update (BsPageItem *self,
+                     BsAction   *action,
+                     BsIcon     *custom_icon)
+{
+  g_assert (BS_IS_PAGE_ITEM (self));
+  g_assert (action == NULL || BS_IS_ACTION (action));
+  g_assert (custom_icon == NULL || BS_IS_ICON (custom_icon));
+
+  if (action && !BS_IS_EMPTY_ACTION (action))
+    {
+      BsActionFactory *action_factory;
+      PeasPluginInfo *plugin_info;
+
+      action_factory = bs_action_get_factory (action);
+      plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (action_factory));
+
+      bs_page_item_set_item_type (self, BS_PAGE_ITEM_ACTION);
+      bs_page_item_set_factory (self, peas_plugin_info_get_module_name (plugin_info));
+      bs_page_item_set_action (self, bs_action_get_id (action));
+      bs_page_item_set_settings (self, bs_action_serialize_settings (action));
+    }
+  else
+    {
+      bs_page_item_set_item_type (self, BS_PAGE_ITEM_EMPTY);
+      bs_page_item_set_factory (self, NULL);
+      bs_page_item_set_action (self, NULL);
+      bs_page_item_set_settings (self, NULL);
+    }
+
+  bs_page_item_set_custom_icon (self, custom_icon ? bs_icon_to_json (custom_icon) : NULL);
+}
