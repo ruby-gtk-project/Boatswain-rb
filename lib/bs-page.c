@@ -224,7 +224,7 @@ ensure_first_subpage_item_is_move_up (BsPage *self)
         }
       else
         {
-          item = bs_page_item_new (self);
+          item = bs_page_item_new ();
           bs_page_item_set_item_type (item, BS_PAGE_ITEM_ACTION);
           bs_page_item_set_factory (item, "default");
           bs_page_item_set_action (item, "default-page-up-action");
@@ -411,7 +411,7 @@ load_page_from_json (BsPage   *self,
       for (unsigned int j = 0; j < json_array_get_length (items); j++)
         {
           JsonNode *item_node = json_array_get_element (items, j);
-          BsPageItem *item = bs_page_item_new_from_json (self, item_node);
+          BsPageItem *item = bs_page_item_new_from_json (item_node);
 
           g_ptr_array_insert (page_region->items, j, item_data_new (item));
         }
@@ -620,7 +620,7 @@ bs_page_get_item (BsPage     *self,
 
   if (!item)
     {
-      item = bs_page_item_new (self);
+      item = bs_page_item_new ();
       add_item (self, item, region_id, position);
     }
 
@@ -653,7 +653,7 @@ bs_page_update_item (BsPage     *self,
 
   if (!item_data)
     {
-      add_item (self, bs_page_item_new (self), region_id, position);
+      add_item (self, bs_page_item_new (), region_id, position);
       item_data = get_item_data (self, region_id, position);
     }
 

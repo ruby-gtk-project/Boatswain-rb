@@ -34,8 +34,6 @@ struct _BsPageItem
 {
   GObject parent_instance;
 
-  BsPage *page;
-
   char *action;
   BsPageItemType item_type;
   char *factory;
@@ -51,7 +49,6 @@ enum
   PROP_ACTION,
   PROP_CUSTOM_ICON,
   PROP_FACTORY,
-  PROP_PAGE,
   PROP_SETTINGS,
   PROP_TYPE,
   N_PROPS
@@ -128,10 +125,6 @@ bs_page_item_get_property (GObject    *object,
       g_value_set_string (value, self->factory);
       break;
 
-    case PROP_PAGE:
-      g_value_set_object (value, self->page);
-      break;
-
     case PROP_SETTINGS:
       g_value_set_boxed (value, self->settings);
       break;
@@ -165,11 +158,6 @@ bs_page_item_set_property (GObject      *object,
 
     case PROP_FACTORY:
       bs_page_item_set_factory (self, g_value_get_string (value));
-      break;
-
-    case PROP_PAGE:
-      g_assert (self->page == NULL);
-      self->page = g_value_get_object (value);
       break;
 
     case PROP_SETTINGS:
@@ -206,10 +194,6 @@ bs_page_item_class_init (BsPageItemClass *klass)
                                                   "",
                                                   G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  properties[PROP_PAGE] = g_param_spec_object ("page", NULL, NULL,
-                                               BS_TYPE_PAGE,
-                                               G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
-
   properties[PROP_SETTINGS] = g_param_spec_boxed ("settings", NULL, NULL,
                                                   JSON_TYPE_NODE,
                                                   G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
@@ -228,16 +212,13 @@ bs_page_item_init (BsPageItem *self)
 }
 
 BsPageItem *
-bs_page_item_new (BsPage *page)
+bs_page_item_new (void)
 {
-  return g_object_new (BS_TYPE_PAGE_ITEM,
-                       "page", page,
-                       NULL);
+  return g_object_new (BS_TYPE_PAGE_ITEM, NULL);
 }
 
 BsPageItem *
-bs_page_item_new_from_json (BsPage   *page,
-                            JsonNode *node)
+bs_page_item_new_from_json (JsonNode *node)
 {
   g_autoptr (GEnumClass) enum_class = NULL;
   g_autoptr (BsPageItem) page_item = NULL;
@@ -247,7 +228,7 @@ bs_page_item_new_from_json (BsPage   *page,
   if (!JSON_NODE_HOLDS_OBJECT (node))
     {
       g_warning ("JSON node is not an object");
-      return bs_page_item_new (page);
+      return bs_page_item_new ();
     }
 
   object = json_node_get_object (node);
@@ -258,7 +239,6 @@ bs_page_item_new_from_json (BsPage   *page,
     enum_value = g_enum_get_value_by_name (enum_class, json_object_get_string_member_with_default (object, "type", ""));
 
   page_item = g_object_new (BS_TYPE_PAGE_ITEM,
-                            "page", page,
                             "type", enum_value ? enum_value->value : BS_PAGE_ITEM_EMPTY,
                             "factory", json_object_get_string_member_with_default (object, "factory", NULL),
                             "action", json_object_get_string_member_with_default (object, "action", NULL),
@@ -322,14 +302,6 @@ bs_page_item_to_json (BsPageItem *self)
   json_builder_end_object (builder);
 
   return json_builder_get_root (builder);
-}
-
-BsPage *
-bs_page_item_get_page (BsPageItem *self)
-{
-  g_return_val_if_fail (BS_IS_PAGE_ITEM (self), NULL);
-
-  return self->page;
 }
 
 JsonNode *
