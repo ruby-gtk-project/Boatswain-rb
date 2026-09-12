@@ -1049,6 +1049,7 @@ bs_device_push_page (BsDevice *self,
 
   g_queue_push_head (priv->active_pages, g_object_ref (page));
 
+  bs_page_load_items (page);
   load_active_page (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_ACTIVE_PAGE]);
@@ -1069,6 +1070,7 @@ bs_device_pop_page (BsDevice *self)
 
   page = g_queue_pop_head (priv->active_pages);
   update_page_items (self, page);
+  bs_page_unload_items (page);
 
   load_active_page (self);
 

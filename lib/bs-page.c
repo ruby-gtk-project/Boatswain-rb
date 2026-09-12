@@ -37,6 +37,7 @@ struct _BsPage
 
   GHashTable *page_regions; /* const char* → PageRegion */
 
+  gboolean loaded;
   gboolean root;
 };
 
@@ -682,6 +683,12 @@ bs_page_update_item (BsPage     *self,
       bs_page_item_set_action (item, bs_action_get_id (action));
       bs_page_item_set_settings (item, bs_action_serialize_settings (action));
     }
+
+  if (self->loaded)
+    {
+      g_set_object (&item_data->action, action);
+      g_set_object (&item_data->custom_icon, custom_icon);
+    }
 }
 
 gboolean
@@ -705,6 +712,28 @@ bs_page_realize (BsPage      *self,
       *out_custom_icon = NULL;
       *out_action = bs_empty_action_new ();
       return FALSE;
+    }
+
+  if (self->loaded)
+    {
+      PageRegion *page_region = g_hash_table_lookup (self->page_regions, region_id);
+      ItemData *item_data = NULL;
+
+      if (!page_region || position >= page_region->items->len)
+        {
+          *out_custom_icon = NULL;
+          *out_action = bs_empty_action_new ();
+          return FALSE;
+        }
+
+      item_data = g_ptr_array_index (page_region->items, position);
+      g_assert (item_data != NULL);
+      g_assert (BS_IS_PAGE_ITEM (item_data->item));
+
+      *out_action = item_data->action ? g_object_ref (item_data->action) : NULL;
+      *out_custom_icon = item_data->custom_icon ? g_object_ref (item_data->custom_icon) : NULL;
+
+      return TRUE;
     }
 
   return bs_page_item_realize (item,
@@ -749,4 +778,106 @@ bs_page_set_region_data (BsPage     *self,
 
   g_clear_pointer (&page_region->region_data, json_node_unref);
   page_region->region_data = json_node_ref (region_data);
+}
+
+void
+bs_page_load_items (BsPage *self)
+{
+  GHashTableIter iter;
+  PageRegion *page_region;
+  const char *region_id;
+
+  g_assert (BS_IS_PAGE (self));
+
+  if (self->loaded)
+    return;
+
+  g_hash_table_iter_init (&iter, self->page_regions);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &region_id, (gpointer *) &page_region))
+    {
+      for (unsigned int i = 0; i < page_region->items->len; i++)
+        {
+          g_autoptr (GError) error = NULL;
+          ItemData *item_data = NULL;
+
+          item_data = g_ptr_array_index (page_region->items, i);
+
+          g_assert (item_data != NULL);
+          g_assert (BS_IS_PAGE_ITEM (item_data->item));
+          g_assert (item_data->action == NULL);
+          g_assert (item_data->custom_icon == NULL);
+
+          if (!bs_page_item_realize (item_data->item,
+                                     &item_data->custom_icon,
+                                     &item_data->action,
+                                     &error))
+            {
+              g_warning ("Error creating action %u for region '%s': %s",
+                         i,
+                         region_id,
+                         error->message);
+            }
+
+        }
+    }
+
+  self->loaded = TRUE;
+}
+
+
+void
+bs_page_unload_items (BsPage *self)
+{
+  GHashTableIter iter;
+  PageRegion *page_region;
+  const char *region_id;
+
+  g_assert (BS_IS_PAGE (self));
+
+  if (!self->loaded)
+    return;
+
+  g_hash_table_iter_init (&iter, self->page_regions);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &region_id, (gpointer *) &page_region))
+    {
+      for (unsigned int i = 0; i < page_region->items->len; i++)
+        {
+          g_autoptr (GError) error = NULL;
+          ItemData *item_data = NULL;
+
+          item_data = g_ptr_array_index (page_region->items, i);
+
+          g_assert (item_data != NULL);
+          g_assert (BS_IS_PAGE_ITEM (item_data->item));
+
+          bs_page_item_set_custom_icon (item_data->item,
+                                        item_data->custom_icon ? bs_icon_to_json (item_data->custom_icon) : NULL);
+
+          if (item_data->action && !BS_IS_EMPTY_ACTION (item_data->action))
+            {
+              BsActionFactory *action_factory;
+              PeasPluginInfo *plugin_info;
+
+              action_factory = bs_action_get_factory (item_data->action);
+              plugin_info = peas_extension_base_get_plugin_info (PEAS_EXTENSION_BASE (action_factory));
+
+              bs_page_item_set_item_type (item_data->item, BS_PAGE_ITEM_ACTION);
+              bs_page_item_set_factory (item_data->item, peas_plugin_info_get_module_name (plugin_info));
+              bs_page_item_set_action (item_data->item, bs_action_get_id (item_data->action));
+              bs_page_item_set_settings (item_data->item, bs_action_serialize_settings (item_data->action));
+            }
+          else
+            {
+              bs_page_item_set_item_type (item_data->item, BS_PAGE_ITEM_EMPTY);
+              bs_page_item_set_factory (item_data->item, NULL);
+              bs_page_item_set_action (item_data->item, NULL);
+              bs_page_item_set_settings (item_data->item, NULL);
+            }
+
+          g_clear_object (&item_data->action);
+          g_clear_object (&item_data->custom_icon);
+        }
+    }
+
+  self->loaded = FALSE;
 }
