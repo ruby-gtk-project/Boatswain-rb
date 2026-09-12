@@ -53,6 +53,41 @@ static GParamSpec *properties [N_PROPS];
 
 
 /*
+ * ItemData
+ */
+
+typedef struct
+{
+  BsPageItem *item;
+  BsAction *action;
+  BsIcon *custom_icon;
+} ItemData;
+
+static void
+item_data_free (gpointer data)
+{
+  ItemData *item_data = data;
+
+  g_clear_object (&item_data->item);
+  g_clear_object (&item_data->action);
+  g_clear_object (&item_data->custom_icon);
+  g_clear_pointer (&item_data, g_free);
+}
+
+static ItemData *
+item_data_new (BsPageItem *item)
+{
+  ItemData *item_data;
+
+  g_assert (BS_IS_PAGE_ITEM (item));
+
+  item_data = g_new0 (ItemData, 1);
+  item_data->item = g_steal_pointer (&item);
+
+  return g_steal_pointer (&item_data);
+}
+
+/*
  * PageRegion
  */
 
@@ -83,7 +118,7 @@ page_region_new (const char *id)
 
   page_region = g_new0 (PageRegion, 1);
   page_region->id = g_strdup (id);
-  page_region->items = g_ptr_array_new_with_free_func (g_object_unref);
+  page_region->items = g_ptr_array_new_with_free_func (item_data_free);
   page_region->region_data = json_node_new (JSON_NODE_OBJECT);
   json_node_take_object (page_region->region_data, json_object_new ());
 
@@ -97,17 +132,32 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (PageRegion, page_region_free);
  * Auxiliary methods
  */
 
+static inline ItemData *
+get_item_data (BsPage       *self,
+               const char   *region_id,
+               unsigned int  position)
+{
+  PageRegion *page_region = g_hash_table_lookup (self->page_regions, region_id);
+  ItemData *item_data = NULL;
+
+  if (!page_region || position >= page_region->items->len)
+    return NULL;
+
+  item_data = g_ptr_array_index (page_region->items, position);
+  g_assert (item_data != NULL);
+  g_assert (BS_IS_PAGE_ITEM (item_data->item));
+
+  return item_data;
+}
+
 static inline BsPageItem *
 get_item (BsPage       *self,
           const char   *region_id,
           unsigned int  position)
 {
-  PageRegion *page_region = g_hash_table_lookup (self->page_regions, region_id);
+  ItemData *item_data = get_item_data (self, region_id, position);
 
-  if (!page_region || position >= page_region->items->len)
-    return NULL;
-
-  return g_ptr_array_index (page_region->items, position);
+  return item_data ? item_data->item : NULL;
 }
 
 static inline PageRegion *
@@ -142,7 +192,7 @@ add_item (BsPage       *self,
   page_region = ensure_page_region (self, region_id);
   g_assert (page_region != NULL);
 
-  g_ptr_array_insert (page_region->items, position, item);
+  g_ptr_array_insert (page_region->items, position, item_data_new (item));
 }
 
 static void
@@ -360,8 +410,9 @@ load_page_from_json (BsPage   *self,
       for (unsigned int j = 0; j < json_array_get_length (items); j++)
         {
           JsonNode *item_node = json_array_get_element (items, j);
+          BsPageItem *item = bs_page_item_new_from_json (self, item_node);
 
-          g_ptr_array_insert (page_region->items, j, bs_page_item_new_from_json (self, item_node));
+          g_ptr_array_insert (page_region->items, j, item_data_new (item));
         }
 
       g_assert (!g_hash_table_contains (self->page_regions, id));
@@ -540,8 +591,8 @@ bs_page_to_json (BsPage *self)
       json_builder_begin_array (builder);
       for (unsigned int i = 0; i < page_region->items->len; i++)
         {
-          BsPageItem *item = g_ptr_array_index (page_region->items, i);
-          json_builder_add_value (builder, bs_page_item_to_json (item));
+          ItemData *item_data = g_ptr_array_index (page_region->items, i);
+          json_builder_add_value (builder, bs_page_item_to_json (item_data->item));
         }
       json_builder_end_array (builder);
 
@@ -592,19 +643,24 @@ bs_page_update_item (BsPage     *self,
 
 {
   BsPageItem *item;
+  ItemData *item_data;
 
   g_return_if_fail (BS_IS_PAGE (self));
   g_return_if_fail (!custom_icon || BS_IS_ICON (custom_icon));
 
-  item = get_item (self, region_id, position);
+  item_data = get_item_data (self, region_id, position);
 
-  if (!item)
+  if (!item_data)
     {
-      item = bs_page_item_new (self);
-      add_item (self, item, region_id, position);
+      add_item (self, bs_page_item_new (self), region_id, position);
+      item_data = get_item_data (self, region_id, position);
     }
 
-  bs_page_item_set_custom_icon (item, custom_icon ? bs_icon_to_json (custom_icon) : NULL);
+  g_assert (item_data != NULL);
+
+  item = item_data->item;
+
+  bs_page_item_set_custom_icon (item_data->item, custom_icon ? bs_icon_to_json (custom_icon) : NULL);
 
   if (BS_IS_EMPTY_ACTION (action))
     {
