@@ -25,14 +25,24 @@
 
 G_BEGIN_DECLS
 
-BsPage   *bs_page_new_root        (JsonNode   *node);
-JsonNode *bs_page_get_region_data (BsPage     *self,
-                                   const char *region_id);
-void      bs_page_set_region_data (BsPage     *self,
-                                   const char *region_id,
-                                   JsonNode   *region_data);
-void      bs_page_load_items      (BsPage     *self);
-void      bs_page_unload_items    (BsPage     *self);
-
+BsPage   *bs_page_new_root        (JsonNode    *node);
+JsonNode *bs_page_get_region_data (BsPage      *self,
+                                   const char  *region_id);
+void      bs_page_set_region_data (BsPage      *self,
+                                   const char  *region_id,
+                                   JsonNode    *region_data);
+void      bs_page_update_item     (BsPage      *self,
+                                   const char  *region_id,
+                                   size_t       position,
+                                   BsAction    *action,
+                                   BsIcon      *custom_icon);
+gboolean  bs_page_realize         (BsPage      *self,
+                                   const char  *region_id,
+                                   size_t       position,
+                                   BsIcon     **out_custom_icon,
+                                   BsAction   **out_action,
+                                   GError     **error);
+void      bs_page_load_items      (BsPage      *self);
+void      bs_page_unload_items    (BsPage      *self);
 
 G_END_DECLS
