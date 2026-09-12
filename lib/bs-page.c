@@ -606,27 +606,6 @@ bs_page_to_json (BsPage *self)
   return json_builder_get_root (builder);
 }
 
-
-BsPageItem *
-bs_page_get_item (BsPage     *self,
-                  const char *region_id,
-                  uint8_t     position)
-{
-  BsPageItem *item;
-
-  g_return_val_if_fail (BS_IS_PAGE (self), NULL);
-
-  item = get_item (self, region_id, position);
-
-  if (!item)
-    {
-      item = bs_page_item_new ();
-      add_item (self, item, region_id, position);
-    }
-
-  return item;
-}
-
 gboolean
 bs_page_is_root (BsPage *self)
 {

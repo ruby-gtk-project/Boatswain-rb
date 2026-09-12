@@ -34,29 +34,20 @@ G_BEGIN_DECLS
 #define BS_TYPE_PAGE (bs_page_get_type())
 G_DECLARE_FINAL_TYPE (BsPage, bs_page, BS, PAGE, GObject)
 
-BsPage * bs_page_new_empty (void);
-
-BsPage * bs_page_new_from_json (JsonNode *node);
-
-JsonNode * bs_page_to_json (BsPage *self);
-
-gboolean bs_page_is_root (BsPage *self);
-
-BsPageItem * bs_page_get_item (BsPage     *self,
-                               const char *region_id,
-                               uint8_t     position);
-
-void bs_page_update_item (BsPage     *self,
-                          const char *region_id,
-                          size_t      position,
-                          BsAction   *action,
-                          BsIcon     *custom_icon);
-
-gboolean bs_page_realize (BsPage      *self,
-                          const char  *region_id,
-                          size_t       position,
-                          BsIcon     **out_custom_icon,
-                          BsAction   **out_action,
-                          GError     **error);
+BsPage   *bs_page_new_empty     (void);
+BsPage   *bs_page_new_from_json (JsonNode    *node);
+JsonNode *bs_page_to_json       (BsPage      *self);
+gboolean  bs_page_is_root       (BsPage      *self);
+void      bs_page_update_item   (BsPage      *self,
+                                 const char  *region_id,
+                                 size_t       position,
+                                 BsAction    *action,
+                                 BsIcon      *custom_icon);
+gboolean  bs_page_realize       (BsPage      *self,
+                                 const char  *region_id,
+                                 size_t       position,
+                                 BsIcon     **out_custom_icon,
+                                 BsAction   **out_action,
+                                 GError     **error);
 
 G_END_DECLS
