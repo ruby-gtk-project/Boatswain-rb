@@ -36,9 +36,6 @@ BsButton * bs_button_new (BsDevice       *device,
 void bs_button_set_pressed (BsButton *self,
                             gboolean  pressed);
 
-void bs_button_inhibit_page_updates (BsButton *self);
-void bs_button_uninhibit_page_updates (BsButton *self);
-
 unsigned int bs_button_get_icon_width (BsButton *self);
 unsigned int bs_button_get_icon_height (BsButton *self);
 

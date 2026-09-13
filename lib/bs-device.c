@@ -371,12 +371,8 @@ load_active_page (BsDevice *self)
                   continue;
                 }
 
-              bs_button_inhibit_page_updates (button);
-
               bs_actionable_set_action (BS_ACTIONABLE (button), action);
               bs_button_set_custom_icon (button, custom_icon);
-
-              bs_button_uninhibit_page_updates (button);
             }
 
         }

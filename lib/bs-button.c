@@ -47,7 +47,6 @@ struct _BsButton
   gulong action_contents_changed_id;
   gulong action_size_changed_id;
   gulong action_changed_id;
-  int inhibit_page_updates_counter;
   gboolean pressed;
 };
 
@@ -457,23 +456,6 @@ bs_button_set_custom_icon (BsButton *self,
 
   // FIXME: This is not technically correct, but alas
   bs_actionable_action_changed (BS_ACTIONABLE (self));
-}
-
-void
-bs_button_inhibit_page_updates (BsButton *self)
-{
-  g_return_if_fail (BS_IS_BUTTON (self));
-
-  self->inhibit_page_updates_counter++;
-}
-
-void
-bs_button_uninhibit_page_updates (BsButton *self)
-{
-  g_return_if_fail (BS_IS_BUTTON (self));
-  g_return_if_fail (self->inhibit_page_updates_counter > 0);
-
-  self->inhibit_page_updates_counter--;
 }
 
 unsigned int
