@@ -70,10 +70,10 @@ bs_shutdown (void)
 
   loop = g_main_loop_new (NULL, FALSE);
   future = dex_future_finally (dex_scheduler_spawn (NULL,
-                                          0,
-                                          bs_shutdown_fiber,
-                                          NULL,
-                                          NULL),
+                                                    0,
+                                                    bs_shutdown_fiber,
+                                                    NULL,
+                                                    NULL),
                                bs_shutdown_cb,
                                g_main_loop_ref (loop),
                                (GDestroyNotify)g_main_loop_unref);
