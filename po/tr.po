@@ -4,22 +4,22 @@
 #
 # Sabri Ünal <yakushabb@gmail.com>, 2023, 2024.
 # Emin Tufan Çetin <etcetin@gmail.com>, 2023, 2024, 2025.
-# Muhammet Kara <muhammetk@gmail.com>, 2025.
+# Muhammet Kara <muhammetk@gmail.com>, 2025-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2026-04-11 20:20+0000\n"
-"PO-Revision-Date: 2026-09-03 23:27+0300\n"
-"Last-Translator: Emin Tufan Çetin <etcetin@gmail.com>\n"
+"POT-Creation-Date: 2026-09-13 03:05+0000\n"
+"PO-Revision-Date: 2026-09-14 00:42+0300\n"
+"Last-Translator: Muhammet Kara <muhammetk@gmail.com>\n"
 "Language-Team: Turkish <takim@gnome.org.tr>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.9\n"
+"X-Generator: Gtranslator 49.0\n"
 
 #: data/com.feaneron.Boatswain.desktop.in.in:2
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:6
@@ -137,6 +137,13 @@ msgstr "Elgato Stream Deck Plus"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "Razer Stream Controller X"
+
 #: lib/devices/mock/mock-device.c:108
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
@@ -145,7 +152,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:361
+#: lib/bs-device.c:314
 msgid "Default"
 msgstr "Öntanımlı"
 
@@ -171,15 +178,15 @@ msgstr ""
 "Boatswain’in Stream Deck eylemlerini algılaması ve yürütmesi için arka "
 "planda çalışması gerekir."
 
-#: src/bs-button-editor.c:327
+#: src/bs-button-editor.c:297
 msgid "All supported formats"
 msgstr "Desteklenen tüm biçimler"
 
-#: src/bs-button-editor.c:336
+#: src/bs-button-editor.c:306
 msgid "Select icon"
 msgstr "Simge seç"
 
-#: src/bs-button-editor.c:337
+#: src/bs-button-editor.c:307
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Aç"
