@@ -622,16 +622,13 @@ bs_page_update_item (BsPage     *self,
                      BsIcon     *custom_icon)
 
 {
-  BsPageItem *item;
   ItemData *item_data;
 
   g_return_if_fail (BS_IS_PAGE (self));
   g_return_if_fail (!custom_icon || BS_IS_ICON (custom_icon));
   g_return_if_fail (self->loaded);
 
-  item_data = get_item_data (self, region_id, position);
-
-  if (!item_data)
+  if (!(item_data = get_item_data (self, region_id, position)))
     {
       add_item (self, bs_page_item_new (), region_id, position);
       item_data = get_item_data (self, region_id, position);
