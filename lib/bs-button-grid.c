@@ -68,6 +68,14 @@ on_button_action_changed_cb (BsButton     *button,
   g_signal_emit (self, signals[BUTTON_CHANGED], 0, button);
 }
 
+static void
+on_button_icon_changed_cb (BsButton     *button,
+                           BsIcon       *icon,
+                           BsButtonGrid *self)
+{
+  g_signal_emit (self, signals[BUTTON_CHANGED], 0, button);
+}
+
 
 /*
  * BsDeviceRegion overrides
@@ -221,6 +229,10 @@ bs_button_grid_new (const char        *id,
       g_signal_connect_object (button,
                                "action-changed",
                                G_CALLBACK (on_button_action_changed_cb),
+                               self, 0);
+      g_signal_connect_object (button,
+                               "icon-changed",
+                               G_CALLBACK (on_button_icon_changed_cb),
                                self, 0);
 
       g_list_store_append (self->buttons, button);
