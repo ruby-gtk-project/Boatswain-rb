@@ -36,6 +36,39 @@
             ]
         },
         {
+            "name" : "gjs",
+            "buildsystem" : "meson",
+            "config-opts" : [
+                "-Dinstalled_tests=false",
+                "-Dskip_dbus_tests=true",
+                "-Dskip_gtk_tests=true"
+            ],
+            "sources" : [
+                {
+                    "type" : "git",
+                    "url" : "https://gitlab.gnome.org/GNOME/gjs.git",
+                    "branch" : "master"
+                }
+            ],
+            "modules": [
+                {
+                    "name" : "wabt",
+                    "buildsystem" : "cmake",
+                    "builddir" : true,
+                    "config-opts" : [
+                        "-DBUILD_TESTS=OFF"
+                    ],
+                    "sources" : [
+                        {
+                            "type" : "git",
+                            "url" : "https://github.com/WebAssembly/wabt.git",
+                            "branch" : "main"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "name" : "libpeas",
             "buildsystem" : "meson",
             "cleanup" : [
