@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boatswain main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/World/boatswain/issues\n"
-"POT-Creation-Date: 2025-11-10 11:18+0000\n"
-"PO-Revision-Date: 2025-11-27 18:56+0100\n"
+"POT-Creation-Date: 2026-09-13 03:05+0000\n"
+"PO-Revision-Date: 2026-09-18 20:39+0200\n"
 "Last-Translator: \n"
 "Language-Team: Catalan <Catalan>\n"
 "Language: ca\n"
@@ -39,8 +39,7 @@ msgstr "Controleu les vostres Stream Decks d'Elgato"
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:14
 msgid "Boatswain allows you to control Elgato Stream Deck devices."
-msgstr ""
-"El Boatswain us permet controlar els dispositius Stream Deck d'Elgato."
+msgstr "El Boatswain us permet controlar els dispositius Stream Deck d'Elgato."
 
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:15
 msgid "With Boatswain you will be able to:"
@@ -80,6 +79,10 @@ msgstr "Fer un seguiment de la puntuació dels jocs"
 #: data/com.feaneron.Boatswain.metainfo.xml.in.in:24
 msgid "Open files and launch applications"
 msgstr "Obrir fitxers i llançar aplicacions"
+
+#: data/com.feaneron.Boatswain.metainfo.xml.in.in:28
+msgid "Georges Basile Stavracas Neto"
+msgstr "Georges Basile Stavracas Neto"
 
 #. Translators: this is a product name. In most cases, it is not translated.
 #. * Please verify if Elgato translates their product names on your locale.
@@ -131,6 +134,13 @@ msgstr "Elgato Stream Deck Plus"
 msgid "Elgato Stream Deck XL"
 msgstr "Elgato Stream Deck XL"
 
+#. Translators: this is a product name. In most cases, it is not translated.
+#. * Please verify if Razer translates their product names on your locale.
+#.
+#: lib/devices/loupedeck/razer-stream-controller-x.c:168
+msgid "Razer Stream Controller X"
+msgstr "Razer Stream Controller X"
+
 #: lib/devices/mock/mock-device.c:108
 msgid "Feaneron Hangar Mild"
 msgstr "Feaneron Hangar Mild"
@@ -139,7 +149,7 @@ msgstr "Feaneron Hangar Mild"
 msgid "Feaneron Hangar XL"
 msgstr "Feaneron Hangar XL"
 
-#: lib/bs-device.c:361
+#: lib/bs-device.c:314
 msgid "Default"
 msgstr "Predeterminat"
 
@@ -166,15 +176,15 @@ msgstr ""
 "El Boatswain ha d'executar-se en segon pla per detectar i executar accions "
 "del Stream Deck."
 
-#: src/bs-button-editor.c:327
+#: src/bs-button-editor.c:297
 msgid "All supported formats"
 msgstr "Tots els formats admesos"
 
-#: src/bs-button-editor.c:336
+#: src/bs-button-editor.c:306
 msgid "Select icon"
 msgstr "Selecciona la icona"
 
-#: src/bs-button-editor.c:337
+#: src/bs-button-editor.c:307
 #: src/plugins/network/network-http-action-prefs.c:147
 msgid "Open"
 msgstr "Obre"
@@ -295,17 +305,17 @@ msgstr "_Quant al Boatswain"
 msgid "_Quit"
 msgstr "_Surt"
 
-#: src/gtk/help-overlay.ui:11
+#: src/shortcuts-dialog.ui:6
 msgctxt "shortcut window"
 msgid "General"
 msgstr "General"
 
-#: src/gtk/help-overlay.ui:14
+#: src/shortcuts-dialog.ui:9
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "Mostra les dreceres de teclat"
 
-#: src/gtk/help-overlay.ui:20
+#: src/shortcuts-dialog.ui:15
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "Surt"
@@ -439,8 +449,8 @@ msgstr "Desa a un fitxer"
 msgid ""
 "Save score to a text file. Other apps such as OBS Studio may read from it."
 msgstr ""
-"Desa la puntuació en un fitxer de text. Altres aplicacions com l'OBS "
-"Studio poden llegir-la."
+"Desa la puntuació en un fitxer de text. Altres aplicacions com l'OBS Studio "
+"poden llegir-la."
 
 #: src/plugins/gaming/score.js:394
 #: src/plugins/launcher/launcher-open-file-action.c:213
