@@ -3,6 +3,7 @@
 require_relative "device_manager"
 require_relative "plugins/default/action_factory"
 require_relative "plugins/launcher/action_factory"
+require_relative "plugins/network/action_factory"
 
 module Boatswain
   # Context is the port of lib/bs-context.c: the one object that owns the
@@ -16,6 +17,7 @@ module Boatswain
     FACTORIES = [
       Plugins::Default::ActionFactory,
       Plugins::Launcher::ActionFactory,
+      Plugins::Network::ActionFactory,
     ].freeze
 
     class << self
