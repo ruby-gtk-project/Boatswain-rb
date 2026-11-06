@@ -36,19 +36,34 @@ scratch against it as the spec.
 
 ## What the port has today
 
-`lib/` on `ruby` holds three files:
+**Updated at this survey.** Since the inventory below was first written,
+`lib/` grew from 3 files to 47 (commit `3d10462`, "Port components written
+during an interrupted run"). That run was stopped before it reached its
+parity audit or drive script, so **every file it added is marked
+`exists (unverified)` below, not `done`** — the files parse (`ruby -c`), and
+that is the only claim made for them. None has been loaded in the dev shell
+or driven against the `ruby-gtk-testing` skill as part of this survey.
 
-| Path | What it is |
-|---|---|
-| `lib/boatswain.rb` | entry point, `require_relative "boatswain/application"` |
-| `lib/boatswain/application.rb` | `Gtk::Application` + `Adwaita::ApplicationWindow` + `Adwaita::ToolbarView` + `Adwaita::HeaderBar` + an `Adwaita::StatusPage` reading "The Ruby port has not been written yet." |
-| `lib/boatswain/rb/version.rb` | gem version |
+Of the 52 user-facing components inventoried below, **26 now have a `lib/`
+file on disk** (the application shell, the main window, the About and
+shortcuts dialogs, the profile row, the device editor and its button/grid/
+editor/action-selector widgets, the style and settings modules, and the full
+`default` and `launcher` plugins). **26 remain absent**: the dial, touchscreen
+and touchscreen-slot widgets and their editor/background dialogs, every
+`desktop`, `network`, `obs-studio`, `soundboard` and `gaming` plugin file, and
+`po/`.
 
-So **one** of the 52 components below exists, and only in placeholder form: the
-application unit has its object, its window and a status page, but none of
-upstream's actions, accelerators, About dialog or device wiring.
+The device/model layer that Blocker 1 below called out as a prerequisite also
+now has files (`device.rb`, `profile.rb`, `page.rb`, `page_item.rb`,
+`button.rb`, `button_grid.rb`, `context.rb`, `device_manager.rb`,
+`device_region.rb`, `icon.rb`, `icon_widget.rb`, `events.rb`,
+`observable_list.rb`, `empty_action.rb`, `action.rb`, `action_info.rb`,
+`action_factory.rb`, and `devices/mock/{device,device_provider}.rb`) — all
+likewise unverified.
 
-`spec/` holds only `spec_helper.rb` and a README — no component tests.
+`spec/` still holds only `spec_helper.rb` and a README — no component tests
+were added alongside the new `lib/` files, so there is no test evidence for
+any of this either.
 
 ---
 
@@ -65,7 +80,8 @@ upstream's actions, accelerators, About dialog or device wiring.
 | CLI option | — | — | — | `--debug`, "Enable debug messages" |
 | UNIX signals | — | — | — | SIGHUP/INT/TERM/USR1/USR2 → quit |
 
-Port target: `lib/boatswain/application.rb` — **exists (placeholder only)**.
+Port target: `lib/boatswain/application.rb` — **exists (unverified — rewritten
+by the interrupted run from the original placeholder, not yet driven)**.
 
 ### src/bs-window.c + src/bs-window.ui — the main window
 
@@ -94,7 +110,7 @@ Port target: `lib/boatswain/application.rb` — **exists (placeholder only)**.
 | `Gtk.Stack` `devices_stack` | 1 | — | — | crossfade; **repeater** of one `BsDeviceEditor` per device, named by pointer |
 | menu `primary_menu` | 1 | — | `app.shortcuts`, `win.about`, `app.quit` | 3 items, one section |
 
-Port target: `lib/boatswain/window.rb` — **absent**.
+Port target: `lib/boatswain/window.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### About dialog (built in src/bs-window.c, `on_show_about_action_activated_cb`)
 
@@ -103,7 +119,7 @@ version, copyright "© 2022 Georges Basile Stavracas Neto", one developer, two
 artists (Jakub Steiner, Sam Hewitt), GPL-3.0, website and issue URL. No `.ui`
 file; it is a component with no file of its own.
 
-Port target: `lib/boatswain/about_dialog.rb` — **absent**.
+Port target: `lib/boatswain/about_dialog.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/shortcuts-dialog.ui — keyboard shortcuts
 
@@ -119,7 +135,7 @@ loads `shortcuts-dialog.ui` — the resource is only listed in
 `boatswain.gresource.xml`. The port should install `app.shortcuts` and present
 this dialog; that is a gap in upstream, not a reason to drop the component.
 
-Port target: `lib/boatswain/shortcuts_dialog.rb` — **absent**.
+Port target: `lib/boatswain/shortcuts_dialog.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-profile-row.c + src/bs-profile-row.ui — one profile in the sidebar
 
@@ -136,7 +152,7 @@ Port target: `lib/boatswain/shortcuts_dialog.rb` — **absent**.
 | `Gtk.Button` `rename_button` | 1 | `suggested-action` | `clicked` → `on_rename_button_clicked_cb` | label "Rename" |
 | menu `menu` | 1 | — | `profile-row.move-up`, `profile-row.move-down`, `profile-row.delete` | submenu "Rename" hosting the custom slot; "Delete" in its own section |
 
-Port target: `lib/boatswain/profile_row.rb` — **absent**.
+Port target: `lib/boatswain/profile_row.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-device-editor.c + src/bs-device-editor.ui — one device's editing surface
 
@@ -151,7 +167,7 @@ Port target: `lib/boatswain/profile_row.rb` — **absent**.
 | `Adw.Bin` `editor_bin` | 1 | — | — | width-request 280; swapped between `empty_page`, `BsButtonEditor` and `BsTouchscreenSlotEditor` on selection |
 | `Adw.StatusPage` | 1 | — | — | "Select a button" |
 
-Port target: `lib/boatswain/device_editor.rb` — **absent**.
+Port target: `lib/boatswain/device_editor.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-selection-controller.c — selection shared across region widgets
 
@@ -160,7 +176,7 @@ No widgets. One `selection-changed` signal, consumed by `BsDeviceEditor`,
 three region widgets' selections mutually exclusive, so it must be ported as
 its own object.
 
-Port target: `lib/boatswain/selection_controller.rb` — **absent**.
+Port target: `lib/boatswain/selection_controller.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-button-grid-widget.c + .ui — the grid of device buttons
 
@@ -170,7 +186,7 @@ Port target: `lib/boatswain/selection_controller.rb` — **absent**.
 | `Gtk.FlowBox` `flowbox` | 1 | — | `child-activated` → `on_flowbox_child_activated_cb`; `selected-children-changed` → `on_flowbox_selected_children_changed_cb` | homogeneous, single selection, 18px spacings, activate-on-single-click false |
 | `BsButtonWidget` | *n* | — | — | **repeater** over the grid's buttons |
 
-Port target: `lib/boatswain/button_grid_widget.rb` — **absent**.
+Port target: `lib/boatswain/button_grid_widget.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-button-widget.c + .ui — one button on the device
 
@@ -181,7 +197,7 @@ Port target: `lib/boatswain/button_grid_widget.rb` — **absent**.
 | `Gtk.DropTarget` `drop_target` (controller, added in C) | 1 | — | — | `BsButton` / move; added via `gtk_widget_add_controller` |
 | `Gtk.Picture` `picture` | 1 | `card` | — | width/height bound to `button.icon-width` / `icon-height` |
 
-Port target: `lib/boatswain/button_widget.rb` — **absent**.
+Port target: `lib/boatswain/button_widget.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-dial-widget.c + .ui — one dial
 
@@ -241,7 +257,7 @@ Port target: `lib/boatswain/touchscreen_slot_widget.rb` — **absent**.
 | `BsActionSelector` | 1 | — | `action-selected` → `on_action_selector_action_selected_cb` | the `actions` page's child |
 | models (not widgets) | — | — | — | `Gtk.SortListModel` + `Gtk.StringSorter` over `Gtk.FilterListModel` + `Gtk.StringFilter` (substring), fed from `Gtk.StringList` of icon names built in C |
 
-Port target: `lib/boatswain/button_editor.rb` — **absent**.
+Port target: `lib/boatswain/button_editor.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-action-selector.c + .ui — the action catalogue
 
@@ -255,7 +271,7 @@ Port target: `lib/boatswain/button_editor.rb` — **absent**.
 | `Adw.ExpanderRow` | *n* | — | — | **repeater**, one per plugin: title from the plugin name, `Gtk.Image` prefix from the plugin icon |
 | `Adw.ActionRow` | *n* | — | `activated` → `on_action_row_activated_cb` | **repeater**, one per non-hidden `BsActionInfo`: title, subtitle, `Gtk.Image` prefix; activating collapses every expander row and emits `action-selected` |
 
-Port target: `lib/boatswain/action_selector.rb` — **absent**.
+Port target: `lib/boatswain/action_selector.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### src/bs-touchscreen-slot-editor.c + .ui — the touchscreen properties pane
 
@@ -311,13 +327,13 @@ Port target: `lib/boatswain/touchscreen_background_dialog.rb` — **absent**.
 row's menu button.
 
 Port target: `lib/boatswain/style.rb` (or `data/style.css` loaded by it) —
-**absent**.
+**exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ### data/com.feaneron.Boatswain.gschema.xml — settings
 
 One key, `desktop-controller-restore-token` (string, default `''`).
 
-Port target: `lib/boatswain/settings.rb` — **absent**.
+Port target: `lib/boatswain/settings.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ---
 
@@ -331,15 +347,15 @@ selector: "Folder" (`folder-symbolic`), "Switch Profile"
 "Multiple Actions" (`stacked-plates-symbolic`), and "Go Up"
 (`go-up-symbolic`, **hidden** — never shown in the selector).
 
-Port target: `lib/boatswain/plugins/default/action_factory.rb` — **absent**.
+Port target: `lib/boatswain/plugins/default/action_factory.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 | Upstream file | Component | Widgets built in C | Port target | Exists |
 |---|---|---|---|---|
-| `default-switch-page-action.c` | "Folder" action | none (no preferences) | `lib/boatswain/plugins/default/switch_page_action.rb` | no |
-| `default-page-up-action.c` | "Go Up" action, hidden | none | `lib/boatswain/plugins/default/page_up_action.rb` | no |
-| `default-switch-profile-action.c` | "Switch Profile" action | `Adw.PreferencesGroup` + 2 `Adw.ComboRow` ("Stream Deck", "Profile"), each with a property expression over the name | `lib/boatswain/plugins/default/switch_profile_action.rb` | no |
-| `default-brightness-action.c` | "Brightness" action | `Gtk.ListBox` `boxed-list` + `Adw.ComboRow` "Mode" over a `Gtk.StringList` + `Adw.ActionRow` "Value" with a `Gtk.SpinButton` (0.01–1.0, step 0.01); icon swaps between three brightness icons | `lib/boatswain/plugins/default/brightness_action.rb` | no |
-| `default-multi-action.c` | "Multiple Actions" action | returns its editor | `lib/boatswain/plugins/default/multi_action.rb` | no |
+| `default-switch-page-action.c` | "Folder" action | none (no preferences) | `lib/boatswain/plugins/default/switch_page_action.rb` | unverified |
+| `default-page-up-action.c` | "Go Up" action, hidden | none | `lib/boatswain/plugins/default/page_up_action.rb` | unverified |
+| `default-switch-profile-action.c` | "Switch Profile" action | `Adw.PreferencesGroup` + 2 `Adw.ComboRow` ("Stream Deck", "Profile"), each with a property expression over the name | `lib/boatswain/plugins/default/switch_profile_action.rb` | unverified |
+| `default-brightness-action.c` | "Brightness" action | `Gtk.ListBox` `boxed-list` + `Adw.ComboRow` "Mode" over a `Gtk.StringList` + `Adw.ActionRow` "Value" with a `Gtk.SpinButton` (0.01–1.0, step 0.01); icon swaps between three brightness icons | `lib/boatswain/plugins/default/brightness_action.rb` | unverified |
+| `default-multi-action.c` | "Multiple Actions" action | returns its editor | `lib/boatswain/plugins/default/multi_action.rb` | unverified |
 
 ### default-multi-action-editor.c + .ui — the multi-action editor
 
@@ -355,7 +371,7 @@ Port target: `lib/boatswain/plugins/default/action_factory.rb` — **absent**.
 | `Gtk.Dialog` `preferences_dialog` | 1 | — | `close-request` → `on_preferences_dialog_close_request_cb` | "Settings", modal, header-bar, 450×450; `Adw.Bin` `preferences_bin` hosts the sub-action's preferences |
 
 Port target: `lib/boatswain/plugins/default/multi_action_editor.rb` —
-**absent**. Note these are `Gtk.Dialog`s, not `Adw.Dialog`s, upstream.
+**exists (unverified — written by an interrupted run, not yet driven; see Blockers)**. Note these are `Gtk.Dialog`s, not `Adw.Dialog`s, upstream.
 
 ### default-multi-action-row.c + .ui — one entry in the multi-action list
 
@@ -367,7 +383,7 @@ Port target: `lib/boatswain/plugins/default/multi_action_editor.rb` —
 | `Gtk.Button` `edit_button` | 1 | `flat` | `clicked` → `on_edit_button_clicked_cb` | `preferences-system-symbolic`, hidden unless the sub-action has preferences |
 | `Gtk.Button` (remove) | 1 | `flat` | `clicked` → `on_remove_button_clicked_cb` | `edit-delete-symbolic` |
 
-Port target: `lib/boatswain/plugins/default/multi_action_row.rb` — **absent**.
+Port target: `lib/boatswain/plugins/default/multi_action_row.rb` — **exists (unverified — written by an interrupted run, not yet driven; see Blockers)**.
 
 ---
 
@@ -403,11 +419,11 @@ Port target: `lib/boatswain/plugins/desktop/shortcut_dialog.rb` — **absent**.
 
 | Upstream file | Component | Detail | Port target | Exists |
 |---|---|---|---|---|
-| `launcher-action-factory.c` | action catalogue | 3 entries: "Launch Application" (`app-launch-symbolic`), "Open File" (`folder-documents-symbolic`), "Open URL" (`open-link-symbolic`) | `lib/boatswain/plugins/launcher/action_factory.rb` | no |
-| `launcher-launch-action.c` | "Launch Application" action | returns `LauncherLaunchPreferences`; icon falls back to `application-x-executable-symbolic` | `lib/boatswain/plugins/launcher/launch_action.rb` | no |
-| `launcher-launch-preferences.c` + `.ui` | its preferences | `Adw.PreferencesGroup` root; `Adw.ActionRow` `app_row` "Choose Application", activatable, `activated` → `on_app_row_activated_cb` (swapped); `Gtk.Label` `app_name` (hidden until chosen) and a `go-next-symbolic` `Gtk.Image` whose visibility is the inverse | `lib/boatswain/plugins/launcher/launch_preferences.rb` | no |
-| `launcher-open-file-action.c` | "Open File" action | prefs in C: `Adw.PreferencesGroup` + `Adw.ActionRow` "File" (subtitle is the basename or "No file selected", gains/loses the `property` class), `document-open-symbolic` `Gtk.Image`, and a `flat` clear button `edit-clear-symbolic`; `Gtk.FileDialog` "Select File"; launches with `Gtk.FileLauncher` | `lib/boatswain/plugins/launcher/open_file_action.rb` | no |
-| `launcher-open-url-action.c` | "Open URL" action | prefs in C: `Adw.PreferencesGroup` + `Adw.EntryRow` "URL"; launches with `Gtk.UriLauncher`; icon `web-browser-symbolic` | `lib/boatswain/plugins/launcher/open_url_action.rb` | no |
+| `launcher-action-factory.c` | action catalogue | 3 entries: "Launch Application" (`app-launch-symbolic`), "Open File" (`folder-documents-symbolic`), "Open URL" (`open-link-symbolic`) | `lib/boatswain/plugins/launcher/action_factory.rb` | unverified |
+| `launcher-launch-action.c` | "Launch Application" action | returns `LauncherLaunchPreferences`; icon falls back to `application-x-executable-symbolic` | `lib/boatswain/plugins/launcher/launch_action.rb` | unverified |
+| `launcher-launch-preferences.c` + `.ui` | its preferences | `Adw.PreferencesGroup` root; `Adw.ActionRow` `app_row` "Choose Application", activatable, `activated` → `on_app_row_activated_cb` (swapped); `Gtk.Label` `app_name` (hidden until chosen) and a `go-next-symbolic` `Gtk.Image` whose visibility is the inverse | `lib/boatswain/plugins/launcher/launch_preferences.rb` | unverified |
+| `launcher-open-file-action.c` | "Open File" action | prefs in C: `Adw.PreferencesGroup` + `Adw.ActionRow` "File" (subtitle is the basename or "No file selected", gains/loses the `property` class), `document-open-symbolic` `Gtk.Image`, and a `flat` clear button `edit-clear-symbolic`; `Gtk.FileDialog` "Select File"; launches with `Gtk.FileLauncher` | `lib/boatswain/plugins/launcher/open_file_action.rb` | unverified |
+| `launcher-open-url-action.c` | "Open URL" action | prefs in C: `Adw.PreferencesGroup` + `Adw.EntryRow` "URL"; launches with `Gtk.UriLauncher`; icon `web-browser-symbolic` | `lib/boatswain/plugins/launcher/open_url_action.rb` | unverified |
 
 ---
 
@@ -488,42 +504,52 @@ the Ruby paths. Counted as one unit: `po/` — **absent** from the port.
 
 | | Upstream | Port (`ruby`) |
 |---|---:|---:|
-| User-facing components (this inventory) | 52 | 1, placeholder only |
+| User-facing components (this inventory) | 52 | 26 have a file, all **unverified**; 26 absent |
+| Device/model layer files (not user-facing, see Blocker 1) | ~17 upstream files | all 17 have a file, **unverified** |
 | `.ui` templates / top-level builder objects under `src/` | 20 | 0 (by design — the house style builds widgets in Ruby) |
-| Action catalogue entries shown in the selector | 18 (+1 hidden) | 0 |
-| Distinct CSS classes and css-names in `style.css` | 7 classes, 8 css-names | 0 |
-| GSettings keys | 1 | 0 |
+| Action catalogue entries shown in the selector | 18 (+1 hidden) | up to 5 (`default` plugin) have code, unverified; 0 confirmed working |
+| Distinct CSS classes and css-names in `style.css` | 7 classes, 8 css-names | `lib/boatswain/style.rb` exists, unverified |
+| GSettings keys | 1 | `lib/boatswain/settings.rb` exists, unverified |
 | Locales | 38 | 0 |
+
+**"Unverified" is load-bearing, not a formality.** Nothing above has been run
+in `nix develop --command xvfb-run -a ruby ...`, driven with the
+`ruby-gtk-testing` skill, or checked against `COMPONENT_PARITY.md` (which
+still does not exist). A file that parses is not a component that works; see
+the commit message on `3d10462` for the same caveat in the port's own words.
 
 ## Blockers
 
-1. **No device layer in the port.** Everything in `src/` is driven by `lib/`
-   upstream — `BsDevice`, `BsProfile`, `BsPage`, `BsButton`, `BsDial`,
-   `BsTouchscreen`, `BsIcon`, `BsRenderer`, `BsContext`, and the Elgato,
-   Loupedeck and mock device providers over USB HID. Until at least the mock
-   provider exists in Ruby, the window can only ever show its
-   "No Stream Deck Found" status page, so no component below the window can be
-   exercised. The mock provider (`lib/devices/mock/`) is the cheapest way to
-   make the rest of the UI reachable and should be ported first.
-2. **libpeas plugin loading has no Ruby equivalent.** Upstream discovers action
-   factories as libpeas extensions (including a GJS loader for the `gaming`
-   plugin). The port needs a plain Ruby registry that `BsContext` equivalents
-   can enumerate; the action selector and the multi-action editor both
-   `bind_model` over it.
-3. **Path convention needs a decision.** The task's house shape says one
-   upstream file maps to one `lib/<thing>.rb`, and the pilot
-   `gnome-contacts-rb` uses a flat `lib/*.rb`. This repo is packaged as a gem
-   and already has `lib/boatswain.rb` + `lib/boatswain/application.rb`. This
-   inventory therefore targets `lib/boatswain/<thing>.rb` and
-   `lib/boatswain/plugins/<plugin>/<thing>.rb`. Confirm before the first port
-   unit lands, because changing it later renames 50 files.
+1. **No device layer in the port — files exist, status unverified.** Everything
+   in `src/` is driven by `lib/` upstream — `BsDevice`, `BsProfile`, `BsPage`,
+   `BsButton`, `BsDial`, `BsTouchscreen`, `BsIcon`, `BsRenderer`, `BsContext`,
+   and the Elgato, Loupedeck and mock device providers over USB HID. The mock
+   provider (`lib/boatswain/devices/mock/`) and the rest of this layer now have
+   Ruby files, but none have been driven, so it is still unknown whether the
+   window can get past its "No Stream Deck Found" status page. Driving the
+   mock provider end-to-end is the next concrete step, not a re-port.
+2. **libpeas plugin loading has no Ruby equivalent — needs a read, not a
+   re-decision.** `lib/boatswain/action_factory.rb` and the per-plugin
+   `action_factory.rb` files now exist; whether they actually form the plain
+   Ruby registry this blocker called for (the thing `action_selector.rb` and
+   the multi-action editor `bind_model` over) has not been checked in this
+   survey and should be the first thing read before writing any more plugin
+   code.
+3. **Path convention was decided (in practice) by the interrupted run.** It
+   wrote `lib/boatswain/<thing>.rb` and
+   `lib/boatswain/plugins/<plugin>/<thing>.rb`, matching what this inventory
+   already targeted. Treat that as settled rather than renaming 47 files.
 4. **`app.shortcuts` is unimplemented upstream.** The menu item and
    `shortcuts-dialog.ui` exist; no code installs the action or loads the
-   dialog. The port should implement it rather than inherit the gap.
+   dialog. `lib/boatswain/shortcuts_dialog.rb` exists now (unverified); confirm
+   it installs `app.shortcuts` itself rather than inheriting the upstream gap.
 5. **Several upstream dialogs are `Gtk.Dialog`, which is deprecated.** The
-   multi-action editor's two dialogs in particular. Reproducing them as
-   `Adw.Dialog` changes behaviour; reproducing them as `Gtk::Dialog` keeps
-   parity. Decide per dialog and record it, do not let the choice be implicit.
-6. **The port has no component or test parity record yet.** `COMPONENT_PARITY.md`
-   and `TEST_PARITY.md` named in `AGENTS.md` do not exist, and `spec/` holds
-   only `spec_helper.rb`.
+   multi-action editor's two dialogs in particular. `multi_action_editor.rb`
+   exists now; check which it chose and that the choice was recorded, not
+   implicit.
+6. **The port still has no component or test parity record.**
+   `COMPONENT_PARITY.md` and `TEST_PARITY.md` named in `AGENTS.md` do not
+   exist, and `spec/` holds only `spec_helper.rb` — despite 47 `lib/` files
+   now existing. This is the gap that most needs closing before any of the
+   "unverified" rows above can become "done": load each file, drive it with
+   `ruby-gtk-testing`, and record the result per component.
