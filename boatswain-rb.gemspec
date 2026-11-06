@@ -18,6 +18,22 @@ Gem::Specification.new do |spec|
   spec.licenses = ["GPL-3.0-or-later"]
   spec.required_ruby_version = ">= 3.4"
 
+  # Toolkit
+  spec.add_dependency("gtk4", "~> 4.3")
+  spec.add_dependency("adwaita", "~> 4.3")
+  spec.add_dependency("glib2", "~> 4.3")
+
+  # USB device discovery for the Elgato/Loupedeck providers (lib/devices/*
+  # upstream): libgudev wraps libudev's device enumeration.
+  spec.add_dependency("gudev", "~> 1.0")
+  # HTTP requests for the network plugin's http action (libsoup 3 upstream).
+  spec.add_dependency("soup3", "~> 1.0")
+  # Sandboxed image loading for background/icon assets (glycin upstream).
+  spec.add_dependency("glycin", "~> 1.0")
+  # The XDG background portal upstream holds itself open through, and any
+  # future portal-backed action (screenshot, file chooser) needs.
+  spec.add_dependency("ashpd", "~> 1.0")
+
   # Linux distros often package gems and securely certify them independent
   #   of the official RubyGem certification process. Allowed via ENV["SKIP_GEM_SIGNING"]
   # Hence, only enable signing if `SKIP_GEM_SIGNING` is not set in ENV.

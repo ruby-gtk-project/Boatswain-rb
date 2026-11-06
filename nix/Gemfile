@@ -10,3 +10,8 @@ source "https://rubygems.org"
 
 gem "adwaita"
 gem "gtk4"
+gem "glib2"
+gem "gudev"
+gem "soup3"
+gem "glycin"
+gem "ashpd"
