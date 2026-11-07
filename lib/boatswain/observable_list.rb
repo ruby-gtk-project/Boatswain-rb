@@ -22,6 +22,13 @@ module Boatswain
 
     def n_items = @items.length
 
+    # Enumerable does not define length/size on its own; callers that treat
+    # this like any other Ruby collection (region.buttons.length, same as
+    # they would write for an Array) need it alongside n_items, the name the
+    # GListModel call sites use.
+    def length = @items.length
+    alias_method :size, :length
+
     def [](position) = @items[position]
 
     def to_a = @items.dup

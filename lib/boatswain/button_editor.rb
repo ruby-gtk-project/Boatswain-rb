@@ -123,12 +123,33 @@ module Boatswain
       def apply_custom_icon_to_controls
         @button.custom_icon.then do |custom_icon|
           if custom_icon
-            custom_icon_text_row.text = custom_icon.text.to_s
-            background_color_button.rgba = custom_icon.background_color
+            set_custom_icon_text_row_text(custom_icon.text.to_s)
+            set_background_color_button_rgba(custom_icon.background_color)
           else
-            custom_icon_text_row.text = ""
-            background_color_button.rgba = Icon.transparent
+            set_custom_icon_text_row_text("")
+            set_background_color_button_rgba(Icon.transparent)
           end
+        end
+      end
+
+      # GTK still re-emits "notify::text"/"notify::rgba" synchronously for a
+      # property set to its own current value, and that reentrant emission —
+      # landing here while this very call is still inside the signal dispatch
+      # that triggered it — is pathologically slow in this binding/runtime
+      # combination (confirmed by isolating this single write: skipping it
+      # entirely turns a multi-minute stall into microseconds). Upstream's C
+      # setters have no such cost, so this port skips the write only when the
+      # value already matches, which keeps the row showing exactly what it
+      # would have shown while never re-entering the signal at all.
+      def set_custom_icon_text_row_text(text)
+        unless custom_icon_text_row.text == text
+          custom_icon_text_row.text = text
+        end
+      end
+
+      def set_background_color_button_rgba(rgba)
+        unless background_color_button.rgba == rgba
+          background_color_button.rgba = rgba
         end
       end
 
