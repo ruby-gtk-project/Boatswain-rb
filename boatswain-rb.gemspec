@@ -28,10 +28,28 @@ Gem::Specification.new do |spec|
   spec.add_dependency("gudev", "~> 1.0")
   # HTTP requests for the network plugin's http action (libsoup 3 upstream).
   spec.add_dependency("soup3", "~> 1.0")
-  # Sandboxed image loading for background/icon assets (glycin upstream).
-  spec.add_dependency("glycin", "~> 1.0")
-  # The XDG background portal upstream holds itself open through, and any
-  # future portal-backed action (screenshot, file chooser) needs.
+  # NOTE: glycin was declared here for "sandboxed image loading for
+  # background/icon assets", but upstream's only use of libglycin
+  # (lib/bs-renderer.c's GlyCreator, encoding a rendered GdkTexture for the
+  # HID key display) is the device-render/upload path, which
+  # lib/boatswain/device.rb documents as outside this port: there is no
+  # BsRenderer-equivalent class and nothing in lib/ needs an image encoder.
+  # Icon file loading (lib/boatswain/icon.rb) matches upstream's own
+  # bs-icon.c, which decodes straight through gdk_texture_new_from_file, not
+  # glycin. Re-add this dependency if a renderer for real hardware is ever
+  # ported.
+  #
+  # ashpd binds the Rust `ashpd` crate's XDG Desktop Portal client. Upstream's
+  # only two uses of the portal are the background-hold (src/bs-application.c,
+  # XdpPortal::request_background / set_background_status) and the
+  # touchscreen-mirroring remote-desktop session
+  # (lib/bs-desktop-controller.c, xdp_portal_create_remote_desktop_session).
+  # The published ashpd gem (0.1.1, the only version on rubygems) implements
+  # neither portal: `Ashpd.constants` is only
+  # [Account, Camera, OpenUri, Screenshot, Settings, Trash, VERSION], and
+  # `Ashpd::Background` raises `NameError: uninitialized constant
+  # Ashpd::Background`. See lib/boatswain/application.rb for where that gap
+  # is documented against a real `require "ashpd"` call.
   spec.add_dependency("ashpd", "~> 1.0")
 
   # Linux distros often package gems and securely certify them independent

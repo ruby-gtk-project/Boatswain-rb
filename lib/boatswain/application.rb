@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "ashpd"
 require "gtk4"
 require "adwaita"
 
@@ -18,10 +19,12 @@ module Boatswain
   # object comes from Gtk and only the window is Adwaita.
   #
   # Upstream also holds itself in the background through the XDG background
-  # portal when its window is closed, and installs UNIX signal handlers and a
-  # --debug option. The portal is libportal, which this port does not bind, so
-  # closing the window quits; the --debug option is the GLib debug logging
-  # switch and has no counterpart here.
+  # portal when its window is closed (XdpPortal::request_background,
+  # src/bs-application.c), and installs UNIX signal handlers and a --debug
+  # option. The --debug option is the GLib debug logging switch and has no
+  # counterpart here; the background hold is attempted for real below, in
+  # request_background, and is this port's gem gap, not a design choice:
+  # closing the window quits because it genuinely cannot do otherwise.
   class Application
     APPLICATION_ID = "com.feaneron.Boatswain"
 
@@ -30,6 +33,7 @@ module Boatswain
         app.signal_connect("startup") do
           Adwaita::StyleManager.default.color_scheme = :prefer_dark
           Style.load
+          request_background
         end
 
         app.signal_connect("activate") do
@@ -53,6 +57,18 @@ module Boatswain
     def window = @window ||= Window.new(app, context)
 
     private
+
+      # Port of the XdpPortal::request_background call in
+      # bs_application_startup. ashpd (the only version rubygems has, 0.1.1)
+      # implements only Account, Camera, OpenUri, Screenshot, Settings and
+      # Trash — Ashpd.constants carries no Background — so this always takes
+      # the rescue branch today; it is wired to the real gem, rather than
+      # stubbed, so it starts working the day a release adds the portal.
+      def request_background
+        Ashpd::Background.request(reason: "Boatswain needs to keep running to upload button changes")
+      rescue NameError => e
+        warn "Cannot hold Boatswain in the background: #{e.message} (ashpd #{Ashpd::VERSION} has no Background portal)"
+      end
 
       def install_actions
         app.add_action(quit_action)

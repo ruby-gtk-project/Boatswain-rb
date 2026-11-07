@@ -26,11 +26,11 @@
           harfbuzz
           librsvg
           # typelibs for the gem bindings: gudev (USB device discovery for
-          # the Elgato/Loupedeck providers), libsoup_3 (the network plugin's
-          # http action) and libglycin (sandboxed image loading).
+          # the Elgato/Loupedeck providers) and libsoup_3 (the network
+          # plugin's http action). glycin is not here: see the gemspec's
+          # note by the dependency that was dropped.
           libgudev
           libsoup_3
-          libglycin
         ]
         # The Ruby `pkg-config` gem resolves `Requires.private` transitively and
         # hard-fails if any .pc in the chain is missing, so gtk4's whole private

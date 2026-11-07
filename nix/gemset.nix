@@ -118,17 +118,6 @@
     };
     version = "4.4.0";
   };
-  glycin = {
-    dependencies = ["gem_kit" "gobject-introspection"];
-    groups = ["default"];
-    platforms = [];
-    source = {
-      remotes = ["https://rubygems.org"];
-      sha256 = "02ycs1k7y7h8hx4nd52r9z7q4sg897rhgln3glcmvvypr2ynrmlh";
-      type = "gem";
-    };
-    version = "1.0.0";
-  };
   gobject-introspection = {
     dependencies = ["glib2"];
     groups = ["default"];
