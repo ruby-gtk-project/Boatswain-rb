@@ -672,6 +672,84 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
     end
   end
 
+  d.step("a dial grid and a touchscreen region build and behave in a device editor") do
+    device = app.window.current_device
+    selection_controller = Boatswain::SelectionController.new
+
+    dial_grid = Boatswain::DialGrid.new(
+      id:           "test-dials",
+      device:       device,
+      n_dials:      3,
+      grid_columns: 3,
+      column:       0,
+      row:          1,
+    )
+    touchscreen = Boatswain::Touchscreen.new(
+      id:         "test-touchscreen",
+      device:     device,
+      image_info: {width: 800, height: 100},
+      n_slots:    4,
+      column:     0,
+      row:        2,
+    )
+    device.regions.append(dial_grid)
+    device.regions.append(touchscreen)
+
+    editor = Boatswain::DeviceEditor.new(app.window.instance_variable_get(:@context), device)
+    region_widgets = editor.instance_variable_get(:@region_widgets)
+
+    dial_flowbox = region_widgets[dial_grid]
+    touchscreen_widget = region_widgets[touchscreen]
+
+    d.check("the dial grid became a 3-column flow box of DialWidgets") do
+      dial_flowbox.is_a?(Gtk::FlowBox) &&
+        dial_flowbox.min_children_per_line == 3 &&
+        (0...3).all? { |i| dial_flowbox.get_child_at_index(i).child.is_a?(Boatswain::DialWidget) }
+    end
+    d.check("each dial widget carries its own Dial, in position order") do
+      (0...3).all? do |i|
+        dial_flowbox.get_child_at_index(i).child.dial.equal?(dial_grid.dials[i])
+      end
+    end
+    d.check("dial flow box children cannot be targeted (not selectable, matching upstream)") do
+      (0...3).all? { |i| !dial_flowbox.get_child_at_index(i).can_target? }
+    end
+
+    d.check("the touchscreen became a TouchscreenWidget with 4 slot widgets") do
+      touchscreen_widget.is_a?(Boatswain::TouchscreenWidget) &&
+        touchscreen.slots.length == 4
+    end
+    touchscreen_flowbox = touchscreen_widget.send(:flowbox)
+    d.check("the slots are TouchscreenSlotWidgets wrapping the real slots in order") do
+      (0...4).all? do |i|
+        touchscreen_flowbox.get_child_at_index(i).slot.equal?(touchscreen.slots[i])
+      end
+    end
+
+    first_slot_widget = touchscreen_flowbox.get_child_at_index(0)
+    touchscreen_flowbox.select_child(first_slot_widget)
+    d.check("tapping a slot drives the shared selection controller, like a button does") do
+      selection = editor.instance_variable_get(:@selection_controller).selection
+      !selection.nil? && selection[0].equal?(touchscreen) && selection[1].equal?(first_slot_widget.slot)
+    end
+
+    dial = dial_grid.dials[0]
+    pressed_events = []
+    dial.on_pressed_changed { |d2| pressed_events << d2.pressed? }
+    dial.pressed = true
+    dial.pressed = true
+    dial.pressed = false
+    d.check("a dial's pressed state only notifies on an actual change") { pressed_events == [true, false] }
+
+    action = Boatswain::EmptyAction.new
+    slot_icon_updates = []
+    touchscreen.slots[1].on_content_changed { slot_icon_updates << touchscreen.slots[1] }
+    touchscreen.slots[1].action = action
+    d.check("assigning a slot's action notifies its widget through content-changed") do
+      slot_icon_updates == [touchscreen.slots[1]]
+    end
+  end
+
   d.step("an unreadable profile file is refused, not crashed on") do
     Dir.mktmpdir("boatswain-bad-profile").then do |dir|
       original_data_home = ENV["XDG_DATA_HOME"]

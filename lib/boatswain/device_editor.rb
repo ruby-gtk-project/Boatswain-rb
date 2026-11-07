@@ -5,7 +5,12 @@ require "adwaita"
 require_relative "button_editor"
 require_relative "button_grid"
 require_relative "button_grid_widget"
+require_relative "dial"
+require_relative "dial_grid"
+require_relative "dial_widget"
 require_relative "selection_controller"
+require_relative "touchscreen"
+require_relative "touchscreen_widget"
 
 module Boatswain
   # DeviceEditor is the port of src/bs-device-editor.c and its .ui: one page
@@ -13,15 +18,17 @@ module Boatswain
   # the editor for whatever is selected on the right.
   #
   # The regions are attached at the row, column and spans each region declares,
-  # which is how upstream's build_regions places them. Only button grids are
-  # built here: the dial grid and touchscreen widgets are separate components
-  # and are not part of this round, so a device with those regions shows its
-  # button grids and nothing where they would be.
+  # which is how upstream's build_regions places them: a button grid becomes a
+  # ButtonGridWidget, a dial grid becomes a flow box of DialWidgets built
+  # inline exactly as upstream's own add_dial_grid does (there is no separate
+  # BsDialGridWidget type upstream either), and a touchscreen becomes a
+  # TouchscreenWidget.
   class DeviceEditor < Adwaita::Bin
     SIDEBAR_WIDTH = 280
     CLAMP_MAXIMUM = 700
     CLAMP_TIGHTENING = 500
     SPACING = 24
+    DIAL_GRID_SPACING = 18
 
     def initialize(context, device)
       super()
@@ -70,7 +77,35 @@ module Boatswain
         @device.regions.each do |region|
           if region.is_a?(ButtonGrid)
             add_region(region, ButtonGridWidget.new(region, @selection_controller))
+          elsif region.is_a?(DialGrid)
+            add_region(region, dial_grid_flowbox(region))
+          elsif region.is_a?(Touchscreen)
+            add_region(region, TouchscreenWidget.new(region, @selection_controller))
           end
+        end
+      end
+
+      # Port of add_dial_grid: upstream builds the dials flow box inline
+      # rather than through a dedicated widget type, so this does the same.
+      def dial_grid_flowbox(dial_grid)
+        Gtk::FlowBox.new.tap do |box|
+          box.valign = :center
+          box.homogeneous = true
+          box.activate_on_single_click = false
+          box.selection_mode = :none
+          box.column_spacing = DIAL_GRID_SPACING
+          box.row_spacing = DIAL_GRID_SPACING
+          box.min_children_per_line = dial_grid.grid_columns
+          box.max_children_per_line = dial_grid.grid_columns
+
+          dial_grid.dials.each { |dial| box.append(dial_flowbox_child(dial)) }
+        end
+      end
+
+      def dial_flowbox_child(dial)
+        Gtk::FlowBoxChild.new.tap do |child|
+          child.child = DialWidget.new(dial)
+          child.can_target = false
         end
       end
 
