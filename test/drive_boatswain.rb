@@ -284,6 +284,7 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
           d.check("it is editing the key that was clicked") do
             editor.send(:editor_bin).child.button.equal?(first_key.button)
           end
+          pump(50)
           d.shot("04-button-selected")
         end
       end
@@ -308,7 +309,8 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
       end
       button_editor.send(:remove_custom_icon_button).signal_emit("clicked")
       d.check("removing it clears the custom icon") { button_editor.button.custom_icon.nil? }
-      d.shot("05-custom-icon")
+          pump(50)
+          d.shot("05-custom-icon")
     end
   end
 
@@ -330,7 +332,8 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
       d.check("the hidden Go Up action is not listed") do
         find_widget(button_editor.send(:action_selector)) { |w| w.is_a?(Adwaita::ActionRow) && w.title == "Go Up" }.nil?
       end
-      d.shot("06-action-selector")
+          pump(50)
+          d.shot("06-action-selector")
     end
   end
 
@@ -351,7 +354,8 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
         button_editor.send(:navigation_view).visible_page.equal?(button_editor.send(:button_page))
       end
       d.check("the remove-action row is visible now there is an action") { button_editor.send(:remove_group).visible? }
-      d.shot("07-folder-action")
+          pump(50)
+          d.shot("07-folder-action")
     end
   end
 

@@ -211,7 +211,9 @@ module Boatswain
       def select_device(device)
         unless @current_device.equal?(device)
           main_stack.visible_child_name = "devices"
+          @current_device&.profiles&.disconnect(@profiles_changed_callback)
           @current_device = device
+          @profiles_changed_callback = device.profiles.on_items_changed { rebuild_profile_rows }
           devices_stack.visible_child_name = device.serial_number
           firmware_version_label.label = device.firmware_version.to_s
           device_window_title.tap do |title|
