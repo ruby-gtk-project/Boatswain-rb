@@ -506,7 +506,7 @@ the Ruby paths. Counted as one unit: `po/` — **absent** from the port.
 |---|---:|---:|
 | User-facing components (this inventory) | 52 | 26 have a file, all **unverified**; 26 absent |
 | Device/model layer files (not user-facing, see Blocker 1) | ~17 upstream files | all 17 have a file, **unverified** |
-| `.ui` templates / top-level builder objects under `src/` | 20 | 0 (by design — the house style builds widgets in Ruby) |
+| `.ui` templates / top-level builder objects under `src/` | 20 | 0 — correspondence, not a gap: the `component-parity` skill names this exact substitution ("a `.ui` file's widget tree built in Ruby as memoized methods... The port has no `.ui` files, by design") as the house pattern, not a missing behaviour. Confirmed only by reading each file's class; none of the 20 templates has been diffed widget-by-widget against its `lib/*.rb` counterpart yet — see `component-parity.md` |
 | Action catalogue entries shown in the selector | 18 (+1 hidden) | up to 5 (`default` plugin) have code, unverified; 0 confirmed working |
 | Distinct CSS classes and css-names in `style.css` | 7 classes, 8 css-names | `lib/boatswain/style.rb` exists, unverified |
 | GSettings keys | 1 | `lib/boatswain/settings.rb` exists, unverified |
@@ -528,8 +528,9 @@ the commit message on `3d10462` for the same caveat in the port's own words.
    Ruby files, but none have been driven, so it is still unknown whether the
    window can get past its "No Stream Deck Found" status page. Driving the
    mock provider end-to-end is the next concrete step, not a re-port.
-2. **libpeas plugin loading has no Ruby equivalent — needs a read, not a
-   re-decision.** `lib/boatswain/action_factory.rb` and the per-plugin
+2. **libpeas plugin loading — the behaviour (a factory registry other UI
+   reads from) is rebuilt as a plain Ruby array, not confirmed working.**
+   `lib/boatswain/action_factory.rb` and the per-plugin
    `action_factory.rb` files now exist; whether they actually form the plain
    Ruby registry this blocker called for (the thing `action_selector.rb` and
    the multi-action editor `bind_model` over) has not been checked in this
