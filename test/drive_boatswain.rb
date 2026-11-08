@@ -346,6 +346,14 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
         d.check("the row was found") { !folder_row.nil? }
         folder_row.signal_emit("activated")
       end
+      # on_action_selected sets the action, then pops the navigation view.
+      # The pop's own notify::visible-page lands through an idle source in
+      # this binding/runtime combination rather than inside signal_emit's own
+      # call frame, so visible_page and remove_group's visibility binding can
+      # both still be mid-flight the instant signal_emit returns. Settle the
+      # loop before reading either back, the same fix 93105a4 applied to the
+      # profile sidebar.
+      pump(50)
       d.check("the button's action is the Folder action") do
         button_editor.button.action.is_a?(Boatswain::Plugins::Default::SwitchPageAction)
       end
@@ -384,6 +392,9 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
     end
     key = current_editor(app).send(:regions_grid).first_child.send(:flowbox).first_child
     key.signal_emit("activate")
+    # Same settling as the pop above: the page-up pops the device back to
+    # its root page through the same async notify path.
+    pump(50)
     d.check("activating Go Up pops back to the root page") { app.window.current_device.active_page.root? }
   end
 
@@ -391,6 +402,7 @@ GtkDriver.drive(Boatswain::Application.new, shots: SHOTS) do |d, app|
     current_editor(app).then do |editor|
       button_editor = editor.send(:editor_bin).child
       button_editor.send(:remove_action_row).signal_emit("activated")
+      pump(50)
       d.check("the action is empty again") { button_editor.button.action.is_a?(Boatswain::EmptyAction) }
       d.check("the remove-action row hid itself") { !button_editor.send(:remove_group).visible? }
     end
