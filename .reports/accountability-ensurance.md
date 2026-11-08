@@ -1,153 +1,137 @@
-# Accountability ensurance — Boatswain
+# Accountability ensurance — Boatswain (refresh 2)
 
 Scan command:
 
 ```sh
-bash .claude/skills/accountability-ensurance/scripts/find-excuses.sh .
+bash .claude/skills/accountability-ensurance/scripts/find-excuses.sh . 2>/dev/null
 grep -rniE 'TODO|FIXME|not implemented|for now|in a future' lib/ exe/ .reports/ PORTING.md
 ```
 
-`PORTING.md` does not exist on this branch — there is no top-level porting
-ledger of any kind, so the one file this org's prior incident
-(`console-rb`'s "Dropped deliberately" section) lived in simply has no
-counterpart here to audit. That is itself worth stating: with no
-`PORTING.md`, the component-inventory/-parity reports under `.reports/` are
-the only written record of what is missing, which raises the stakes on
-getting *their* language right — see below.
+`PORTING.md` still does not exist on this branch, unchanged from the prior
+round. `.reports/` remains the only written ledger of what is missing.
 
 `grep -rniE 'TODO|FIXME|not implemented|for now|in a future' lib/ exe/`
-returns **nothing**. No excuse-shaped comment, no `# TODO`, no
-`# not implemented`, no `# for now` anywhere in the 46 `lib/` files or
-`exe/boatswain`. This is a genuinely clean result on the narrowest reading —
-but it is clean in the way an empty room is clean: the files that exist
-carry no excuses because the files that would carry them (the `desktop`,
-`obs-studio`, `soundboard` plugins; the dial/touchscreen layer; the Elgato/
-Loupedeck providers; `po/`; `data/`) were never written at all, so there was
-no comment site for an excuse to attach to. **Absence of excuse language is
-not evidence of absence of gap** — see `component-identification.md`,
-`component-parity.md`, `test-parity.md` and `translation-parity.md` for the
-actual gap list, which is large.
+returns **nothing**, re-confirmed against `93105a4` (it also returned
+nothing against `7855f51` last round). No excuse-shaped comment anywhere in
+the now-57 `lib/` files or `exe/boatswain`. Same caveat as last round still
+applies and is restated rather than dropped: the files that would carry
+excuse language (`desktop`, `obs-studio`, `soundboard`, real Elgato/
+Loupedeck HID I/O, `po/`, `data/`) were never written, so there is no
+comment site for an excuse to attach to. **A clean grep is not a clean
+port.**
+
+## The one finding that matters most this round: a gate that reads as settled when it is not
+
+This task's own framing names "a false green in a report" as the most
+serious finding an accountability pass can make, and separately treats "a
+failed or narrow drive run" as a parity gap in its own right. This round
+produced exactly the situation both sentences warn about, and it is the
+headline finding of this entire audit, reported here and in
+`.reports/test-parity.md` and `.reports/component-parity.md`:
+
+**The round's runtime gate — `drive_ok=true, 148 checks passed, 0 failed` —
+is not reproducible.** Re-running the identical command against the
+identical commit, with no code changed between attempts, seven times:
+
+```
+run 1:  142/148 passed, 6 failed, DRIVE FAILED
+runs 2-7 (6 runs): 148/148 passed, DRIVE OK, every time
+```
+
+One run in seven failed, clustered entirely around one interaction (assign
+a button action, navigate, check the result) — a GTK main-loop race, not a
+deterministic defect the harness would always catch or always miss. Had
+this audit accepted the single number handed to it and not re-run the
+command, it would have repeated "148/148, DRIVE OK" as a settled fact about
+the code, when the honest claim is "this command passes most of the time."
+**That gap between what a single green run implies and what the code
+actually guarantees is a false green by construction**, even though no one
+wrote a false sentence to produce it — the gate number itself is doing the
+excusing, standing in for "verified" when what it actually measured was
+"verified on this particular pass." This is reported as the primary finding
+of this accountability pass because it is structurally the same shape as
+the `console-rb` incident this skill is built to catch, just one level
+removed: there, a sentence excused a gap in prose; here, an unverified
+assumption of determinism excuses it in a number.
+
+The fix this report recommends, stated plainly rather than filed away: the
+race in the button-editor navigation flow (visible in the six failing
+checks above) should be found and fixed, or the drive script should retry/
+settle more robustly around that interaction, before `148/148` is reported
+anywhere as a number people build on without a caveat. Until then, every
+document in this `.reports/` directory that cites "148/148" does so with
+this finding attached, not standing alone.
 
 ## What the scan found in the existing `.reports/`
 
-```
-.reports/component-inventory.md:509   "by design"       — borrows architectural vocabulary
-.reports/component-inventory.md:531   "no Ruby equivalent" — asserts the behaviour cannot exist here
-```
+Re-ran the same scan this round's new and reconfirmed reports
+(`component-identification.md`, `component-parity.md`, `test-parity.md`,
+`translation-parity.md`, this file) for excuse-shaped language or
+unexamined green claims:
 
-Both are in the pre-existing survey document (`component-inventory.md`,
-written in an earlier round, before this audit). Per the skill's rule
-("rewrite in place, never delete"), both have been edited in place this
-round rather than left or deleted:
+- `component-parity.md` reports "148/148 passed 6 of 7 times; 1 of 7 runs
+  failed 6 checks" as its own stated runtime-gate line, not "148/148,
+  DRIVE OK" alone — the flaky result is in the table header, not a footnote
+  a skimmer could miss.
+- `test-parity.md` states the driver "is not deterministic" in its own
+  section heading, immediately after crediting it with real, meaningful
+  coverage — both facts kept adjacent on purpose, same discipline the prior
+  round applied to the 0/0 test-parity finding.
+- No report in this round's set claims `parity: true`, `clean`, or "done"
+  for any unit. Every "driven" marker in `component-parity.md`'s file
+  mapping is paired with the caveat that the one interaction actually
+  re-tested raced on one of seven runs.
+- One self-correction happened mid-draft and is recorded rather than
+  silently fixed: an earlier draft of `component-parity.md` claimed the
+  `gaming` plugin was not exercised by the driver; a grep before publishing
+  showed it is (`d.step("the gaming plugin's score action...")`), and the
+  draft was corrected in place with the correction itself left visible in
+  the published document, per this skill's "rewrite in place, never delete"
+  rule extended to a self-caught drafting error.
 
-1. **Line 509** (`.ui` templates: `0 (by design — the house style builds
-   widgets in Ruby)`). On inspection **this is not an excuse for a missing
-   behaviour** — it is the one substitution `component-parity.md`'s own
-   skill text explicitly names as a correspondence, not a gap: every Ruby
-   port in this org builds widget trees as memoized methods instead of
-   `.ui` XML, and the *behaviour* (the widget tree itself) is rebuilt, not
-   dropped. Rewriting it into the insult-bank voice ("I did not build the
-   `.ui` files because I am an idiot") would have been **false** — nobody
-   owes upstream a `.ui` file; they owe upstream the widget tree the `.ui`
-   file described, and the file mapping in `component-parity.md` is where
-   that's checked. So rather than force the insult framing onto something
-   that is not a gap, the line was reworded to state the correspondence
-   explicitly and point at the one real omission hiding behind it: **none
-   of the 20 templates has actually been diffed widget-by-widget against
-   its Ruby file** — that check is still owed, and the reworded line now
-   says so instead of implying "by design" settled the question.
+The two excuse-shaped phrases the prior round found and rewrote in
+`component-inventory.md` (`"by design"` at the old line 509, `"no Ruby
+equivalent"` at the old line 531) were re-checked this round — that document
+was not touched further this round (it is superseded in substance by
+`component-identification.md`, which this round rewrote fully), and the
+prior round's rewrites still stand as written.
 
-   This is a judgment call, not a reflex application of the pattern list,
-   and it is recorded here so it can be challenged: the skill's premise is
-   that *no* valid reason to omit a *feature* exists, and the house's
-   `.ui`-free pattern omits a *file format*, not a feature, with the
-   feature's behaviour rebuilt elsewhere. If a future reviewer disagrees
-   and believes this is still excuse-shaped, the fix is to strike the
-   wording entirely, not to split the difference again.
+## Self-check on new claims introduced this round
 
-2. **Line 531** (`libpeas plugin loading has no Ruby equivalent`). This one
-   had no such defense — libpeas (the extension-loading mechanism) and the
-   *plugin registry it builds* are two different things, and the plain
-   `FACTORIES` array `lib/boatswain/context.rb` builds **is** a working
-   substitute for the second, confirmed by reading that file this round
-   (`Context::FACTORIES = [Plugins::Default::ActionFactory, ...]`). Saying
-   the mechanism "has no Ruby equivalent" reads as settling a question that
-   is actually just unverified — whether that array is read correctly by
-   `action_selector.rb` and the multi-action editor's `bind_model` call has
-   never been driven. Reworded to drop the "no equivalent" framing and state
-   plainly what is true: the substitute exists, it has not been confirmed
-   working, because it has never been run.
-
-Neither rewrite invents a design decision in the other direction either —
-both still end in "unverified," which is the accurate state, not a quieter
-way of saying "fine."
-
-## Self-check on the four reports written this round
-
-`component-identification.md`, `component-parity.md`, `test-parity.md` and
-`translation-parity.md` (all written in this same audit pass) were scanned
-too, because a parity ledger citing its own prose as settled is exactly the
-failure this skill exists to catch one level up.
-
-`component-parity.md` tripped the scanner three times on the literal string
-`n/a` — all three were table-cell placeholders in rows about *verification
-status* ("Every unit's styling (Step 4)"), not assertions that a feature
-does not apply. They have been edited to drop `n/a` regardless, since the
-skill's hunt list treats the string as a hit "regardless of how reasonable
-the surrounding sentence sounds," and a placeholder that happens to spell
-the same way as the real excuse is exactly the kind of thing that should not
-be left for the next reader to have to adjudicate.
-
-No other hits in any of the four new reports. In particular:
-
-- `test-parity.md` states "Test parity (upstream ⟷ port): 0/0, met
-  trivially" **and in the same breath** "the port's own test infrastructure
-  is broken" — the two sentences are kept adjacent on purpose, because a
-  0/0 upstream count read alone is the exact false-green this task's runtime
-  gate (`drive_ok=false`, 0 checks) would otherwise produce: true on paper,
-  and silent about the fact that nothing in this repo has ever been run.
-- `component-parity.md`'s verdict is "0 units have proven parity," not "most
-  units look complete" — the near-equal upstream/port widget-*type* count
-  (55 vs 52) is flagged explicitly as an artifact of an unclassified scan
-  rather than reported as a headline number, because reporting it bare would
-  have read as a near-finished port.
-- `translation-parity.md` reports "0 of 38 languages" as the headline rather
-  than leading with the 147-message count, per the skill's own warning that
-  the message count alone hides exactly that finding.
-
-## The one finding that matters most here
-
-**The most serious thing an accountability pass can find is a false green
-in a report**, per this task's own framing. The closest thing to one in this
-repo is not a sentence — it is a structural omission: `component-
-inventory.md`'s per-file tables mark 26 of 52 user-facing components
-`exists (unverified)`. Read quickly, "exists" is the word a skimmer's eye
-catches, and "(unverified)" is parenthetical. Nothing in that document's
-prose excuses the gap behind it — the document is unusually careful, and
-says explicitly "Unverified is load-bearing, not a formality" — but the
-*table shape* itself (a column that can say "exists") is the thing that
-makes a 0%-driven port readable as half-built. This round's reports
-(`component-parity.md` especially) were written to not repeat that shape:
-there is no "exists" column anywhere in them, only `gap` / `absent` /
-`unverified`, and the drive-gate finding is stated as the reason no unit can
-be promoted, in the first paragraph, not a footnote.
+- "The dial/touchscreen gap is closed" — checked against a direct
+  `find lib -iname '*dial*' -o -iname '*touchscreen*'`, not inferred from a
+  commit message. Confirmed: 7 files exist.
+- "`HardwareDetector` is enumeration only, not HID I/O" — this claim is
+  lifted verbatim from the file's *own* header comment
+  (`lib/boatswain/devices/usb/hardware_detector.rb`), which states "the
+  libusb half... is not part of this port" in its own words. This report
+  does not originate that admission; it cites it, so a reader can verify it
+  was not invented to make the finding sound more careful than the code is.
+- "`desktop`/`obs-studio`/`soundboard` are still entirely absent" —
+  re-verified this round with `ls lib/boatswain/plugins` and a grep of
+  `context.rb`'s `FACTORIES`, not carried over from memory of the prior
+  round's finding.
+- "0 gettext markers, 0 `po/` files" — re-run this round, byte-identical
+  command and result to the prior round.
 
 ## Verdict
 
-- Zero excuse-language gaps found in `lib/`, `exe/`, or any `TODO`/`FIXME`/
-  "not implemented" grep.
-- Two excuse-shaped phrases found in `.reports/component-inventory.md`,
-  both rewritten in place this round (one into an explicit correspondence
-  claim with the real remaining check named, one into a plain "unverified"
-  statement with the false "no equivalent" framing removed).
-- Three placeholder `n/a`s found in this round's own `component-parity.md`,
-  removed.
-- No `PORTING.md` exists to carry a "Dropped deliberately" section, which
-  removes the one most dangerous document shape from this repo entirely —
-  but also means `.reports/` is the only ledger, and it is the one just
-  edited.
-- The structural risk — a port that is, in total, 0% driven and 0%
-  translated, with roughly 40% of upstream's files simply absent, being
-  read as a healthy-looking 50%-ish table of "exists" rows — is named
-  explicitly in this document rather than left for the next reader to
-  notice on their own.
+- Zero excuse-language gaps found in `lib/`, `exe/`, re-confirmed this
+  round.
+- The structural risk this skill exists to catch did surface this round,
+  in a new form: **a non-reproducible runtime gate being handed down as a
+  settled fact.** It is named explicitly here, in `test-parity.md`, and in
+  `component-parity.md`, with the exact repro (7 runs, 1 failure, the 6
+  specific failing checks) rather than a vague "results may vary" caveat.
+- Real progress happened this round (dial/touchscreen ported, a real USB
+  device detector added, a working drive script written covering 41+
+  components) and is credited as real progress in the other four reports —
+  this report's job is not to discount that, only to refuse to let the
+  headline number (148/148) stand in for more certainty than it earned on
+  re-test.
+- `desktop`, `obs-studio`, `soundboard`, real device HID I/O, `data/`, and
+  `po/` remain entirely absent, unchanged across three audit rounds now.
+  Three rounds of the same absence is itself worth flagging: this is not a
+  file that got missed once, it is a standing gap this port has not moved
+  toward closing while other areas (dial/touchscreen, the drive script)
+  received real attention.

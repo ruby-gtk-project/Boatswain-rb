@@ -1,9 +1,25 @@
-# Translation parity — Boatswain
+# Translation parity — Boatswain (reconfirmed at `93105a4`)
 
 | | |
 |---|---|
-| Upstream | `main` @ `0262d32` |
-| Port | `ruby` @ `7855f51` |
+| Upstream | `main` @ `0262d32` (unchanged) |
+| Port | `ruby` @ `93105a4` |
+
+**Reconfirmed this round, no change.** Six commits landed since this report
+was first written (`7855f51` → `93105a4`: the gaming plugin was already in
+by the time this was written; since then the dial/touchscreen widgets and a
+USB hardware detector were ported). None of them touch `po/`, add a gettext
+dependency, or mark a single string. Every command below was re-run against
+current `HEAD` and produced the identical result:
+
+```sh
+$ find . -iname '*.po' -o -iname '*.pot'
+(no output)
+$ grep -rn '\bgettext\b\|\b_(\|\bN_(\|\bn_(' lib/ exe/
+(no output)
+```
+
+The table and ledger below are the original findings, verified unchanged.
 | Domain | `boatswain` (`po/meson.build`) |
 | Upstream messages | 147 |
 | Ported | **0** |

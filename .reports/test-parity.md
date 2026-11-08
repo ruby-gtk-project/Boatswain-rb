@@ -1,133 +1,139 @@
-# Test parity — Boatswain
+# Test parity — Boatswain (refresh 2)
 
 | | |
 |---|---|
 | Upstream | `main` @ `0262d32` |
-| Port | `ruby` @ `7855f51` |
+| Port | `ruby` @ `93105a4` |
 | Upstream tests | 0 |
 | Ported | 0 |
 | Gaps | 0 |
-| Test command (specs) | `ruby -e 'require "rspec/core"; exit RSpec::Core::Runner.run(["--format","progress","--require","spec_helper","spec"])'` — **does not run** (see below) |
-| Drive command | `xvfb-run ruby test/drive_*.rb` — **the `test/` directory does not exist** |
+| Port's own `spec/` suite | still cannot load (`kettle/test/rspec` unresolvable) |
+| Port's own drive script | **now exists** (`test/drive_boatswain.rb` + `test/gtk_driver.rb`) — but is flaky |
 
-## Step 1 — census the upstream suite
+## Step 1 — upstream census (unchanged)
+
+Re-confirmed this round: upstream ships no test suite (0 `g_test_add_func`,
+no `tests/` directory; the three `meson.build` `test(...)` entries are
+build-time desktop/metainfo/schema validators, not behavioural tests, and
+the skill's census correctly excludes them). **Test parity on the
+upstream⟷port axis is still met trivially at 0/0.** As last round: this
+means no safety net is being silently dropped from upstream, and also that
+none is being inherited for free.
+
+## Step 2 — the port's own suite: a real driver now exists
+
+This is the one significant change since the last `test-parity.md`.
+`test/drive_boatswain.rb` (779 lines) and `test/gtk_driver.rb` (214 lines,
+a small reusable GTK-driving harness) did not exist at the last audit round
+and now do. This closes the single largest gap that round identified: "the
+drive script the devshell banner points at does not exist."
 
 ```sh
-scripts/test-census.sh <upstream worktree>
+$ find test -type f
+test/drive_boatswain.rb
+test/gtk_driver.rb
+$ nix develop --command xvfb-run -a ruby test/drive_boatswain.rb
+...
+148 of 148 checks passed
+DRIVE OK
 ```
 
-returns **zero rows**. Cross-checked by hand:
+42 `d.step` blocks drive the application through startup, the window, the
+shortcuts/about dialogs, the primary menu and its accelerators, profile
+switching, the multi-action editor, the network plugin's HTTP action, the
+gaming plugin's score action, the device editor, the dial grid and
+touchscreen widgets, GSettings persistence, profile save/reload round-trips,
+and a corrupt-profile recovery path, with 9 screenshots written to
+`tmp/shots/`. This is genuine Step 5 ("drive it, assert on live state")
+coverage for a meaningful slice of the app — a real advance, and it should
+be named as one rather than buried under the finding below.
 
-```sh
-find <upstream worktree> -iname '*test*' -not -path '*/.git/*' | grep -v -E '\.(svg|png)$'
--> data/icon-tester.blend          # a Blender asset, not a test
+## The finding this round adds: the driver is not deterministic
+
+Re-running the identical command, against the identical commit, with
+nothing changed between runs, seven times:
+
+```
+run 1:  142/148 — DRIVE FAILED (6)
+  failed check: the button's action is the Folder action
+  failed check: its icon followed
+  failed check: the view popped back to the button page
+  failed check: the remove-action row is visible now there is an action
+  failed check: the device pushed a page
+  failed check: its action is Go Up
+runs 2-7:  148/148 — DRIVE OK, every time
 ```
 
-No `tests/` directory, no `g_test_add_func`, no GLib `Test.add_func`. The
-only `test(...)` registrations anywhere in the build are three **build-time
-validation checks** in `data/meson.build` — `Validate desktop file`,
-`Validate metainfo file`, `Validate schema file` — which run `desktop-file-
-validate`/`appstreamcli`/`glib-compile-schemas` against the packaged data
-files. These are not unit or integration tests of app behaviour and the
-skill's census deliberately does not count them (they assert nothing about
-`BsDevice`, `BsButton`, the action plugins, or any behaviour a user sees).
+**1 run in 7 failed.** All six failing checks sit inside one interaction —
+assign an action to a button, then navigate and check the follow-on state —
+which is the textbook shape of a GTK main-loop race: a `d.step` tick firing
+a check before an earlier step's signal chain (action-assignment →
+icon update → navigation → row visibility) has actually settled. This is
+not a flaky *test* in the sense of "asserts on randomness" — it is evidence
+that the thing being asserted (the button's action took effect, the page
+was pushed) is not yet reliably true on every run, only on most runs.
 
-**Per the skill's "When upstream has no tests" section: this is the
-legitimate 0/0 case.** Boatswain upstream genuinely ships no test suite.
-Parity here is met trivially, and the one-sentence finding that must not be
-left implicit: **the port inherits no safety net from upstream.** Whatever
-confidence this port has in its own correctness has to come from the port's
-own tests — there is no upstream knowledge being silently dropped on this
-axis, but there is also none being inherited for free.
+This matters for exactly the reason the task framing calls out: **a
+"148 checks passed, 0 failed" runtime gate is being treated as this round's
+ground truth, and it is not reproducible as stated.** Re-running it is
+cheap and this audit did so before accepting the number. Any report that
+repeats "148/148, DRIVE OK" as settled, full stop, without noting that the
+same command failed 6 checks on one of seven identical re-runs, would be
+reporting a result that happened to land on this particular invocation, not
+a property of the code. The commit immediately before this report
+(`93105a4`, "Fix the profile sidebar going stale on delete; settle widget
+tree before screenshotting") already shows this exact race has needed one
+fix in this area before — this round's finding is that it is not fully
+closed.
 
-## Step 2 — the port's own suite (the real finding)
-
-This is where the round's runtime gate (`drive_ok=false`, 0 checks, 0
-components covered) lands, and it is worse than "no inherited safety net":
-**the port has no safety net of its own, and what little scaffolding exists
-does not run.**
+## `spec/` — unchanged, still broken
 
 ```sh
 $ find spec -type f
 spec/README.md
 spec/spec_helper.rb
-$ find test -type f
-(directory does not exist)
+$ nix develop --command bash -c 'ruby -e "require \"rspec/core\"; \
+    exit RSpec::Core::Runner.run([\"--format\",\"progress\", \
+    \"--require\",\"spec_helper\",\"spec\"])"'
+LoadError: cannot load such file -- kettle/test/rspec
+0 examples, 0 failures, 2 errors occurred outside of examples
 ```
 
-- `spec/` contains only a harness README and a `spec_helper.rb`. **Zero
-  `_spec.rb` files.** `rspec spec` would report "no examples" even if it
-  could load.
-- It cannot load, regardless:
-
-  ```sh
-  $ nix develop --command bash -c 'ruby -e "require \"rspec/core\"; \
-      exit RSpec::Core::Runner.run([\"--format\",\"progress\", \
-      \"--require\",\"spec_helper\",\"spec\"])"'
-  ...
-  Failure/Error: require "kettle/test/rspec"
-  LoadError:
-    cannot load such file -- kettle/test/rspec
-  0 examples, 0 failures, 2 errors occurred outside of examples
-  ```
-
-  `spec/spec_helper.rb` requires `kettle/test/rspec`, which is not resolvable
-  in the dev shell (the `kettle-test` gem the house `spec/README.md`
-  documents is not present in the bundle this devshell builds). This is not
-  a flaky test — it is the test harness itself failing to boot, confirmed by
-  running the exact command the project's own `spec/README.md` and devshell
-  banner document.
-
-- `test/` — the directory the devshell banner points at
-  (`drive the app: xvfb-run ruby test/drive_*.rb`) **does not exist at
-  all**:
-
-  ```sh
-  $ nix develop --command xvfb-run -a ruby test/drive_app.rb
-  /nix/store/.../ruby: No such file or directory -- test/drive_app.rb (LoadError)
-  ```
-
-  There is no `drive_*.rb` of any name under `test/`, and no `test/`
-  directory under which one could be found. The `ruby-gtk-testing` skill's
-  headless-driver pattern — the thing CLAUDE.md says proves any GTK change
-  works, and the thing Step 5 of `component-parity` requires before any unit
-  can be called `parity` — has never been written for this port.
-
-This is the concrete shape of this round's runtime gate: **0 checks passed,
-0 failed, 0 components covered** is not a flaky or incomplete run — it is
-the correct result of there being no checks to run. `drive_ok=false` is
-earned, not a measurement error.
-
-## Step 3/4 — port the gaps / prove it
-
-Nothing to port (0/0 upstream), and nothing to prove for the port's own
-suite because there is no suite:
-
-- counts: 0 upstream tests, 0 port tests under `spec/` or `test/` — vacuously
-  "equal", but meaningless given neither side has content;
-- the port's suite does **not** pass under its own test target, because
-  loading it errors before a single example runs;
-- the drive script named in the devshell banner does not exist, so "drive
-  the app" cannot be attempted at all, let alone pass.
+Identical failure to the prior round, byte for byte. Zero `_spec.rb` files
+exist regardless, so even a working `spec_helper.rb` would run zero
+examples. This is a second, independent test-infrastructure gap sitting
+alongside the drive script — the drive script's existence does not fix it,
+and the two should not be conflated: `test/` now works (mostly); `spec/`
+still does not work at all.
 
 ## What this report is not allowed to say
 
-It would be easy to write "0/0, parity met, clean" and stop, because the
-upstream number really is zero. That sentence, alone, is the false-green
-this audit's `accountability-ensurance` pass exists to catch: it is true on
-the upstream side and silently omits that **the port's own harness is
-broken and its own driver script is missing**, which is the actual state
-behind `drive_ok=false`. Both facts go in the ledger together:
+Not "0/0 upstream parity, and the port now has a driver, so test parity is
+clean." Three facts belong in the ledger together, as last round insisted:
 
-- **Test parity (upstream ⟷ port): 0/0, met trivially.**
-- **Port's own test infrastructure: broken.** `spec/` cannot load
-  (`kettle/test/rspec` unresolvable), has zero spec files regardless, and
-  `test/drive_*.rb` does not exist. No GTK code in this port has ever been
-  exercised by an automated check. Every "unverified" marker in
-  `.reports/component-inventory.md` and `.reports/component-parity.md`
-  stays unverified because there is no mechanism in this repo that could
-  move it to verified.
+- **Test parity (upstream ⟷ port): 0/0, met trivially.** Unchanged.
+- **The port's `spec/` harness: still broken**, identical to the prior
+  round — `kettle/test/rspec` unresolvable, zero spec files regardless.
+- **The port's `test/drive_boatswain.rb`: exists, covers real behaviour,
+  and is not deterministic** — it failed 6 checks on 1 of 7 identical
+  re-runs this audit performed. Reporting it as simply "DRIVE OK" without
+  that caveat would be the false green this audit's accountability pass
+  exists to catch, one level removed from a sentence and into a number.
+
+## Coverage this driver does not and cannot reach
+
+Per the task's framing ("a component no check exercises is unverified, not
+done"), the following have no `d.step` anywhere in `test/drive_boatswain.rb`
+and so remain entirely unverified by any automated check, regardless of the
+148-check total: `desktop`, `obs-studio`, `soundboard` plugins (all absent,
+so trivially untested); real Elgato/Loupedeck HID I/O (absent); the
+`.gschema.xml`/`.desktop`/metainfo content (absent); any non-English locale
+behaviour (absent, see `.reports/translation-parity.md`); and a byte-level
+diff of `lib/boatswain/style.rb` against upstream's `src/style.css` (Step 37
+only checks the port's own CSS parses, not that it matches upstream's).
 
 ## Extra
 
-None. There is nothing under `spec/` or `test/` to list.
+`tmp/shots/*.png` (9 files) are written by the drive run and are evidence,
+not test artifacts to assert against — nothing in the driver reads them
+back or diffs them against a reference image.

@@ -1,154 +1,160 @@
-# Component parity — Boatswain
+# Component parity — Boatswain (refresh 2)
 
 | | |
 |---|---|
 | Upstream | `main` @ `0262d32` |
-| Port | `ruby` @ `7855f51` |
-| Units with full (4-axis, driven) parity | **0 / ~58** |
-| Runtime gate this round | **drive_ok = false, 0 checks, 0 components covered** |
+| Port | `ruby` @ `93105a4` |
+| This round's drive result (as reported by the harness) | drive_ok=true, 148/148 checks, 41 components |
+| This round's drive result (independently re-run, 7×) | **148/148 passed 6 of 7 times; 1 of 7 runs failed 6 checks** |
+| Units with full (4-axis, driven) parity | still **0 / ~58**, for a reason below that is new this round |
 
-58 is the unit count from `.reports/component-inventory.md`'s 52 user-facing
-components plus the ~17 device/model-layer files minus overlap, rounded to
-the nearest whole unit; see that document and `component-identification.md`
-for the per-file breakdown.
+## The headline finding this round: the gate is not the solid floor it reads as
 
-## Verdict, stated plainly
-
-**Zero units have proven component parity**, for one structural reason that
-overrides every individual widget comparison below: **no check in this repo
-has ever run against a live GTK widget tree.** `ruby -c` (syntax) passes on
-all 46 `lib/` files, and that is the *only* thing that has been verified. The
-`component-parity` skill is explicit that parity is proven in Steps 4 and 5 —
-stylesheet rendering and signals actually firing, both checked by driving the
-app — and neither step has ever been executed here. A widget type and a CSS
-class string appearing in a `.rb` file is not a built widget; it is a claim
-about one.
-
-This round's runtime gate (`drive_ok=false`, 0 checks, 0 components covered)
-is not a separate, smaller finding alongside the component tables — it is
-the reason the component tables below cannot say `parity` for anything, no
-matter how many axes look right on paper.
-
-## Step 1/2 — inventory and file mapping (summary)
-
-See `.reports/component-identification.md` for the scan and
-`.reports/component-inventory.md` for the per-file widget/CSS/signal tables
-inherited from the prior survey. The file mapping, restated:
+The task framing for this audit treats `drive_ok=true, 148 checks passed, 0
+failed` as a fixed fact about this round. It is not reproducible as stated.
+Re-running the exact same command against the exact same commit
+(`xvfb-run -a ruby test/drive_boatswain.rb`), with no code changes between
+runs, this audit got:
 
 ```
-src/bs-application.c                          -> lib/boatswain/application.rb
-src/bs-window.c + .ui                          -> lib/boatswain/window.rb
-src/bs-about-dialog equivalent (Adw built-in)  -> lib/boatswain/about_dialog.rb
-src/bs-shortcuts-window equivalent             -> lib/boatswain/shortcuts_dialog.rb
-lib/bs-device*.c                               -> lib/boatswain/device*.rb
-lib/bs-profile.c                               -> lib/boatswain/profile.rb
-lib/bs-page*.c                                 -> lib/boatswain/page*.rb
-lib/bs-button*.c                               -> lib/boatswain/button*.rb
-lib/bs-context.c                               -> lib/boatswain/context.rb
-lib/devices/mock/*.c                           -> lib/boatswain/devices/mock/*.rb
-src/plugins/default/*.c                        -> lib/boatswain/plugins/default/*.rb
-src/plugins/launcher/*.c                       -> lib/boatswain/plugins/launcher/*.rb
-src/plugins/network/*.c                        -> lib/boatswain/plugins/network/*.rb
-src/plugins/gaming/*.js                        -> lib/boatswain/plugins/gaming/*.rb
+run 1: 142 of 148 checks passed
+  failed check: the button's action is the Folder action
+  failed check: its icon followed
+  failed check: the view popped back to the button page
+  failed check: the remove-action row is visible now there is an action
+  failed check: the device pushed a page
+  failed check: its action is Go Up
+DRIVE FAILED (6)
+
+runs 2-7: 148 of 148 checks passed, DRIVE OK  (6 further runs, all clean)
+```
+
+One run in seven failed, on identical code, with no flag changed. All six
+failing checks cluster around one interaction (assigning an action to a
+button, then navigating back to the button page and checking the remove-
+action row and a Go Up follow-on) — the shape of a **race**: a GTK main-loop
+tick firing a check before a signal it depends on has actually settled, not
+a deterministic bug the harness would catch every time. The `93105a4` commit
+message itself says the prior fix was for "the profile sidebar going stale
+on delete" and "settle widget tree before screenshotting" — i.e. this exact
+class of race has already needed one fix in this file, and this round found
+it is not fully closed.
+
+**This is reported as the primary finding, not a footnote, because of what
+it does to the number everyone downstream treats as ground truth.** A gate
+that is "green" 6 times out of 7 is not the same claim as a gate that is
+green, full stop — the one failing run is not a fluke to discard, it is
+positive evidence that the thing being asserted ("the button's action
+followed", "the page was pushed") is not yet reliably true, only usually
+true. Per the task's framing, *this counts as "a failed or narrow drive
+run," itself a parity gap* — the race is a real behavioural gap in the
+button-editor/navigation interaction, independent of the component-file
+tables below.
+
+## What the drive run actually proves, and does not
+
+41 `d.step` blocks (42 by raw count, one of which is the mock-device-provider
+setup, not a user-facing component) now exercise the application, the
+window, the shortcuts/about dialogs, the primary menu, profile switching,
+multi-action editing, the network plugin, the device editor, the dial grid
+and touchscreen slot widgets end-to-end, and a corrupt-profile-file recovery
+path — a large, genuine advance on the prior round's "`exe/boatswain` was
+launched once, nothing was clicked, no assertion was made." This is real
+headless UI testing of real widgets, screenshotted, and it is the right
+shape of evidence per the `component-parity` skill's Steps 4/5.
+
+It still proves parity for **zero units at the "4-axis, driven" bar**,
+because:
+
+1. The one race found above means even the units the driver does cover are
+   not yet reliably passing — "usually passes" is not "parity."
+2. The driver only covers the plugins and widgets that exist. It cannot and
+   does not exercise `desktop`, `obs-studio`, `soundboard`, real Elgato/
+   Loupedeck device I/O, or any `data/`/`po/` content, because none of that
+   exists to drive (see `.reports/component-identification.md`). **A
+   component no check exercises is unverified, not done** — stated per this
+   audit's own framing, and it is the correct reading of every row in the
+   "absent" table below.
+3. No per-unit axis table (widget/CSS/signal/behaviour, one row per
+   component) has been rebuilt against the new dial/touchscreen files or the
+   `HardwareDetector`, for the same reason as last round: doing so from the
+   `.rb` source without the symbol table rebuild is a reading, not a scan.
+
+## File mapping (updated)
+
+```
+src/bs-application.c                          -> lib/boatswain/application.rb        driven
+src/bs-window.c + .ui                          -> lib/boatswain/window.rb             driven
+Adw.AboutDialog / ShortcutsDialog equivalents  -> lib/boatswain/{about,shortcuts}_dialog.rb  driven
+lib/bs-device*.c, bs-profile.c, bs-page*.c     -> lib/boatswain/{device,profile,page}*.rb    driven
+lib/bs-button*.c                                -> lib/boatswain/button*.rb            driven, but see the race above
+lib/bs-dial*.c, bs-touchscreen*.c (NEW)        -> lib/boatswain/{dial,touchscreen}*.rb  driven (step 40)
+lib/bs-context.c                                -> lib/boatswain/context.rb            driven (4/6 plugins wired)
+lib/devices/mock/*.c                            -> lib/boatswain/devices/mock/*.rb      driven
+lib/devices/elgato/*.c, loupedeck/*.c (HID)     -> (absent — HardwareDetector covers enumeration only, not HID)
+src/plugins/default/*, launcher/*, network/*   -> lib/boatswain/plugins/{default,launcher,network}/*.rb  driven
+src/plugins/gaming/*.js                         -> lib/boatswain/plugins/gaming/*.rb    driven (step: score action counts up/down/resets)
 --- no port file on the right ---
-lib/bs-dial*.c, lib/bs-touchscreen*.c          -> (absent)
-src/plugins/desktop/*                          -> (absent)
-src/plugins/obs-studio/*                       -> (absent)
-src/plugins/soundboard/*                       -> (absent)
-lib/devices/elgato/*                           -> (absent)
-lib/devices/loupedeck/*                        -> (absent)
+src/plugins/desktop/*                           -> (absent)
+src/plugins/obs-studio/*                        -> (absent)
+src/plugins/soundboard/*                        -> (absent)
 data/*.gschema.xml, *.desktop.in, *.metainfo*  -> (absent)
-po/*                                           -> (absent)
+po/*                                             -> (absent)
 ```
 
-Every row on the left with nothing on the right is a gap under this skill's
-own rule ("an upstream file with no port file opposite it is the first and
-largest kind of gap"). That is **6 of upstream's roughly 13 top-level
-areas** (device providers, 3 of 6 action plugins, the dial/touchscreen
-widget family, and the whole `data/`+`po/` tree) with **no port file at
-all** — not a partial build, zero.
+Still **6 of upstream's roughly 13 top-level areas with no port file at
+all** — unchanged in count from the prior round; the dial/touchscreen row
+moved from "absent" to "present and driven," which is the one area that
+actually improved.
 
-## Step 3/4/5 — axis comparison, styling, behaviour
-
-Not performed per-unit this round, for a reason that is itself the finding:
-**there is nothing to drive.** Steps 4 and 5 require running the port headless
-(`ruby-gtk-testing`) and asserting on live widget state; `exe/boatswain` was
-launched once during this audit (`xvfb-run ruby exe/boatswain`, 25s, no crash,
-Vulkan/DRI3 warnings only) which proves the application object constructs and
-the main loop starts — and proves nothing beyond that, because the run was
-not driven, nothing was clicked, and no assertion was made. No `test/drive_*`
-script exists to do that driving (see `.reports/test-parity.md`).
-
-So every unit in the inventory is in exactly the state
-`component-identification.md`'s prior survey already named:
-**`exists (unverified)` or `absent`**, and this report cannot promote a
-single one of them past that without the drive step actually running. Doing
-so anyway — reading the `.rb` source and asserting "looks right" — is exactly
-the shortcut both skills prohibit (parity is proven by driving, not by
-reading).
-
-### What the per-file reading *can* say today (static only, not parity)
-
-- `lib/boatswain/window.rb`, `about_dialog.rb`, `shortcuts_dialog.rb`,
-  `device_editor.rb`, `button_editor.rb`, `button_grid_widget.rb`,
-  `button_widget.rb`, `action_selector.rb`, `profile_row.rb` are present and
-  `ruby -c` clean, following the house `.tap`/memoized-accessor style.
-- `lib/boatswain/context.rb` wires exactly 4 of 6 upstream action plugins
-  (confirmed by grep, see `component-identification.md`) — this is not a
-  reading uncertainty, it is a direct count.
-- Signal count from the scan (20 port vs 50 upstream, see
-  `component-identification.md`) is consistent with widgets being built but
-  under-connected — the classic "screenshot, not an app" shape the skill
-  warns about. It cannot be split per-unit without the symbol table rebuild
-  and per-file reading that did not happen this round (see that report's
-  self-audit checklist).
+**Correction while drafting this report:** an earlier pass of this audit
+claimed the `gaming` plugin was not exercised by the driver. Re-checked by
+grep before publishing — it is: `test/drive_boatswain.rb` has a step
+exercising `Boatswain::Plugins::Gaming::ScoreAction` counting up, down and
+resetting. That claim is withdrawn here rather than left uncorrected.
 
 ## Stylesheet
 
 ```
 $ find . -iname '*.css'
 (no output)
-$ grep -rn 'CssProvider\|load(data:' lib/ exe/
-lib/boatswain/style.rb   (defines Style, not grepped as a literal hit above
-                          because it is not named CssProvider directly in
-                          this file — content not verified against upstream's
-                          style.css this round)
 ```
 
-Upstream's `src/style.css` (referenced via `boatswain.gresource.xml`) was not
-diffed against `lib/boatswain/style.rb`'s content in this pass. That is a gap
-in this report, not a clean bill for the file — open it and diff before
-claiming any CSS-axis parity.
+Step 37 of the drive script does assert `Style's CSS parses cleanly, with no
+errors swallowed` — a real improvement on the prior round's "not diffed at
+all." But parsing cleanly is not the same claim as matching upstream's
+`src/style.css` content; that diff still has not been done.
 
 ## Text axis
 
-Not evaluated per-component here; see `.reports/translation-parity.md`,
-whose finding (0/147 messages, 0/38 languages) makes every unit's text axis
-an automatic **gap** regardless of what the widget/CSS/signal axes eventually
-show, because no string in the port goes through a translation marker at
-all.
+Unchanged: see `.reports/translation-parity.md` — 0/147 messages, 0/38
+languages. Every unit's text axis is still an automatic gap.
 
 ## Gaps (component-level, this round)
 
 | Area | Upstream | Port | State |
 |---|---|---|---|
-| Elgato Stream Deck device provider (10 models) | `lib/devices/elgato/*` (15 files) | absent | **gap** |
-| Loupedeck device provider | `lib/devices/loupedeck/*` (5 files) | absent | **gap** |
-| Dial / touchscreen widget family | `lib/bs-dial*.c`, `lib/bs-touchscreen*.c` (9 files) | absent | **gap** |
-| `desktop` plugin (keyboard-shortcut action + capture dialog) | 6 files | absent | **gap** |
-| `obs-studio` plugin (6 actions, connection manager/settings) | 18 files | absent | **gap** |
-| `soundboard` plugin (MPRIS play action + prefs) | 9 files | absent | **gap** |
+| Elgato Stream Deck HID I/O (10 models) | `lib/devices/elgato/*` (15 files) | enumeration only (`HardwareDetector`) | **gap** |
+| Loupedeck HID I/O | `lib/devices/loupedeck/*` (5 files) | enumeration only | **gap** |
+| `desktop` plugin | 6 files | absent | **gap** |
+| `obs-studio` plugin | 18 files | absent | **gap** |
+| `soundboard` plugin | 9 files | absent | **gap** |
 | `data/` (desktop file, metainfo, gschema, icons) | present | absent | **gap** |
-| Every unit's styling (Step 4) | (cross-cutting) | not run | **unverified** |
-| Every unit's behaviour (Step 5) | (cross-cutting) | not run | **unverified** |
-| Text axis, all units | (cross-cutting) | 0/147 | **gap** (see translation-parity.md) |
+| Button-editor navigate-back-after-assigning-action flow | — | races ~1/7 runs | **gap (flaky, not fixed)** |
+| Dial/touchscreen per-widget CSS/signal table | 7 new files | not rebuilt | **unverified** |
+| Style.css content vs `lib/boatswain/style.rb` | present | parses clean, not diffed | **unverified** |
+| Text axis, all units | (cross-cutting) | 0/147 | **gap** |
 
 ## Rules check against this report itself
 
-- "Never report parity from the scan alone." — honoured: this report asserts
-  **zero** parity, specifically because Steps 4/5 did not run, rather than
-  inferring parity from the scan's near-equal widget-type count.
-- "Never compare app-wide totals and call it parity." — the app-wide signal
-  count (20/50) is reported as a symptom, not as the verdict; the verdict is
-  the per-area gap table above and the 0-drive finding.
-- No unit in this report is marked `parity`. None has been driven.
+- "Never report parity from the scan alone." — honoured: the race was found
+  by re-running the actual driver, not by reading source.
+- "A component no check exercises is unverified, not done." — applied to
+  `gaming`, to the three absent plugins, and to the HID-I/O half of the
+  device providers.
+- "Treat a failed or narrow drive run as a parity gap in its own right." —
+  this round's own re-runs produced exactly that failed run, and it is
+  reported as the headline finding, not smoothed into "148/148, DRIVE OK"
+  because six of seven attempts said so.
+- No unit in this report is marked `parity`. None has been driven reliably
+  enough to earn it.
