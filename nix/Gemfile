@@ -9,8 +9,8 @@
 source "https://rubygems.org"
 
 gem "adwaita"
-gem "gtk4"
+gem "ashpd"
 gem "glib2"
+gem "gtk4"
 gem "gudev"
 gem "soup3"
-gem "ashpd"
